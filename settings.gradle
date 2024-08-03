@@ -1,0 +1,3 @@
+rootProject.name = "text-renderer"
+
+include "core", "unicode-fonts", "vulkan"
