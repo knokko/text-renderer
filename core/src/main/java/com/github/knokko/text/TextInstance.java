@@ -1,5 +1,8 @@
 package com.github.knokko.text;
 
+import com.github.knokko.text.font.FontSource;
+import com.github.knokko.text.font.LoadedFonts;
+import com.github.knokko.text.font.TextFont;
 import org.lwjgl.system.Configuration;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FreeType;
@@ -37,39 +40,33 @@ public class TextInstance {
 		this(createLibrary());
 	}
 
-	public synchronized TextFont createFontFromFile(File file) {
-		try (var stack = stackPush()) {
-			var pFace = stack.callocPointer(1);
-			assertFtSuccess(FT_New_Face(
-					ftLibrary, stack.UTF8(file.getAbsolutePath()), 0, pFace
-			), "New_Face", "TextInstance.createFontFromFile");
-			return new TextFont(FT_Face.create(pFace.get(0)), null);
-		}
-	}
+	public synchronized TextFont createFont(FontSource... fonts) {
+		LoadedFonts[] loaded = new LoadedFonts[fonts.length];
 
-	public synchronized TextFont createFontFromResourcePath(String path) {
-		ByteBuffer fontBuffer;
-		try (var input = TextInstance.class.getClassLoader().getResourceAsStream(path)) {
-			if (input == null) throw new Error("Can't find resource at path " + path);
-			byte[] fontArray = input.readAllBytes();
-
-			fontBuffer = memAlloc(fontArray.length);
-			fontBuffer.put(0, fontArray);
-		} catch (IOException e) {
-			throw new Error("Can't read font " + path);
+		for (int index = 0; index < fonts.length; index++) {
+			loaded[index] = fonts[index].load(ftLibrary);
 		}
 
-		return createFontFromBuffer(fontBuffer);
-	}
-
-	public TextFont createFontFromBuffer(ByteBuffer fontBuffer) {
-		try (var stack = stackPush()) {
-			var pFace = stack.callocPointer(1);
-			assertFtSuccess(FT_New_Memory_Face(
-					ftLibrary, fontBuffer, 0, pFace
-			), "New_Memory_Face", "TextInstance.createFontFromResourcePath");
-			return new TextFont(FT_Face.create(pFace.get(0)), fontBuffer);
+		int numFaces = 0;
+		int numBuffers = 0;
+		for (LoadedFonts font : loaded) {
+			numFaces += font.ftFaces().length;
+			numBuffers += font.fontBuffers().length;
 		}
+
+		FT_Face[] faces = new FT_Face[numFaces];
+		ByteBuffer[] buffers = new ByteBuffer[numBuffers];
+
+		int faceIndex = 0;
+		int bufferIndex = 0;
+		for (LoadedFonts font : loaded) {
+			System.arraycopy(font.ftFaces(), 0, faces, faceIndex, font.ftFaces().length);
+			faceIndex += font.ftFaces().length;
+			System.arraycopy(font.fontBuffers(), 0, buffers, bufferIndex, font.fontBuffers().length);
+			bufferIndex += font.fontBuffers().length;
+		}
+
+		return new TextFont(faces, buffers);
 	}
 
 	public void destroy() {

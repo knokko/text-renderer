@@ -56,6 +56,12 @@ project(":core") {
 	}
 }
 
+project(":unicode-fonts") {
+	dependencies {
+		compileOnly project(":core")
+	}
+}
+
 project(":vulkan") {
 	repositories {
 		maven { url = "https://jitpack.io" }

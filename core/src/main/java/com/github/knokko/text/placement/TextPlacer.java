@@ -1,11 +1,10 @@
 package com.github.knokko.text.placement;
 
 import com.github.knokko.text.SizedGlyph;
-import com.github.knokko.text.TextFont;
+import com.github.knokko.text.font.TextFont;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.freetype.FT_Size;
 
-import java.text.Bidi;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,9 +22,30 @@ public class TextPlacer {
 	private final TextFont font;
 	private final long hbBuffer;
 
+	private final long[] hbFonts;
+	private final TextSplitter splitter;
+
+	private int currentHeight;
+
 	public TextPlacer(TextFont font) {
 		this.font = font;
 		this.hbBuffer = hb_buffer_create();
+		this.hbFonts = new long[font.getFreeTypeFaces().length];
+		this.splitter = new TextSplitter(hbBuffer, hbFonts);
+	}
+
+	private void setHeight(int height) {
+		if (height == currentHeight) return;
+
+		font.setHeight(height);
+
+		for (int faceIndex = 0; faceIndex < hbFonts.length; faceIndex++) {
+			if (hbFonts[faceIndex] != 0L) hb_font_destroy(hbFonts[faceIndex]);
+			hbFonts[faceIndex] = hb_ft_font_create_referenced(font.getFreeTypeFaces()[faceIndex].address());
+			hb_ft_font_set_funcs(hbFonts[faceIndex]);
+		}
+
+		currentHeight = height;
 	}
 
 	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requestCollection) {
@@ -33,21 +53,11 @@ public class TextPlacer {
 		Arrays.sort(requests);
 
 		List<PlacedGlyph> placements = new ArrayList<>();
+		currentHeight = -1;
 
-		int lastHeight = 0;
-		long hbFont = 0;
 		for (var request : requests) {
-			int height = request.getHeight();
-			if (height != lastHeight) {
-				font.setHeight(height);
-				lastHeight = height;
-				if (hbFont != 0L) hb_font_destroy(hbFont);
-				hbFont = hb_ft_font_create_referenced(font.getFreeTypeFace().address());
-				hb_ft_font_set_funcs(hbFont);
-			}
-
 			try (var stack = stackPush()) {
-				var freePlacements = placeFree(hbFont, request, stack);
+				var freePlacements = placeFree(request, stack);
 				for (var placement : freePlacements) {
 					placements.add(new PlacedGlyph(
 							placement.glyph,
@@ -60,33 +70,36 @@ public class TextPlacer {
 			}
 		}
 
-		if (hbFont != 0L) hb_font_destroy(hbFont);
 		return placements;
 	}
 
 	@SuppressWarnings("resource")
-	private List<PlacedGlyph> placeFree(long hbFont, TextPlaceRequest request, MemoryStack stack) {
-		Bidi bidi = new Bidi(request.text, Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT);
+	private List<PlacedGlyph> placeFree(TextPlaceRequest request, MemoryStack stack) {
+		this.setHeight(request.getHeight());
+		List<TextRun> runs = splitter.split(request.text, stack);
 		List<PlacedGlyph> placements = new ArrayList<>();
-
-		FT_Size faceSize = font.getFreeTypeFace().size();
-		if (faceSize == null) throw new RuntimeException("Face size must not be null right now");
-		int ascent = Math.toIntExact(faceSize.metrics().ascender() / 64);
 
 		int cursorX = 0;
 		int cursorY = 0;
 
-		bidiLoop:
-		for (int bidiRun = 0; bidiRun < bidi.getRunCount(); bidiRun++) {
-			String runString = request.text.substring(bidi.getRunStart(bidiRun), bidi.getRunLimit(bidiRun));
-			String context = "TextPlacer.placeRun(" + runString + ")";
+		int maxAscent = 0;
+
+		for (TextRun run : runs) {
+			FT_Size faceSize = font.getFreeTypeFaces()[run.faceIndex()].size();
+			if (faceSize == null) throw new RuntimeException("Face size must not be null right now");
+			int ascent = Math.toIntExact(faceSize.metrics().ascender() / 64);
+			maxAscent = Math.max(maxAscent, ascent);
+		}
+
+		runLoop:
+		for (TextRun run : runs) {
+			String context = "TextPlacer.placeFree(run = " + run.text() + ")";
 
 			hb_buffer_reset(hbBuffer);
-
-			hb_buffer_add_utf16(hbBuffer, stack.UTF16(runString), 0, -1);
-
+			hb_buffer_add_utf16(hbBuffer, stack.UTF16(run.text()), 0, -1);
 			hb_buffer_guess_segment_properties(hbBuffer);
-			hb_shape(hbFont, hbBuffer, null);
+			hb_buffer_set_cluster_level(hbBuffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
+			hb_shape(hbFonts[run.faceIndex()], hbBuffer, null);
 
 			var glyphInfo = hb_buffer_get_glyph_infos(hbBuffer);
 			var glyphPositions = hb_buffer_get_glyph_positions(hbBuffer);
@@ -97,28 +110,30 @@ public class TextPlacer {
 				var position = glyphPositions.get(glyphIndex);
 				var info = glyphInfo.get(glyphIndex);
 
-				int charIndex = info.cluster() + bidi.getRunStart(bidiRun);
+				int charIndex = info.cluster() + run.offset();
+				if (info.cluster() >= run.text().length()) continue;
+
 				int glyph = info.codepoint();
 
-				assertFtSuccess(FT_Load_Glyph(font.getFreeTypeFace(), glyph, 0), "FT_Load_Glyph", context);
-				var glyphSlot = font.getFreeTypeFace().glyph();
+				assertFtSuccess(FT_Load_Glyph(font.getFreeTypeFaces()[run.faceIndex()], glyph, 0), "FT_Load_Glyph", context);
+				var glyphSlot = font.getFreeTypeFaces()[run.faceIndex()].glyph();
 				if (glyphSlot == null) throw new RuntimeException("Glyph slot should not be null right now");
 
 				placements.add(new PlacedGlyph(
-						new SizedGlyph(glyph, font.getSize()),
+						new SizedGlyph(glyph, run.faceIndex(), font.getSize()),
 						cursorX + position.x_offset() + glyphSlot.bitmap_left(),
-						cursorY + position.y_offset() - glyphSlot.bitmap_top() + ascent,
+						cursorY + position.y_offset() - glyphSlot.bitmap_top() + maxAscent,
 						request, charIndex
 				));
 
 				cursorX += position.x_advance() / 64;
 				cursorY += position.y_advance() / 64;
 
-				if (cursorX > request.getWidth() && bidi.baseIsLeftToRight()) break bidiLoop;
+				if (cursorX > request.getWidth() && splitter.wasBaseLeftToRight) break runLoop;
 			}
 		}
 
-		if (!bidi.baseIsLeftToRight()) {
+		if (!splitter.wasBaseLeftToRight) {
 			int shift = request.getWidth() - cursorX;
 			placements = placements.stream().map(placement -> new PlacedGlyph(
 					placement.glyph, placement.minX + shift,
@@ -138,5 +153,9 @@ public class TextPlacer {
 
 	public void destroy() {
 		hb_buffer_destroy(hbBuffer);
+		for (int faceIndex = 0; faceIndex < hbFonts.length; faceIndex++) {
+			if (hbFonts[faceIndex] != 0L) hb_font_destroy(hbFonts[faceIndex]);
+			hbFonts[faceIndex] = 0L;
+		}
 	}
 }

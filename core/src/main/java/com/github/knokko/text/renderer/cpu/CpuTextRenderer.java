@@ -1,6 +1,6 @@
 package com.github.knokko.text.renderer.cpu;
 
-import com.github.knokko.text.TextFont;
+import com.github.knokko.text.font.TextFont;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.placement.TextPlaceRequest;
 import com.github.knokko.text.placement.TextPlacer;

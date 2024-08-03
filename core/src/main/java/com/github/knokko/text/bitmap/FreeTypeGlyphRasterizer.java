@@ -13,24 +13,24 @@ import static org.lwjgl.util.freetype.FreeType.FT_Load_Glyph;
 
 public class FreeTypeGlyphRasterizer implements GlyphRasterizer {
 
-	private final FT_Face freeTypeFace;
+	private final FT_Face[] freeTypeFaces;
 	private final IntConsumer changeSize;
 
 	private int width, height;
 	private ByteBuffer buffer;
 
-	public FreeTypeGlyphRasterizer(FT_Face freeTypeFace, IntConsumer changeSize) {
-		this.freeTypeFace = freeTypeFace;
+	public FreeTypeGlyphRasterizer(FT_Face[] freeTypeFaces, IntConsumer changeSize) {
+		this.freeTypeFaces = freeTypeFaces;
 		this.changeSize = changeSize;
 	}
 
 	@Override
-	public void set(int glyph, int size) {
-		String context = "FreeTypeGlyphRasterizer.set(" + glyph + ", " + size + ")";
+	public void set(int glyph, int faceIndex, int size) {
+		String context = "FreeTypeGlyphRasterizer.set(" + glyph + ", " + faceIndex + ", " + size + ")";
 		changeSize.accept(size);
-		assertFtSuccess(FT_Load_Glyph(freeTypeFace, glyph, FT_LOAD_RENDER), "Load_Glyph", context);
+		assertFtSuccess(FT_Load_Glyph(freeTypeFaces[faceIndex], glyph, FT_LOAD_RENDER), "Load_Glyph", context);
 
-		FT_GlyphSlot slot = freeTypeFace.glyph();
+		FT_GlyphSlot slot = freeTypeFaces[faceIndex].glyph();
 		if (slot == null) throw new Error("Glyph slot must not be null at this point");
 
 		FT_Bitmap bitmap = slot.bitmap();

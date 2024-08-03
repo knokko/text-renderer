@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 public interface GlyphRasterizer {
 
-	void set(int glyph, int size);
+	void set(int glyph, int faceIndex, int size);
 
 	int getBufferWidth();
 
