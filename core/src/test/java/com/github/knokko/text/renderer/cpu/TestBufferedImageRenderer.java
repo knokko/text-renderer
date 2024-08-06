@@ -23,7 +23,7 @@ public class TestBufferedImageRenderer {
 		var font = instance.createFont(new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(500, 130, BufferedImage.TYPE_INT_RGB),
-				font, 20_000
+				font, 10_000
 		);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
@@ -46,7 +46,7 @@ public class TestBufferedImageRenderer {
 		var font = instance.createFont(UnicodeFonts.SOURCE);
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(2000, 20_000, BufferedImage.TYPE_INT_RGB),
-				font, 4_000_000 // TODO Check whether I can reduce this after optimizing
+				font, 3_000_000
 		);
 
 		var scanner = new Scanner(Objects.requireNonNull(

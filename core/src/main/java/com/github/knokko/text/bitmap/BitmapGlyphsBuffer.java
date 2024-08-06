@@ -39,13 +39,13 @@ public class BitmapGlyphsBuffer {
 		for (var placedGlyph : placedGlyphs) {
 			var sections = getSections(rasterizer, placedGlyph.glyph);
 			for (var section : sections) {
-				int desiredMinX = placedGlyph.minX + section.offsetX;
+				int desiredMinX = placedGlyph.minX + section.offsetX();
 				int minX = Math.max(placedGlyph.request.minX, desiredMinX);
 				quads.add(new GlyphQuad(
-						section.bufferIndex, minX, placedGlyph.minY + section.offsetY,
-						Math.min(placedGlyph.request.maxX, placedGlyph.minX + section.offsetX + section.width - 1),
-						placedGlyph.minY + section.offsetY + section.height - 1,
-						section.width, minX - desiredMinX, placedGlyph.charIndex, placedGlyph.request.userData
+						section.bufferIndex(), minX, placedGlyph.minY + section.offsetY(),
+						Math.min(placedGlyph.request.maxX, placedGlyph.minX + section.offsetX() + section.width() - 1),
+						placedGlyph.minY + section.offsetY() + section.height() - 1,
+						section.width(), minX - desiredMinX, placedGlyph.charIndex, placedGlyph.request.userData
 				));
 			}
 		}
@@ -81,11 +81,11 @@ public class BitmapGlyphsBuffer {
 			);
 
 			for (BitmapGlyphSection section : sections) {
-				int baseIndex = section.bufferIndex;
-				for (int bufferY = 0; bufferY < section.height; bufferY++) {
+				int baseIndex = section.bufferIndex();
+				for (int bufferY = 0; bufferY < section.height(); bufferY++) {
 					buffer.put(
-							baseIndex + bufferY * section.width, bitmap,
-							section.offsetX + (bufferY + section.offsetY) * rasterizer.getBufferWidth(), section.width
+							baseIndex + bufferY * section.width(), bitmap,
+							section.offsetX() + (bufferY + section.offsetY()) * rasterizer.getBufferWidth(), section.width()
 					);
 				}
 			}
@@ -96,5 +96,18 @@ public class BitmapGlyphsBuffer {
 
 		bufferedGlyph.lastUsed = currentFrame;
 		return bufferedGlyph.sections;
+	}
+
+	public int getUsedSpace() {
+		return buffer.capacity() - slotSize * bufferSlots.size();
+	}
+
+	public int countAvailableSpace() {
+		int freeSlots = bufferSlots.size();
+		int availableSlots = 0;
+		for (var glyph : glyphMap.values()) {
+			if (glyph.lastUsed < currentFrame) availableSlots += glyph.sections.size();
+		}
+		return slotSize * (freeSlots + availableSlots);
 	}
 }

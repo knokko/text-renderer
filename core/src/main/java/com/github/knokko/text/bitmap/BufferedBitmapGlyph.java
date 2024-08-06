@@ -11,4 +11,9 @@ class BufferedBitmapGlyph {
 	BufferedBitmapGlyph(List<BitmapGlyphSection> sections) {
 		this.sections = Collections.unmodifiableList(sections);
 	}
+
+	@Override
+	public String toString() {
+		return sections.size() + " sections last used " + lastUsed;
+	}
 }
