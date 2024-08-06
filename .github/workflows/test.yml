@@ -1,0 +1,24 @@
+name: Runs unit tests
+
+on: [push]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        jdk: [17, 21]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.jdk }}
+          distribution: temurin
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@v3
+      - run: ./gradlew test --no-daemon
