@@ -2,6 +2,7 @@ package com.github.knokko.text.placement;
 
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.font.ClasspathFontsSource;
+import com.github.knokko.text.font.UnicodeFonts;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -163,6 +164,27 @@ public class TestTextPlacer {
 		assertEquals(4699, result.get(22).glyph.id);
 		assertEquals(0, result.get(23).charIndex);
 		assertEquals(1378, result.get(23).glyph.id);
+
+		placer.destroy();
+		font.destroy();
+		instance.destroy();
+	}
+
+	@Test
+	public void testOffsetRegressionGujarati() {
+		var instance = new TextInstance();
+		var font = instance.createFont(UnicodeFonts.SOURCE);
+		var placer = new TextPlacer(font);
+
+		String gujaratiText = "૬ ૭ ૮ ૯";
+
+		List<TextPlaceRequest> requests = new ArrayList<>();
+		requests.add(new TextPlaceRequest(gujaratiText, 10, 10, 500, 40, null));
+
+		var result = placer.place(requests);
+		for (var placed : result) {
+			assertNotEquals(0, placed.glyph.id);
+		}
 
 		placer.destroy();
 		font.destroy();
