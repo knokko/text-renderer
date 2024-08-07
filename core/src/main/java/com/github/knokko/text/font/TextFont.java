@@ -123,6 +123,7 @@ public class TextFont {
 	 */
 	public void setHeight(int height) {
 		int desiredRawHeight = height * 64;
+		// TODO Add support for maxHeight and very large text
 		int size = heightSearcher.search(desiredRawHeight, height, 3, 10 * height);
 		setSize(size);
 	}

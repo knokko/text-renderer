@@ -40,12 +40,25 @@ public class BitmapGlyphsBuffer {
 			var sections = getSections(rasterizer, placedGlyph.glyph);
 			for (var section : sections) {
 				int desiredMinX = placedGlyph.minX + section.offsetX();
+				int desiredMinY = placedGlyph.minY + section.offsetY();
+				int desiredMaxX = placedGlyph.minX + section.offsetX() + section.width() - 1;
+				int desiredMaxY = placedGlyph.minY + section.offsetY() + section.height() - 1;
 				int minX = Math.max(placedGlyph.request.minX, desiredMinX);
+				int maxX = Math.min(placedGlyph.request.maxX, desiredMaxX);
+
+				int minY, maxY;
+				if (placedGlyph.request.enforceBoundsY) {
+					minY = Math.max(placedGlyph.request.minY, desiredMinY);
+					maxY = Math.min(placedGlyph.request.maxY, desiredMaxY);
+				} else {
+					minY = desiredMinY;
+					maxY = desiredMaxY;
+				}
+
 				quads.add(new GlyphQuad(
-						section.bufferIndex(), minX, placedGlyph.minY + section.offsetY(),
-						Math.min(placedGlyph.request.maxX, placedGlyph.minX + section.offsetX() + section.width() - 1),
-						placedGlyph.minY + section.offsetY() + section.height() - 1,
-						section.width(), minX - desiredMinX, placedGlyph.charIndex, placedGlyph.request.userData
+						section.bufferIndex(), minX, minY, maxX, maxY, section.width(),
+						minX - desiredMinX + section.width() * (minY - desiredMinY),
+						placedGlyph.charIndex, placedGlyph.request.userData
 				));
 			}
 		}

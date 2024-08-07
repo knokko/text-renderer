@@ -27,10 +27,10 @@ public class TestBufferedImageRenderer {
 		);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
-		requests.add(new TextPlaceRequest("hello world", 10, 10, 200, 40, null));
-		requests.add(new TextPlaceRequest("אלט", 210, 10, 300, 40, null));
-		requests.add(new TextPlaceRequest("ؤلاششششششش" + "  hi  " + "يييييييثب", 10, 50, 490, 80, null));
-		requests.add(new TextPlaceRequest("(Only) 1 word (אלט) is Hebrew", 10, 90, 490, 120, null));
+		requests.add(new TextPlaceRequest("hello world", 10, 10, 200, 40, true, null));
+		requests.add(new TextPlaceRequest("אלט", 210, 10, 300, 40, true, null));
+		requests.add(new TextPlaceRequest("ؤلاششششششش" + "  hi  " + "يييييييثب", 10, 50, 490, 80, true, null));
+		requests.add(new TextPlaceRequest("(Only) 1 word (אלט) is Hebrew", 10, 90, 490, 120, true, null));
 		renderer.render(requests);
 
 		assertImageEquals("expected-english-hebrew-mix.png", renderer.image, "actual-english-hebrew-mix.png");
@@ -57,7 +57,7 @@ public class TestBufferedImageRenderer {
 		int minY = 5;
 		while (scanner.hasNextLine()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(scanner.nextLine(), 0, minY, renderer.image.getWidth(), maxY, null));
+			requests.add(new TextPlaceRequest(scanner.nextLine(), 0, minY, renderer.image.getWidth(), maxY, false, null));
 			minY = maxY;
 		}
 		scanner.close();
