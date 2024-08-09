@@ -101,4 +101,35 @@ public class TestBufferedImageRenderer {
 		font.destroy();
 		instance.destroy();
 	}
+
+	@Test
+	public void setMaxHeight() {
+		var instance = new TextInstance();
+		var font = instance.createFont(UnicodeFonts.SOURCE).setMaxHeight(100);
+		var renderer = new BufferedImageTextRenderer(
+				new BufferedImage(4000, 300, BufferedImage.TYPE_INT_RGB),
+				font, 50_000
+		);
+
+		var requests = new ArrayList<TextPlaceRequest>();
+		int minX = 0;
+		int minY = 0;
+		for (int height = 20; height < 500; height += 30) {
+			requests.add(new TextPlaceRequest("Big", minX, minY, minX + height, minY + height, false, null));
+			// noinspection SuspiciousNameCombination
+			minX += height;
+			if (minX > renderer.image.getWidth()) {
+				minX = 0;
+				minY += height;
+			}
+		}
+
+		renderer.render(requests);
+
+		assertImageEquals("expected-large-text.png", renderer.image, "actual-large-text.png");
+
+		renderer.destroy();
+		font.destroy();
+		instance.destroy();
+	}
 }

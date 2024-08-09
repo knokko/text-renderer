@@ -20,10 +20,11 @@ public class TextFont {
 		setSize(size);
 		return getRawHeight(true);
 	});
+	private int maxHeight = 10_000;
 
 	private int currentUnscaledFontSize;
 	private int currentScaledFontSize;
-	private int currentScale;
+	private int currentScale, currentHeightScale;
 	public final FreeTypeGlyphRasterizer rasterizer;
 
 	public TextFont(FT_Face[] ftFaces, ByteBuffer[] fontBuffers) {
@@ -32,6 +33,11 @@ public class TextFont {
 		this.relativeFontSizes = new double[ftFaces.length];
 		this.rasterizer = new FreeTypeGlyphRasterizer(ftFaces, this::setSize);
 		this.estimateFontSizes();
+	}
+
+	public TextFont setMaxHeight(int newMaxHeight) {
+		this.maxHeight = newMaxHeight;
+		return this;
 	}
 
 	private void estimateFontSizes() {
@@ -115,7 +121,7 @@ public class TextFont {
 	}
 
 	public int getScale() {
-		return currentScale;
+		return currentScale * currentHeightScale;
 	}
 
 	private int getRawHeight(boolean scaled) {
@@ -147,8 +153,14 @@ public class TextFont {
 	 * Sets the font height (the vertical distance between two lines of text), in pixels
 	 */
 	public void setHeight(int height) {
+		int originalHeight = height;
+		currentHeightScale = 1;
+		while (height > maxHeight) {
+			currentHeightScale += 1;
+			height = originalHeight / currentHeightScale;
+		}
+
 		int desiredRawHeight = height * 64;
-		// TODO Add support for maxHeight
 		int size = heightSearcher.search(desiredRawHeight, height, 3, 10 * height);
 		setSize(size);
 	}
