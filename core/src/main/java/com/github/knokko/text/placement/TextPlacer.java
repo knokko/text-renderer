@@ -119,15 +119,16 @@ public class TextPlacer {
 				var glyphSlot = font.getFreeTypeFaces()[run.faceIndex()].glyph();
 				if (glyphSlot == null) throw new RuntimeException("Glyph slot should not be null right now");
 
+				int scale = font.getScale();
 				placements.add(new PlacedGlyph(
-						new SizedGlyph(glyph, run.faceIndex(), font.getSize()),
-						cursorX + position.x_offset() + glyphSlot.bitmap_left(),
-						cursorY + position.y_offset() - glyphSlot.bitmap_top() + maxAscent,
+						new SizedGlyph(glyph, run.faceIndex(), font.getSize(false), scale),
+						cursorX + scale * (position.x_offset() + glyphSlot.bitmap_left()),
+						cursorY + scale * (position.y_offset() - glyphSlot.bitmap_top() + maxAscent),
 						request, charIndex
 				));
 
-				cursorX += position.x_advance() / 64;
-				cursorY += position.y_advance() / 64;
+				cursorX += scale * position.x_advance() / 64;
+				cursorY += scale * position.y_advance() / 64;
 
 				if (cursorX > request.getWidth() && splitter.wasBaseLeftToRight) break runLoop;
 			}

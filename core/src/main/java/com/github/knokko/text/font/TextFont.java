@@ -18,10 +18,12 @@ public class TextFont {
 	private final double[] relativeFontSizes;
 	private final HeightSearcher heightSearcher = new HeightSearcher(5000, size -> {
 		setSize(size);
-		return getRawHeight();
+		return getRawHeight(true);
 	});
 
-	private int currentFontSize;
+	private int currentUnscaledFontSize;
+	private int currentScaledFontSize;
+	private int currentScale;
 	public final FreeTypeGlyphRasterizer rasterizer;
 
 	public TextFont(FT_Face[] ftFaces, ByteBuffer[] fontBuffers) {
@@ -72,29 +74,51 @@ public class TextFont {
 	}
 
 	void setSize(int size) {
-		if (currentFontSize == size) return;
+		if (currentScaledFontSize == size) return;
 		if (size <= 0) throw new IllegalArgumentException("Size (" + size + ") must be positive");
 
+		currentScale = 1;
+		currentUnscaledFontSize = size;
+
 		String context = "TextFont.setSize(" + size + ")";
-		for (int index = 0; index < ftFaces.length; index++) {
-			var face = ftFaces[index];
-			int localSize = Math.toIntExact(Math.round(size / relativeFontSizes[index]));
-			assertFtSuccess(FT_Set_Char_Size(
-					face, 0, localSize * 64L, 0, 5 * localSize
-			), "Set_Char_Size", context);
-			assertFtSuccess(FT_Set_Pixel_Sizes(
-					face, 0, localSize
-			), "Set_Pixel_Sizes", context);
+
+		scaleLoop:
+		while (true) {
+			for (int index = 0; index < ftFaces.length; index++) {
+				var face = ftFaces[index];
+				int localSize = Math.toIntExact(Math.round(currentUnscaledFontSize / relativeFontSizes[index]));
+
+				int charSizeResult = FT_Set_Char_Size(
+						face, 0, localSize * 64L, 0, 5 * localSize
+				);
+				if (charSizeResult == FT_Err_Invalid_Pixel_Size) {
+					currentScale += 1;
+					currentUnscaledFontSize = size / currentScale;
+					if (size % currentScale != 0) currentUnscaledFontSize += 1;
+					continue scaleLoop;
+				}
+
+				assertFtSuccess(charSizeResult, "Set_Char_Size", context);
+				assertFtSuccess(FT_Set_Pixel_Sizes(
+						face, 0, localSize
+				), "Set_Pixel_Sizes", context);
+			}
+			break;
 		}
 
-		currentFontSize = size;
+		currentScaledFontSize = size;
 	}
 
-	public int getSize() {
-		return currentFontSize;
+	public int getSize(boolean scaled) {
+		if (scaled) return currentScaledFontSize;
+		else return currentUnscaledFontSize;
 	}
 
-	private int getRawHeight() {
+	public int getScale() {
+		return currentScale;
+	}
+
+	private int getRawHeight(boolean scaled) {
 		long maxAscent = 0;
 		long minDescent = 0;
 		long maxHeight = 0;
@@ -108,14 +132,15 @@ public class TextFont {
 			maxHeight = Math.max(maxHeight, size.metrics().ascender() - size.metrics().descender());
 		}
 
+		if (scaled) maxHeight *= currentScale;
 		return Math.toIntExact(maxHeight);
 	}
 
 	/**
 	 * @return The vertical distance between two lines of text, in pixels
 	 */
-	public int getHeight() {
-		return getRawHeight() / 64;
+	public int getHeight(boolean scaled) {
+		return getRawHeight(scaled) / 64;
 	}
 
 	/**
@@ -123,7 +148,7 @@ public class TextFont {
 	 */
 	public void setHeight(int height) {
 		int desiredRawHeight = height * 64;
-		// TODO Add support for maxHeight and very large text
+		// TODO Add support for maxHeight
 		int size = heightSearcher.search(desiredRawHeight, height, 3, 10 * height);
 		setSize(size);
 	}

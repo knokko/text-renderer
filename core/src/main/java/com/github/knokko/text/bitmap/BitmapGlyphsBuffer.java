@@ -37,14 +37,17 @@ public class BitmapGlyphsBuffer {
 		List<GlyphQuad> quads = new ArrayList<>();
 
 		for (var placedGlyph : placedGlyphs) {
+			int scale = placedGlyph.glyph.scale;
 			var sections = getSections(rasterizer, placedGlyph.glyph);
 			for (var section : sections) {
-				int desiredMinX = placedGlyph.minX + section.offsetX();
-				int desiredMinY = placedGlyph.minY + section.offsetY();
-				int desiredMaxX = placedGlyph.minX + section.offsetX() + section.width() - 1;
-				int desiredMaxY = placedGlyph.minY + section.offsetY() + section.height() - 1;
+				int desiredMinX = placedGlyph.minX + scale * section.offsetX();
+				int desiredMinY = placedGlyph.minY + scale * section.offsetY();
+				int desiredMaxX = desiredMinX + scale * section.width() - 1;
+				int desiredMaxY = desiredMinY + scale * section.height() - 1;
 				int minX = Math.max(placedGlyph.request.minX, desiredMinX);
 				int maxX = Math.min(placedGlyph.request.maxX, desiredMaxX);
+
+				while ((1 + maxX - minX) % scale != 0) maxX -= 1;
 
 				int minY, maxY;
 				if (placedGlyph.request.enforceBoundsY) {
@@ -55,8 +58,10 @@ public class BitmapGlyphsBuffer {
 					maxY = desiredMaxY;
 				}
 
+				while ((1 + maxY - minY) % scale != 0) maxY -= 1;
+
 				quads.add(new GlyphQuad(
-						section.bufferIndex(), minX, minY, maxX, maxY, section.width(),
+						section.bufferIndex(), minX, minY, maxX, maxY, scale, section.width(),
 						minX - desiredMinX + section.width() * (minY - desiredMinY),
 						placedGlyph.charIndex, placedGlyph.request.userData
 				));

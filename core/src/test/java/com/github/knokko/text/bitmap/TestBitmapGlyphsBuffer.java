@@ -55,7 +55,7 @@ public class TestBitmapGlyphsBuffer {
 		glyphsBuffer.startFrame();
 
 		int size = 10;
-		var result = glyphsBuffer.getSections(new DummyRasterizer(), new SizedGlyph(1234, 0, size));
+		var result = glyphsBuffer.getSections(new DummyRasterizer(), new SizedGlyph(1234, 0, size, 2));
 
 		int totalArea = 0;
 		for (var section : result) {
@@ -92,8 +92,8 @@ public class TestBitmapGlyphsBuffer {
 				"hello", 12, 34, 56, 78, true, null
 		);
 
-		var glyph1 = new SizedGlyph(12, 0, 15);
-		var glyph2 = new SizedGlyph(13, 0, 15);
+		var glyph1 = new SizedGlyph(12, 0, 15, 3);
+		var glyph2 = new SizedGlyph(13, 0, 15, 4);
 
 		int requiredSize = 2 * glyph1.size * glyph1.size + 2 * glyph2.size * glyph2.size;
 
@@ -130,7 +130,7 @@ public class TestBitmapGlyphsBuffer {
 		var placeRequest = new TextPlaceRequest("h", 5, 6, 20, 35, true, null);
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
-		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20), 2, 1, placeRequest, 0));
+		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20, 1), 2, 1, placeRequest, 0));
 
 		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs);
 
@@ -171,7 +171,7 @@ public class TestBitmapGlyphsBuffer {
 		var placeRequest = new TextPlaceRequest("h", 5, 6, 20, 35, false, null);
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
-		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20), 2, 1, placeRequest, 0));
+		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20, 1), 2, 1, placeRequest, 0));
 
 		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs);
 
@@ -204,5 +204,30 @@ public class TestBitmapGlyphsBuffer {
 
 		assertEquals((byte) 784, resultMap[0][39]);
 		assertEquals((byte) 799, resultMap[15][39]);
+	}
+
+	@Test
+	public void testScaledBoundY() {
+		int bufferSize = 1000;
+		long bufferAddress = nmalloc(bufferSize);
+		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
+
+		var placeRequest = new TextPlaceRequest("h", 1, 4, 3, 7, true, null);
+
+		var placedGlyphs = new ArrayList<PlacedGlyph>();
+		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 5, 2), 0, 0, placeRequest, 0));
+
+		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs);
+		assertEquals(1, quads.size());
+
+		var quad = quads.get(0);
+		assertEquals(0, quad.bufferIndex);
+		assertEquals(1, quad.minX);
+		assertEquals(4, quad.minY);
+		assertEquals(2, quad.maxX); // maxX is 2 instead of 3 because width must be a multiple of scale
+		assertEquals(7, quad.maxY);
+		assertEquals(2, quad.scale);
+		assertEquals(5, quad.sectionWidth);
+		assertEquals(placeRequest.minX + placeRequest.minY * quad.sectionWidth, quad.bufferOffsetX);
 	}
 }

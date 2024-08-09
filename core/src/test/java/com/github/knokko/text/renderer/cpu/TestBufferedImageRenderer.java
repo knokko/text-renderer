@@ -70,4 +70,35 @@ public class TestBufferedImageRenderer {
 		font.destroy();
 		instance.destroy();
 	}
+
+	@Test
+	public void testVeryLargeText() {
+		var instance = new TextInstance();
+		var font = instance.createFont(UnicodeFonts.SOURCE);
+		var renderer = new BufferedImageTextRenderer(
+				new BufferedImage(11000, 3000, BufferedImage.TYPE_INT_RGB),
+				font, 1_000_000
+		);
+
+		var requests = new ArrayList<TextPlaceRequest>();
+		int minX = 0;
+		int minY = 0;
+		for (int height = 1500; height < 5000; height += 900) {
+			requests.add(new TextPlaceRequest("Big", minX, minY, minX + height, minY + height, false, null));
+			// noinspection SuspiciousNameCombination
+			minX += height;
+			if (minX > renderer.image.getWidth()) {
+				minX = 0;
+				minY += height;
+			}
+		}
+
+		renderer.render(requests);
+
+		assertImageEquals("expected-very-large-text.png", renderer.image, "actual-very-large-text.png");
+
+		renderer.destroy();
+		font.destroy();
+		instance.destroy();
+	}
 }

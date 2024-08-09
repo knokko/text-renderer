@@ -3,13 +3,13 @@ package com.github.knokko.text.bitmap;
 public class GlyphQuad {
 
 	public final int bufferIndex;
-	public final int minX, minY, maxX, maxY;
+	public final int minX, minY, maxX, maxY, scale;
 	public final int sectionWidth, bufferOffsetX;
 	public final int charIndex;
 	public final Object userData;
 
 	public GlyphQuad(
-			int bufferIndex, int minX, int minY, int maxX, int maxY,
+			int bufferIndex, int minX, int minY, int maxX, int maxY, int scale,
 			int sectionWidth, int bufferOffsetX, int charIndex, Object userData
 	) {
 		this.bufferIndex = bufferIndex;
@@ -17,6 +17,7 @@ public class GlyphQuad {
 		this.minY = minY;
 		this.maxX = maxX;
 		this.maxY = maxY;
+		this.scale = scale;
 		this.sectionWidth = sectionWidth;
 		this.bufferOffsetX = bufferOffsetX;
 		this.charIndex = charIndex;

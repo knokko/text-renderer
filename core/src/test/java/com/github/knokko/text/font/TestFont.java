@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestFont {
@@ -17,7 +18,8 @@ public class TestFont {
 		)));
 
 		font.setHeight(15);
-		int height = font.getHeight();
+		int height = font.getHeight(true);
+		assertEquals(height, font.getHeight(false));
 		assertTrue(height >= 14 && height <= 16, "Font height (" + height + ") should be in range [14, 16]");
 
 		font.destroy();
@@ -32,7 +34,7 @@ public class TestFont {
 		)));
 
 		font.setHeight(21);
-		int height = font.getHeight();
+		int height = font.getHeight(false);
 		assertTrue(height >= 20 && height <= 22, "Font height (" + height + ") should be in range [20, 22]");
 
 		font.destroy();
@@ -45,7 +47,8 @@ public class TestFont {
 		var font = instance.createFont(new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
 
 		font.setSize(10);
-		int height = font.getHeight();
+		int height = font.getHeight(true);
+		assertEquals(height, font.getHeight(false));
 		assertTrue(height >= 11 && height <= 15, "Font height (" + height + ") should be in range [11, 15]");
 
 		font.destroy();
