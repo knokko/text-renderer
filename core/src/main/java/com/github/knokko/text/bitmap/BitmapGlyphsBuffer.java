@@ -11,6 +11,7 @@ import static org.lwjgl.system.MemoryUtil.memByteBuffer;
 public class BitmapGlyphsBuffer {
 
 	private final Map<SizedGlyph, BufferedBitmapGlyph> glyphMap = new HashMap<>();
+	private final SortedSet<BufferedBitmapGlyph> glyphSet = new TreeSet<>();
 	private final List<Integer> bufferSlots = new ArrayList<>();
 	private final ByteBuffer buffer;
 	private final int slotSize;
@@ -91,8 +92,20 @@ public class BitmapGlyphsBuffer {
 						}
 
 						if (hasNonZero) {
-							// TODO Evict older entries
-							if (bufferSlots.isEmpty()) throw new RuntimeException("Not enough slots available");
+							while (bufferSlots.isEmpty()) {
+								var oldestGlyph = glyphSet.first();
+								if (oldestGlyph.lastUsed < currentFrame) {
+									if (!glyphSet.remove(oldestGlyph)) {
+										throw new IllegalStateException("Failed to remove oldest glyph");
+									}
+									if (glyphMap.remove(oldestGlyph.glyph) != oldestGlyph) {
+										throw new IllegalStateException("Unexpected oldest glyph was removed");
+									}
+									for (var section : oldestGlyph.sections) {
+										bufferSlots.add(section.bufferIndex() / slotSize);
+									}
+								} else throw new RuntimeException("Not enough slots/capacity available");
+							}
 							return slotSize * bufferSlots.remove(bufferSlots.size() - 1);
 						} else return -1;
 					}
@@ -108,11 +121,15 @@ public class BitmapGlyphsBuffer {
 				}
 			}
 
-			bufferedGlyph = new BufferedBitmapGlyph(sections);
-			glyphMap.put(glyph, bufferedGlyph);
+			bufferedGlyph = new BufferedBitmapGlyph(glyph, sections, currentFrame);
+			if (glyphMap.put(glyph, bufferedGlyph) != null) throw new RuntimeException("Didn't expect existing element");
+			if (!glyphSet.add(bufferedGlyph)) throw new RuntimeException("Didn't expect existing element in glyph set");
+		} else {
+			if (!glyphSet.remove(bufferedGlyph)) throw new IllegalStateException("Glyph was not in set");
+			bufferedGlyph.lastUsed = currentFrame;
+			if (!glyphSet.add(bufferedGlyph)) throw new IllegalStateException("Glyph should just have been removed");
 		}
 
-		bufferedGlyph.lastUsed = currentFrame;
 		return bufferedGlyph.sections;
 	}
 
@@ -123,7 +140,7 @@ public class BitmapGlyphsBuffer {
 	public int countAvailableSpace() {
 		int freeSlots = bufferSlots.size();
 		int availableSlots = 0;
-		for (var glyph : glyphMap.values()) {
+		for (var glyph : glyphSet) {
 			if (glyph.lastUsed < currentFrame) availableSlots += glyph.sections.size();
 		}
 		return slotSize * (freeSlots + availableSlots);

@@ -72,6 +72,40 @@ public class TestBufferedImageRenderer {
 	}
 
 	@Test
+	public void unicodeTestCaseInMultipleFrames() {
+		var instance = new TextInstance();
+		var font = instance.createFont(UnicodeFonts.SOURCE);
+		var renderer = new BufferedImageTextRenderer(
+				new BufferedImage(2000, 20_000, BufferedImage.TYPE_INT_RGB),
+				font, 30_000
+		);
+
+		var scanner = new Scanner(Objects.requireNonNull(
+				TestBufferedImageRenderer.class.getClassLoader().getResourceAsStream("unicode-3.2-test-page.html")
+		), StandardCharsets.UTF_8);
+
+		List<TextPlaceRequest> requests = new ArrayList<>(1);
+		int minY = 5;
+		while (scanner.hasNextLine()) {
+			int maxY = minY + 40;
+			requests.add(new TextPlaceRequest(scanner.nextLine(), 0, minY, renderer.image.getWidth(), maxY, false, null));
+			renderer.render(requests);
+			requests.clear();
+			minY = maxY;
+		}
+		scanner.close();
+
+		assertImageEquals(
+				"expected-unicode-test-result.png", renderer.image,
+				"actual-unicode-test-result-multiple-frames.png"
+		);
+
+		renderer.destroy();
+		font.destroy();
+		instance.destroy();
+	}
+
+	@Test
 	public void testVeryLargeText() {
 		var instance = new TextInstance();
 		var font = instance.createFont(UnicodeFonts.SOURCE);
