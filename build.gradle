@@ -3,11 +3,12 @@ plugins {
 }
 
 allprojects {
-	apply plugin: "java"
+	apply plugin: "java-library"
 
 	repositories {
 		mavenCentral()
 		maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
+		maven { url = "https://jitpack.io" }
 	}
 
 	java {
@@ -15,6 +16,7 @@ allprojects {
 		targetCompatibility = "17"
 	}
 
+	project.ext.boilerVersion = "132a8571ff"
 	project.ext.jUnitVersion = "5.10.3"
 	project.ext.allNatives = [
 			"natives-windows", "natives-windows-x86", "natives-windows-arm64",
@@ -25,18 +27,6 @@ allprojects {
 
 	dependencies {
 		implementation platform("org.lwjgl:lwjgl-bom:3.3.4")
-		compileOnly "org.lwjgl:lwjgl"
-		compileOnly "org.lwjgl:lwjgl-freetype"
-		compileOnly "org.lwjgl:lwjgl-harfbuzz"
-
-		testImplementation "org.lwjgl:lwjgl"
-		testImplementation "org.lwjgl:lwjgl-freetype"
-		testImplementation "org.lwjgl:lwjgl-harfbuzz"
-
-		for (String target : project.ext.allNatives) {
-			testRuntimeOnly "org.lwjgl:lwjgl::$target"
-			testRuntimeOnly "org.lwjgl:lwjgl-freetype::$target"
-		}
 
 		testImplementation platform("org.junit:junit-bom:$jUnitVersion")
 		testImplementation "org.junit.jupiter:junit-jupiter:$jUnitVersion"
@@ -52,7 +42,27 @@ allprojects {
 
 project(":core") {
 	dependencies {
+		compileOnly "org.lwjgl:lwjgl"
+		compileOnly "org.lwjgl:lwjgl-freetype"
+		compileOnly "org.lwjgl:lwjgl-harfbuzz"
+
+		testImplementation project(":core-bundle")
 		testImplementation project(":unicode-fonts")
+		testImplementation project(":test-helper")
+	}
+}
+
+project(":core-bundle") {
+	dependencies {
+		api "org.lwjgl:lwjgl"
+		api "org.lwjgl:lwjgl-freetype"
+		api "org.lwjgl:lwjgl-harfbuzz"
+		api project(":core")
+
+		for (String target : project.ext.allNatives) {
+			runtimeOnly "org.lwjgl:lwjgl::$target"
+			runtimeOnly "org.lwjgl:lwjgl-freetype::$target"
+		}
 	}
 }
 
@@ -63,19 +73,36 @@ project(":unicode-fonts") {
 }
 
 project(":vulkan") {
-	repositories {
-		maven { url = "https://jitpack.io" }
-	}
-
-	project.ext.boilerVersion = "v3.2.1"
-
 	dependencies {
+		compileOnly project(":core")
 		compileOnly "org.lwjgl:lwjgl-vulkan"
+		compileOnly "org.lwjgl:lwjgl-vma"
 		compileOnly "com.github.knokko:vk-boiler:$boilerVersion"
 
-		testImplementation "org.lwjgl:lwjgl-vulkan"
-		testImplementation "com.github.knokko:vk-boiler:$boilerVersion"
-		testRuntimeOnly "org.lwjgl:lwjgl-vulkan::natives-macos"
-		testRuntimeOnly "org.lwjgl:lwjgl-vulkan::natives-macos-arm64"
+		testImplementation project(":vulkan-bundle")
+		testImplementation project(":unicode-fonts")
+		testImplementation project(":test-helper")
+	}
+}
+
+project(":vulkan-bundle") {
+	dependencies {
+		api project(":core-bundle")
+		api "org.lwjgl:lwjgl-vulkan"
+		api "org.lwjgl:lwjgl-vma"
+		api "com.github.knokko:vk-boiler:$boilerVersion"
+		runtimeOnly "org.lwjgl:lwjgl-vulkan::natives-macos"
+		runtimeOnly "org.lwjgl:lwjgl-vulkan::natives-macos-arm64"
+		for (String target : project.ext.allNatives) {
+			runtimeOnly "org.lwjgl:lwjgl-vma::$target"
+		}
+	}
+}
+
+project(":test-helper") {
+	dependencies {
+		implementation platform("org.junit:junit-bom:$jUnitVersion")
+		implementation "org.junit.jupiter:junit-jupiter:$jUnitVersion"
+		runtimeOnly "org.junit.platform:junit-platform-launcher"
 	}
 }
