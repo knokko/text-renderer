@@ -1,7 +1,11 @@
 package com.github.knokko.text;
 
-import static org.lwjgl.util.freetype.FreeType.FT_Err_Ok;
-import static org.lwjgl.util.freetype.FreeType.FT_Error_String;
+import org.lwjgl.util.freetype.FreeType;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+
+import static org.lwjgl.util.freetype.FreeType.*;
 
 public class FreeTypeFailureException extends RuntimeException {
 
@@ -18,7 +22,23 @@ public class FreeTypeFailureException extends RuntimeException {
 	private static String generateMessage(String functionName, int result, String context) {
 		String functionContext = functionName;
 		if (context != null) functionContext += " (" + context + ")";
-		return functionContext + " returned " + result + " (" + FT_Error_String(result) + ")";
+
+		String errorName = "unknown";
+		try {
+			Field[] fields = FreeType.class.getDeclaredFields();
+			for (Field field : fields) {
+				if (field.getType() == int.class && field.getName().startsWith("FT_Err_") && Modifier.isStatic(field.getModifiers())) {
+					if (field.getInt(null) == result) {
+						errorName = field.getName();
+						break;
+					}
+				}
+			}
+		} catch (Exception cannotFindErrorName) {
+			errorName = "ERROR";
+		}
+
+		return functionContext + " returned " + result + " (" + errorName + ")";
 	}
 
 	public FreeTypeFailureException(String functionName, int result, String context) {
