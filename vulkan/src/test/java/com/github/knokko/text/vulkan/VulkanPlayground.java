@@ -1,9 +1,8 @@
 package com.github.knokko.text.vulkan;
 
-import com.github.knokko.boiler.builder.BoilerBuilder;
+import com.github.knokko.boiler.builders.BoilerBuilder;
 import com.github.knokko.boiler.commands.CommandRecorder;
-import com.github.knokko.boiler.images.VmaImage;
-import com.github.knokko.boiler.sync.ResourceUsage;
+import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.UnicodeFonts;
@@ -40,15 +39,11 @@ public class VulkanPlayground {
 		int framebufferWidth = 1000;
 		int framebufferHeight = 500;
 
-		VmaImage framebufferImage;
-		try (var stack = stackPush()) {
-			framebufferImage = boiler.images.createSimple(
-					stack, framebufferWidth, framebufferHeight, framebufferFormat,
-					VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-					VK_IMAGE_ASPECT_COLOR_BIT, "FramebufferImage"
-			);
-		}
-
+		var framebufferImage = boiler.images.createSimple(
+				framebufferWidth, framebufferHeight, framebufferFormat,
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+				VK_IMAGE_ASPECT_COLOR_BIT, "FramebufferImage"
+		);
 		var quadBuffer = boiler.buffers.createMapped(50_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
 		var glyphBuffer = boiler.buffers.createMapped(50_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphsBuffer");
 		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), (int) glyphBuffer.size());
@@ -57,7 +52,6 @@ public class VulkanPlayground {
 		long descriptorSet;
 		try (var stack = stackPush()) {
 			descriptorSet = descriptorPool.allocate(stack, 1)[0];
-
 			vulkanTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
 		}
 
@@ -83,7 +77,7 @@ public class VulkanPlayground {
 				"DrawPool"
 		);
 		var commandBuffer = boiler.commands.createPrimaryBuffers(commandPool, 1, "DrawCmdBuffer")[0];
-		var fence = boiler.sync.createFences(false, 1, "Drawing")[0];
+		var fence = boiler.sync.fenceBank.borrowFence(false, "Drawing");
 		try (var stack = stackPush()) {
 			var recorder = CommandRecorder.begin(commandBuffer, boiler, stack, "Drawing");
 
@@ -114,8 +108,8 @@ public class VulkanPlayground {
 
 			recorder.end();
 
-			boiler.queueFamilies().graphics().queues().get(0).submit(commandBuffer, "Draw", null, fence);
-			boiler.sync.waitAndReset(stack, fence);
+			boiler.queueFamilies().graphics().first().submit(commandBuffer, "Draw", null, fence);
+			fence.awaitSignal();
 
 			var destinationImage = boiler.buffers.decodeBufferedImageRGBA(
 					destinationBuffer, 0, framebufferWidth, framebufferHeight
@@ -128,12 +122,12 @@ public class VulkanPlayground {
 		}
 
 		descriptorPool.destroy();
-		quadBuffer.destroy(boiler.vmaAllocator());
-		destinationBuffer.destroy(boiler.vmaAllocator());
-		glyphBuffer.destroy(boiler.vmaAllocator());
+		quadBuffer.destroy(boiler);
+		destinationBuffer.destroy(boiler);
+		glyphBuffer.destroy(boiler);
 		vkDestroyImageView(boiler.vkDevice(), framebufferImage.vkImageView(), null);
 		vmaDestroyImage(boiler.vmaAllocator(), framebufferImage.vkImage(), framebufferImage.vmaAllocation());
-		vkDestroyFence(boiler.vkDevice(), fence, null);
+		boiler.sync.fenceBank.returnFence(fence);
 		vkDestroyCommandPool(boiler.vkDevice(), commandPool, null);
 		textPipeline.destroy();
 		vulkanTextInstance.destroyInitialObjects();

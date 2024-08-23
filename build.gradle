@@ -16,7 +16,7 @@ allprojects {
 		targetCompatibility = "17"
 	}
 
-	project.ext.boilerVersion = "132a8571ff"
+	project.ext.boilerVersion = "7324e08944"
 	project.ext.jUnitVersion = "5.10.3"
 	project.ext.allNatives = [
 			"natives-windows", "natives-windows-x86", "natives-windows-arm64",

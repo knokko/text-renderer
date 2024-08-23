@@ -1,8 +1,8 @@
 package com.github.knokko.text.vulkan;
 
-import com.github.knokko.boiler.buffer.MappedVmaBuffer;
-import com.github.knokko.boiler.descriptors.DescriptorSetLayout;
-import com.github.knokko.boiler.instance.BoilerInstance;
+import com.github.knokko.boiler.BoilerInstance;
+import com.github.knokko.boiler.buffers.MappedVkbBuffer;
+import com.github.knokko.boiler.descriptors.VkbDescriptorSetLayout;
 import com.github.knokko.boiler.pipelines.GraphicsPipelineBuilder;
 import org.lwjgl.vulkan.*;
 
@@ -13,34 +13,21 @@ import static org.lwjgl.vulkan.VK10.*;
 public class VulkanTextInstance {
 
 	public final BoilerInstance boiler;
-	public final DescriptorSetLayout descriptorSetLayout;
+	public final VkbDescriptorSetLayout descriptorSetLayout;
 	public final long pipelineLayout;
 
 	public VulkanTextInstance(BoilerInstance boiler) {
 		this.boiler = boiler;
 		try (var stack = stackPush()) {
 			var bindings = VkDescriptorSetLayoutBinding.calloc(2, stack);
-			var quadBinding = bindings.get(0);
-			quadBinding.binding(0);
-			quadBinding.descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-			quadBinding.descriptorCount(1);
-			quadBinding.stageFlags(VK_SHADER_STAGE_VERTEX_BIT);
-			quadBinding.pImmutableSamplers(null);
-
-			var glyphBinding = bindings.get(1);
-			glyphBinding.binding(1);
-			glyphBinding.descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-			glyphBinding.descriptorCount(1);
-			glyphBinding.stageFlags(VK_SHADER_STAGE_FRAGMENT_BIT);
-			glyphBinding.pImmutableSamplers(null);
-
+			boiler.descriptors.binding(bindings, 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+			boiler.descriptors.binding(bindings, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 			descriptorSetLayout = boiler.descriptors.createLayout(stack, bindings, "TextBuffersLayout");
 
 			var pushConstants = VkPushConstantRange.calloc(1, stack);
 			pushConstants.stageFlags(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 			pushConstants.offset(0);
 			pushConstants.size(8);
-
 			pipelineLayout = boiler.pipelines.createLayout(
 					stack, pushConstants, "TextPipelineLayout", descriptorSetLayout.vkDescriptorSetLayout
 			);
@@ -112,7 +99,7 @@ public class VulkanTextInstance {
 		}
 	}
 
-	public void updateDescriptorSet(long descriptorSet, MappedVmaBuffer quadBuffer, MappedVmaBuffer glyphBuffer) {
+	public void updateDescriptorSet(long descriptorSet, MappedVkbBuffer quadBuffer, MappedVkbBuffer glyphBuffer) {
 		try (var stack = stackPush()) {
 			var descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
 			boiler.descriptors.writeBuffer(

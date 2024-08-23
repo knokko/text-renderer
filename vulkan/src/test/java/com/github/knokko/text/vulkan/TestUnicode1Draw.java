@@ -1,8 +1,8 @@
 package com.github.knokko.text.vulkan;
 
-import com.github.knokko.boiler.builder.BoilerBuilder;
+import com.github.knokko.boiler.builders.BoilerBuilder;
 import com.github.knokko.boiler.commands.CommandRecorder;
-import com.github.knokko.boiler.sync.ResourceUsage;
+import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.UnicodeFonts;
@@ -63,16 +63,17 @@ public class TestUnicode1Draw {
 		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), (int) glyphBuffer.size());
 		var quadBuffer = boiler.buffers.createMapped(1_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
 		var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
-		var fence = boiler.sync.createFences(false, 1, "DrawFence")[0];
+		var fence = boiler.sync.fenceBank.borrowFence(false, "DrawFence");
 
 		var resultBuffer = boiler.buffers.createMapped(4 * width * height, VK_BUFFER_USAGE_TRANSFER_DST_BIT, "ResultBuffer");
+		var image = boiler.images.createSimple(
+				width, height, colorFormat,
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+				VK_IMAGE_ASPECT_COLOR_BIT, "DrawImage"
+		);
 
 		try (var stack = stackPush()) {
-			var image = boiler.images.createSimple(
-					stack, width, height, colorFormat,
-					VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-					VK_IMAGE_ASPECT_COLOR_BIT, "DrawImage"
-			);
+
 
 			var descriptorSet = textDescriptorPool.allocate(stack, 1)[0];
 			vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
@@ -108,8 +109,8 @@ public class TestUnicode1Draw {
 			recorder.end();
 
 			System.out.println("finished recording: " + (System.nanoTime() - startTime) / 1000_000);
-			boiler.queueFamilies().graphics().queues().get(0).submit(commandBuffer, "Draw", null, fence);
-			boiler.sync.waitAndReset(stack, fence);
+			boiler.queueFamilies().graphics().first().submit(commandBuffer, "Draw", null, fence);
+			fence.awaitSignal();
 			System.out.println("finished drawing: " + (System.nanoTime() - startTime) / 1000_000);
 
 			vkDestroyCommandPool(boiler.vkDevice(), commandPool, null);
@@ -122,10 +123,10 @@ public class TestUnicode1Draw {
 				"actual-unicode-test-result-vulkan1.png"
 		);
 
-		resultBuffer.destroy(boiler.vmaAllocator());
-		vkDestroyFence(boiler.vkDevice(), fence, null);
-		glyphBuffer.destroy(boiler.vmaAllocator());
-		quadBuffer.destroy(boiler.vmaAllocator());
+		resultBuffer.destroy(boiler);
+		boiler.sync.fenceBank.returnFence(fence);
+		glyphBuffer.destroy(boiler);
+		quadBuffer.destroy(boiler);
 		textDescriptorPool.destroy();
 		vkTextPipeline.destroy();
 		vkTextInstance.destroyInitialObjects();
