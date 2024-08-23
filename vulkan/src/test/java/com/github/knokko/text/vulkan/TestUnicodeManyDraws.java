@@ -7,11 +7,11 @@ import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.placement.TextPlaceRequest;
+import com.github.knokko.text.util.UnicodeLines;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.vulkan.VkRenderPassBeginInfo;
 
 import java.awt.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 
@@ -27,25 +27,20 @@ public class TestUnicodeManyDraws {
 	@Test
 	public void testUnicodeWith1DrawCallPerLine() {
 		long startTime = System.nanoTime();
-		int width = 2000;
-		int height = 20_000;
+		int width = 3500;
+		int height = 9700;
 		int colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
 		var instance = new TextInstance();
 		var font = instance.createFont(UnicodeFonts.SOURCE);
 
-		var scanner = new Scanner(Objects.requireNonNull(
-				TestUnicode1Draw.class.getClassLoader().getResourceAsStream("unicode-3.2-test-page.html")
-		), StandardCharsets.UTF_8);
-
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		int minY = 5;
-		while (scanner.hasNextLine()) {
+		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(scanner.nextLine(), 0, minY, width, maxY, false, Color.WHITE));
+			requests.add(new TextPlaceRequest(line, 0, minY, width, maxY, false, Color.WHITE));
 			minY = maxY;
 		}
-		scanner.close();
 
 		System.out.println("initial: " + (System.nanoTime() - startTime) / 1000_000);
 
@@ -64,9 +59,9 @@ public class TestUnicodeManyDraws {
 
 		var textDescriptorPool = vkTextInstance.descriptorSetLayout.createPool(1, 0, "TextPool");
 
-		var glyphBuffer = boiler.buffers.createMapped(30_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
+		var glyphBuffer = boiler.buffers.createMapped(90_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
 		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), (int) glyphBuffer.size());
-		var quadBuffer = boiler.buffers.createMapped(10_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
+		var quadBuffer = boiler.buffers.createMapped(30_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
 		var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
 		var fence = boiler.sync.fenceBank.borrowFence(false, "DrawFence");
 

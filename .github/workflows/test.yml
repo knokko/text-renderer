@@ -6,7 +6,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  test-core:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -21,4 +21,29 @@ jobs:
           distribution: temurin
       - name: Setup gradle
         uses: gradle/actions/setup-gradle@v3
+      - run: rm -R vulkan/src/test
       - run: ./gradlew test --no-daemon
+  test-vulkan:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        jdk: [17, 21]
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt update
+      - run: sudo apt install -y vulkan-validationlayers
+      - run: sudo apt install -y mesa-vulkan-drivers
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.jdk }}
+          distribution: temurin
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@v3
+      - run: ./gradlew test -p vulkan --no-daemon
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-report-vulkan-jdk${{ matrix.jdk }}
+          path: vulkan/build/reports/tests/test/

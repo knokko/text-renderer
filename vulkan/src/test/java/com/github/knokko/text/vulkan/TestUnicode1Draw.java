@@ -7,15 +7,13 @@ import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.placement.TextPlaceRequest;
+import com.github.knokko.text.util.UnicodeLines;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.vulkan.VkRenderingAttachmentInfo;
 
 import java.awt.*;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Scanner;
 
 import static com.github.knokko.text.util.ImageChecks.assertImageEquals;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -28,25 +26,20 @@ public class TestUnicode1Draw {
 	@Test
 	public void testUnicodeWithOnly1DrawCall() {
 		long startTime = System.nanoTime();
-		int width = 2000;
-		int height = 20_000;
+		int width = 3500;
+		int height = 9700;
 		int colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
 		var instance = new TextInstance();
 		var font = instance.createFont(UnicodeFonts.SOURCE);
 
-		var scanner = new Scanner(Objects.requireNonNull(
-				TestUnicode1Draw.class.getClassLoader().getResourceAsStream("unicode-3.2-test-page.html")
-		), StandardCharsets.UTF_8);
-
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		int minY = 5;
-		while (scanner.hasNextLine()) {
+		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(scanner.nextLine(), 0, minY, width, maxY, false, Color.WHITE));
+			requests.add(new TextPlaceRequest(line, 0, minY, width, maxY, false, Color.WHITE));
 			minY = maxY;
 		}
-		scanner.close();
 
 		var boiler = new BoilerBuilder(
 				VK_API_VERSION_1_2, "TestUnicode1Draw", 1

@@ -4,14 +4,12 @@ import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.font.ClasspathFontsSource;
 import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.placement.TextPlaceRequest;
+import com.github.knokko.text.util.UnicodeLines;
 import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Scanner;
 
 import static com.github.knokko.text.util.ImageChecks.assertImageEquals;
 
@@ -45,22 +43,17 @@ public class TestBufferedImageRenderer {
 		var instance = new TextInstance();
 		var font = instance.createFont(UnicodeFonts.SOURCE);
 		var renderer = new BufferedImageTextRenderer(
-				new BufferedImage(2000, 20_000, BufferedImage.TYPE_INT_RGB),
+				new BufferedImage(3500, 9700, BufferedImage.TYPE_INT_RGB),
 				font, 3_000_000
 		);
 
-		var scanner = new Scanner(Objects.requireNonNull(
-				TestBufferedImageRenderer.class.getClassLoader().getResourceAsStream("unicode-3.2-test-page.html")
-		), StandardCharsets.UTF_8);
-
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		int minY = 5;
-		while (scanner.hasNextLine()) {
+		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(scanner.nextLine(), 0, minY, renderer.image.getWidth(), maxY, false, null));
+			requests.add(new TextPlaceRequest(line, 0, minY, renderer.image.getWidth(), maxY, false, null));
 			minY = maxY;
 		}
-		scanner.close();
 
 		renderer.render(requests);
 
@@ -76,24 +69,19 @@ public class TestBufferedImageRenderer {
 		var instance = new TextInstance();
 		var font = instance.createFont(UnicodeFonts.SOURCE);
 		var renderer = new BufferedImageTextRenderer(
-				new BufferedImage(2000, 20_000, BufferedImage.TYPE_INT_RGB),
-				font, 30_000
+				new BufferedImage(3500, 9700, BufferedImage.TYPE_INT_RGB),
+				font, 90_000
 		);
-
-		var scanner = new Scanner(Objects.requireNonNull(
-				TestBufferedImageRenderer.class.getClassLoader().getResourceAsStream("unicode-3.2-test-page.html")
-		), StandardCharsets.UTF_8);
 
 		List<TextPlaceRequest> requests = new ArrayList<>(1);
 		int minY = 5;
-		while (scanner.hasNextLine()) {
+		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(scanner.nextLine(), 0, minY, renderer.image.getWidth(), maxY, false, null));
+			requests.add(new TextPlaceRequest(line, 0, minY, renderer.image.getWidth(), maxY, false, null));
 			renderer.render(requests);
 			requests.clear();
 			minY = maxY;
 		}
-		scanner.close();
 
 		assertImageEquals(
 				"expected-unicode-test-result.png", renderer.image,
