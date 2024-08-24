@@ -16,7 +16,7 @@ allprojects {
 		targetCompatibility = "17"
 	}
 
-	project.ext.boilerVersion = "7324e08944"
+	project.ext.boilerVersion = "1b4052ef35"
 	project.ext.jUnitVersion = "5.10.3"
 	project.ext.allNatives = [
 			"natives-windows", "natives-windows-x86", "natives-windows-arm64",
@@ -88,6 +88,7 @@ project(":vulkan") {
 project(":vulkan-bundle") {
 	dependencies {
 		api project(":core-bundle")
+		api project(":vulkan")
 		api "org.lwjgl:lwjgl-vulkan"
 		api "org.lwjgl:lwjgl-vma"
 		api "com.github.knokko:vk-boiler:$boilerVersion"
@@ -96,6 +97,19 @@ project(":vulkan-bundle") {
 		for (String target : project.ext.allNatives) {
 			runtimeOnly "org.lwjgl:lwjgl-vma::$target"
 		}
+	}
+}
+
+project(":sample-unicode-renderer") {
+	dependencies {
+		implementation project(":vulkan-bundle")
+		implementation project(":unicode-fonts")
+		implementation project(":test-helper")
+		implementation "org.lwjgl:lwjgl-glfw"
+		for (String target : project.ext.allNatives) {
+			runtimeOnly "org.lwjgl:lwjgl-glfw::$target"
+		}
+		implementation "com.github.knokko:sample-profiler:v1.0.0"
 	}
 }
 

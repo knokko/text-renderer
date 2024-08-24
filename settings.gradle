@@ -1,3 +1,4 @@
 rootProject.name = "text-renderer"
 
-include "core", "core-bundle", "unicode-fonts", "vulkan", "vulkan-bundle", "test-helper"
+include "core", "core-bundle", "unicode-fonts", "vulkan", "vulkan-bundle", "test-helper",
+	"sample-unicode-renderer"

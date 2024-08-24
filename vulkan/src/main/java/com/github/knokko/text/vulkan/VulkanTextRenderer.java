@@ -51,19 +51,29 @@ public class VulkanTextRenderer {
 			int framebufferWidth, int framebufferHeight,
 			List<TextPlaceRequest> requests
 	) {
-		long startTime = System.nanoTime();
+		requests = requests.stream().filter(
+				request -> request.minX < framebufferWidth && request.maxX >= 0 &&
+						request.minY < framebufferHeight && request.maxY >= 0
+		).toList();
+
 		var placedGlyphs = placer.place(requests);
-		System.out.println("placing " + requests.size() + " requests took " + (System.nanoTime() - startTime) / 1000_000);
+
+		placedGlyphs = placedGlyphs.stream().filter(
+				placedGlyph -> placedGlyph.minX < framebufferWidth && placedGlyph.minX > -5 * placedGlyph.glyph.scale * placedGlyph.glyph.size
+		).toList();
+
 		glyphsBuffer.startFrame();
 
-		startTime = System.nanoTime();
 		var placedQuads = glyphsBuffer.bufferGlyphs(rasterizer, placedGlyphs);
-		System.out.println("buffering " + placedGlyphs.size() + " glyphs took " + (System.nanoTime() - startTime) / 1000_000);
 		if (placedQuads.size() * QUAD_INTS > quadBuffer.remaining()) {
 			throw new IllegalArgumentException("Quad buffer is too small: needed " +
 					placedQuads.size() * QUAD_INTS + ", but got " + quadBuffer.remaining()
 			);
 		}
+
+		placedQuads = placedQuads.stream().filter(
+				quad -> quad.minX < framebufferWidth && quad.minY < framebufferHeight && quad.maxX >= 0 && quad.maxY >= 0
+		).toList();
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeline);
 		if (pipeline.hasDynamicViewport) {
@@ -77,13 +87,11 @@ public class VulkanTextRenderer {
 		);
 		pushConstants(commandBuffer, stack, framebufferWidth, framebufferHeight);
 
-		startTime = System.nanoTime();
 		int quadIndex = 0;
 		for (var quad : placedQuads) {
 			putQuad(memAddress(quadBuffer), quadIndex, quad);
 			quadIndex += 1;
 		}
-		System.out.println("putting quads took " + (System.nanoTime() - startTime) / 1000_000);
 
 		vkCmdDraw(commandBuffer, 6 * placedQuads.size(), 1, 0, 0);
 	}

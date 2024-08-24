@@ -1,0 +1,91 @@
+11116 samples (100.00%)
+  11116 samples (100.00%) java.lang.Thread.run:
+  line 833:
+    11116 samples (100.00%)
+      11116 samples (100.00%) com.github.knokko.boiler.window.WindowRenderLoop$$Lambda$67/0x0000000800c3b9d0.run:
+      line -1:
+        11116 samples (100.00%)
+          11116 samples (100.00%) com.github.knokko.boiler.window.WindowRenderLoop.run:
+          line 64:
+            10544 samples (94.85%)
+              10544 samples (94.85%) com.github.knokko.boiler.window.SimpleWindowRenderLoop.renderFrame:
+              line 77:
+                9545 samples (85.87%)
+                  9544 samples (85.86%) com.github.knokko.text.sample.UnicodeRendererSample.recordFrame:
+                  line 201:
+                    9464 samples (85.14%)
+                      9464 samples (85.14%) com.github.knokko.text.vulkan.VulkanTextRenderer.recordCommands:
+                      line 61:
+                        8478 samples (76.27%)
+                          8478 samples (76.27%) com.github.knokko.text.placement.TextPlacer.place:
+                          line 60:
+                            8397 samples (75.54%)
+                              8395 samples (75.52%) com.github.knokko.text.placement.TextPlacer.placeFree:
+                              line 118:
+                                4750 samples (42.73%)
+                                  4749 samples (42.72%) org.lwjgl.util.freetype.FreeType.FT_Load_Glyph:
+                                  line 3129:
+                                    4749 samples (42.72%)
+                                      4749 samples (42.72%) org.lwjgl.util.freetype.FreeType.nFT_Load_Glyph:
+                                      line 3124:
+                                        4749 samples (42.72%)
+                                          4749 samples (42.72%) org.lwjgl.system.JNI.invokePI:
+                                          line -2:
+                                            4749 samples (42.72%)
+                              line 79:
+                                2069 samples (18.61%)
+                                  2068 samples (18.60%) com.github.knokko.text.placement.TextSplitter.split:
+                                  line 38:
+                                    1977 samples (17.79%)
+                                      1976 samples (17.78%) com.github.knokko.text.placement.TextSplitter.splitForRightFace:
+                                      line 79:
+                                        1506 samples (13.55%)
+                                          1506 samples (13.55%) org.lwjgl.util.harfbuzz.HarfBuzz.hb_shape:
+                                          line 6242:
+                                            1506 samples (13.55%)
+                                              1506 samples (13.55%) org.lwjgl.util.harfbuzz.HarfBuzz.nhb_shape:
+                                              line 6238:
+                                                1506 samples (13.55%)
+                                                  1506 samples (13.55%) org.lwjgl.system.JNI.invokePPPV:
+                                                  line -2:
+                                                    1506 samples (13.55%)
+                              line 102:
+                                803 samples (7.22%)
+                                  803 samples (7.22%) org.lwjgl.util.harfbuzz.HarfBuzz.hb_shape:
+                                  line 6242:
+                                    803 samples (7.22%)
+                                      803 samples (7.22%) org.lwjgl.util.harfbuzz.HarfBuzz.nhb_shape:
+                                      line 6238:
+                                        803 samples (7.22%)
+                                          803 samples (7.22%) org.lwjgl.system.JNI.invokePPPV:
+                                          line -2:
+                                            803 samples (7.22%)
+                              line 78:
+                                622 samples (5.60%)
+                                  621 samples (5.59%) com.github.knokko.text.placement.TextPlacer.setHeight:
+                      line 71:
+                        722 samples (6.50%)
+                          722 samples (6.50%) com.github.knokko.text.bitmap.BitmapGlyphsBuffer.bufferGlyphs:
+                          line 42:
+                            600 samples (5.40%)
+                              594 samples (5.34%) com.github.knokko.text.bitmap.BitmapGlyphsBuffer.getSections:
+              line 64:
+                867 samples (7.80%)
+                  867 samples (7.80%) com.github.knokko.boiler.synchronization.VkbFence.waitAndReset:
+                  line 111:
+                    867 samples (7.80%)
+                      867 samples (7.80%) com.github.knokko.boiler.synchronization.VkbFence.waitAndReset:
+                      line 115:
+                        867 samples (7.80%)
+                          867 samples (7.80%) com.github.knokko.boiler.synchronization.VkbFence.awaitSignal:
+                          line 93:
+                            867 samples (7.80%)
+                              867 samples (7.80%) org.lwjgl.vulkan.VK10.vkWaitForFences:
+                              line 6289:
+                                867 samples (7.80%)
+                                  867 samples (7.80%) org.lwjgl.vulkan.VK10.nvkWaitForFences:
+                                  line 6224:
+                                    867 samples (7.80%)
+                                      867 samples (7.80%) org.lwjgl.system.JNI.callPPJI:
+                                      line -2:
+                                        867 samples (7.80%)
