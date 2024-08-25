@@ -33,4 +33,13 @@ public class FilesFontSource extends FontSource {
 
 		return new LoadedFonts(faces, new ByteBuffer[0]);
 	}
+
+	@Override
+	FreeTypeFaceSource[] loadData() {
+		var sources = new FreeTypeFaceSource[files.length];
+		for (int index = 0; index < files.length; index++) {
+			sources[index] = new FileFaceSource(files[index]);
+		}
+		return sources;
+	}
 }

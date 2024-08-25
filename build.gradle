@@ -46,6 +46,8 @@ project(":core") {
 		compileOnly "org.lwjgl:lwjgl-freetype"
 		compileOnly "org.lwjgl:lwjgl-harfbuzz"
 
+		implementation "com.github.knokko:memory-query:v1.1" // TODO Remove after testing
+
 		testImplementation project(":core-bundle")
 		testImplementation project(":unicode-fonts")
 		testImplementation project(":test-helper")

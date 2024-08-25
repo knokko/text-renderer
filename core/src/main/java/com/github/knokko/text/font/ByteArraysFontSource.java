@@ -38,4 +38,17 @@ public class ByteArraysFontSource extends FontSource {
 
 		return new LoadedFonts(faces, buffers);
 	}
+
+	@Override
+	FreeTypeFaceSource[] loadData() {
+		var data = new FreeTypeFaceSource[arrays.length];
+
+		for (int index = 0; index < arrays.length; index++) {
+			var dataBuffer = memCalloc(arrays[index].length);
+			dataBuffer.put(0, arrays[index]);
+			data[index] = new ByteBufferFaceSource(dataBuffer);
+		}
+
+		return data;
+	}
 }

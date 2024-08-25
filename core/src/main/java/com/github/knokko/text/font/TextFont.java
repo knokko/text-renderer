@@ -97,6 +97,7 @@ public class TextFont {
 				int charSizeResult = FT_Set_Char_Size(
 						face, 0, localSize * 64L, 0, 5 * localSize
 				);
+				// TODO Handle very small sizes by downscaling
 				if (charSizeResult == FT_Err_Invalid_Pixel_Size) {
 					currentScale += 1;
 					currentUnscaledFontSize = size / currentScale;

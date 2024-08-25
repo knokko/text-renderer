@@ -1,19 +1,15 @@
 package com.github.knokko.text;
 
-import com.github.knokko.text.font.FontSource;
-import com.github.knokko.text.font.LoadedFonts;
-import com.github.knokko.text.font.TextFont;
+import com.github.knokko.text.font.*;
 import org.lwjgl.system.Configuration;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FreeType;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.memAlloc;
 import static org.lwjgl.util.freetype.FreeType.*;
 
 public class TextInstance {
@@ -40,11 +36,17 @@ public class TextInstance {
 		this(createLibrary());
 	}
 
+	public synchronized FT_Face createFreeTypeFace(FreeTypeFaceSource source, MemoryStack stack) {
+		return source.createFreeTypeFace(ftLibrary, stack);
+	}
+
 	public synchronized TextFont createFont(FontSource... fonts) {
 		LoadedFonts[] loaded = new LoadedFonts[fonts.length];
 
 		for (int index = 0; index < fonts.length; index++) {
 			loaded[index] = fonts[index].load(ftLibrary);
+			System.out.println();
+			fonts[index].load(ftLibrary);
 		}
 
 		int numFaces = 0;
