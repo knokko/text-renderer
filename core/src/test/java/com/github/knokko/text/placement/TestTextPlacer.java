@@ -2,6 +2,7 @@ package com.github.knokko.text.placement;
 
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.font.ClasspathFontsSource;
+import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,7 @@ public class TestTextPlacer {
 	@Test
 	public void testWrongFontRegressionItalic() {
 		var instance = new TextInstance();
-		var font = instance.createFont(new ClasspathFontsSource(
+		var font = new FontData(instance, 100, new ClasspathFontsSource(
 				"fonts/unicode-freeserif.ttf", "fonts/unicode-quivira.ttf"
 		));
 		var placer = new TextPlacer(font);
@@ -51,7 +52,7 @@ public class TestTextPlacer {
 	@Test
 	public void testWrongFontRegressionSyriac() {
 		var instance = new TextInstance();
-		var font = instance.createFont(new ClasspathFontsSource("fonts/thaana.ttf", "fonts/syriac.otf"));
+		var font = new FontData(instance, 100, new ClasspathFontsSource("fonts/thaana.ttf", "fonts/syriac.otf"));
 		var placer = new TextPlacer(font);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
@@ -91,7 +92,7 @@ public class TestTextPlacer {
 	@Test
 	public void testWrongFontRegressionTagalog() {
 		var instance = new TextInstance();
-		var font = instance.createFont(new ClasspathFontsSource(
+		var font = new FontData(instance, 100, new ClasspathFontsSource(
 				"fonts/unicode-freeserif.ttf",
 				"fonts/unicode-quivira.ttf"
 		));
@@ -118,7 +119,7 @@ public class TestTextPlacer {
 	@Test
 	public void regressionHiInsideArabic() {
 		var instance = new TextInstance();
-		var font = instance.createFont(new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
+		var font = new FontData(instance, 100, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
 		var placer = new TextPlacer(font);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
@@ -173,7 +174,7 @@ public class TestTextPlacer {
 	@Test
 	public void testOffsetRegressionGujarati() {
 		var instance = new TextInstance();
-		var font = instance.createFont(UnicodeFonts.SOURCE);
+		var font = new FontData(instance, 100, UnicodeFonts.SOURCE);
 		var placer = new TextPlacer(font);
 
 		String gujaratiText = "૬ ૭ ૮ ૯";

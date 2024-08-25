@@ -76,6 +76,7 @@ public class BitmapGlyphsBuffer {
 
 			rasterizer.set(glyph.id, glyph.faceIndex, glyph.size);
 			ByteBuffer bitmap = rasterizer.getBuffer();
+			System.out.println("width is " + rasterizer.getBufferWidth() + " and height is " + rasterizer.getBufferHeight());
 			List<BitmapGlyphSection> sections = BitmapGlyphSection.coverRectangle(
 					slotSize, rasterizer.getBufferWidth(), rasterizer.getBufferHeight(), (x, y, width, height) -> {
 						boolean hasNonZero = false;

@@ -4,11 +4,13 @@ import org.lwjgl.util.freetype.FT_Face;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.util.freetype.FreeType.*;
+import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 
 public class TextFace {
 
 	public final FT_Face ftFace;
 	private final int scaledFontSize, unscaledFontSize, scale, heightScale;
+	public final long hbFont;
 
 	public TextFace(FT_Face ftFace, int size, int heightScale) {
 		this.ftFace = ftFace;
@@ -41,12 +43,15 @@ public class TextFace {
 		}
 
 		long endTime = System.nanoTime();
-		System.out.println("Sizing FT font took " + (endTime - startTime));
+		//System.out.println("Sizing FT font took " + (endTime - startTime));
 
 		this.scaledFontSize = size;
 		this.unscaledFontSize = currentUnscaledFontSize;
 		this.scale = currentScale;
 		this.heightScale = heightScale;
+
+		this.hbFont = hb_ft_font_create_referenced(this.ftFace.address());
+		hb_ft_font_set_funcs(this.hbFont);
 	}
 
 	public int getSize(boolean scaled) {

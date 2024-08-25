@@ -2,6 +2,7 @@ package com.github.knokko.text.renderer.cpu;
 
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.font.ClasspathFontsSource;
+import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.placement.TextPlaceRequest;
 import com.github.knokko.text.util.UnicodeLines;
@@ -18,7 +19,7 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void testPartialHebrew() {
 		var instance = new TextInstance();
-		var font = instance.createFont(new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
+		var font = new FontData(instance, 200, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(500, 130, BufferedImage.TYPE_INT_RGB),
 				font, 10_000
@@ -41,7 +42,7 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void unicodeTestCase() {
 		var instance = new TextInstance();
-		var font = instance.createFont(UnicodeFonts.SOURCE);
+		var font = new FontData(instance, 20_000, UnicodeFonts.SOURCE);
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(3500, 9700, BufferedImage.TYPE_INT_RGB),
 				font, 3_000_000
@@ -67,7 +68,7 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void unicodeTestCaseInMultipleFrames() {
 		var instance = new TextInstance();
-		var font = instance.createFont(UnicodeFonts.SOURCE);
+		var font = new FontData(instance, 20_000, UnicodeFonts.SOURCE);
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(3500, 9700, BufferedImage.TYPE_INT_RGB),
 				font, 90_000
@@ -96,7 +97,7 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void testVeryLargeText() {
 		var instance = new TextInstance();
-		var font = instance.createFont(UnicodeFonts.SOURCE);
+		var font = new FontData(instance, 20_000, UnicodeFonts.SOURCE);
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(11000, 3000, BufferedImage.TYPE_INT_RGB),
 				font, 1_000_000
@@ -127,7 +128,7 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void setMaxHeight() {
 		var instance = new TextInstance();
-		var font = instance.createFont(UnicodeFonts.SOURCE).setMaxHeight(100);
+		var font = new FontData(instance, 100, UnicodeFonts.SOURCE);
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(4000, 300, BufferedImage.TYPE_INT_RGB),
 				font, 50_000

@@ -31,7 +31,7 @@ public class TextFont {
 		this.ftFaces = Objects.requireNonNull(ftFaces);
 		this.fontBuffers = Objects.requireNonNull(fontBuffers);
 		this.relativeFontSizes = new double[ftFaces.length];
-		this.rasterizer = new FreeTypeGlyphRasterizer(ftFaces, this::setSize);
+		this.rasterizer = new FreeTypeGlyphRasterizer(null);
 		this.estimateFontSizes();
 	}
 

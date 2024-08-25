@@ -1,5 +1,6 @@
 package com.github.knokko.text.placement;
 
+import com.github.knokko.text.font.FontData;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.harfbuzz.hb_glyph_info_t;
 
@@ -14,14 +15,14 @@ import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 
 class TextSplitter {
 
+	private final FontData fontData;
 	private final long hbBuffer;
-	private final long[] hbFonts;
 
 	boolean wasBaseLeftToRight;
 
-	TextSplitter(long hbBuffer, long[] hbFonts) {
+	TextSplitter(FontData fontData, long hbBuffer) {
+		this.fontData = fontData;
 		this.hbBuffer = hbBuffer;
-		this.hbFonts = hbFonts;
 	}
 
 	List<TextRun> split(String originalText, MemoryStack stack) {
@@ -71,12 +72,15 @@ class TextSplitter {
 	) {
 		if (limit <= offset) return Collections.emptyList();
 
-		hb_buffer_reset(hbBuffer);
+		hb_buffer_reset(hbBuffer); // TODO Maybe make hbBuffer part of TextFace
 		hb_buffer_add_utf16(hbBuffer, originalStringBuffer, offset, limit - offset);
 		hb_buffer_guess_segment_properties(hbBuffer);
 		hb_buffer_set_cluster_level(hbBuffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-		hb_shape(hbFonts[faceIndex], hbBuffer, null);
+
+		var face = fontData.borrowFaceWithHeight(faceIndex, 10); // TODO Careful with the height: this might not be reusable
+		hb_shape(face.hbFont, hbBuffer, null);
 		var glyphInfo = hb_buffer_get_glyph_infos(hbBuffer);
+		fontData.returnFace(face);
 		List<Substring> substrings = computeSubstrings(originalString, offset, limit, glyphInfo, faceIndex);
 
 		List<TextRun> runs = new ArrayList<>(substrings.size());
@@ -84,7 +88,7 @@ class TextSplitter {
 			String smallString = originalString.substring(substring.startIndex(), substring.limit());
 
 			if (substring.succeeded()) runs.add(new TextRun(smallString, faceIndex, substring.startIndex()));
-			else if (faceIndex + 1 < hbFonts.length) runs.addAll(splitForRightFace(
+			else if (faceIndex + 1 < fontData.getNumFaces()) runs.addAll(splitForRightFace(
 					originalString, originalStringBuffer, substring.startIndex(), substring.limit(), faceIndex + 1
 			));
 			else runs.add(new TextRun(smallString, 0, substring.startIndex()));

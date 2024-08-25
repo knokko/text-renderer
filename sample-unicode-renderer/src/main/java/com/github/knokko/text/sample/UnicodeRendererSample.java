@@ -13,7 +13,7 @@ import com.github.knokko.profiler.storage.FrequencyThreadStorage;
 import com.github.knokko.profiler.storage.SampleStorage;
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
-import com.github.knokko.text.font.TextFont;
+import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.placement.TextPlaceRequest;
 import com.github.knokko.text.util.UnicodeLines;
@@ -91,7 +91,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 	private SwapchainResourceManager<Long> swapchainImageViews;
 
 	private TextInstance textInstance;
-	private TextFont unicodeFont;
+	private FontData unicodeFont;
 
 	private VulkanTextInstance vkTextInstance;
 	private VulkanTextPipeline vkTextPipeline;
@@ -126,7 +126,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		), swapchainImageView -> vkDestroyImageView(boiler.vkDevice(), swapchainImageView, null));
 
 		textInstance = new TextInstance();
-		unicodeFont = textInstance.createFont(UnicodeFonts.SOURCE);
+		unicodeFont = new FontData(textInstance, 200, UnicodeFonts.SOURCE);
 		vkTextInstance = new VulkanTextInstance(boiler);
 		vkTextPipeline = vkTextInstance.createPipelineWithDynamicRendering(
 				0, window.surfaceFormat, null, null

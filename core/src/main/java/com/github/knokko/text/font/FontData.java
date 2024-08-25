@@ -10,7 +10,7 @@ public class FontData {
 
 	private final TextInstance textInstance;
 	private final FreeTypeFaceSource[] faceSources;
-	private final HeightSearcher[] heightSearchers;
+	private final HeightSearcher[] heightSearchers; // TODO Reconsider using relative sizes
 	private final int maxHeight;
 
 	public FontData(TextInstance textInstance, int maxHeight, FontSource... fonts) {
@@ -42,6 +42,10 @@ public class FontData {
 				return height;
 			});
 		}
+	}
+
+	public int getNumFaces() {
+		return faceSources.length;
 	}
 
 	public TextFace borrowFaceWithHeight(int faceIndex, int height) {

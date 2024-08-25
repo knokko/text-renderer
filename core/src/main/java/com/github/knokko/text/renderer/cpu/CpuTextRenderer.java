@@ -1,6 +1,7 @@
 package com.github.knokko.text.renderer.cpu;
 
-import com.github.knokko.text.font.TextFont;
+import com.github.knokko.text.bitmap.FreeTypeGlyphRasterizer;
+import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.placement.TextPlaceRequest;
 import com.github.knokko.text.placement.TextPlacer;
@@ -12,13 +13,13 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 public abstract class CpuTextRenderer {
 
-	private final TextFont font;
+	private final FreeTypeGlyphRasterizer rasterizer;
 	private final TextPlacer placer;
 	private final ByteBuffer byteBuffer;
 	private final BitmapGlyphsBuffer glyphsBuffer;
 
-	public CpuTextRenderer(TextFont font, int glyphBufferCapacity) {
-		this.font = font;
+	public CpuTextRenderer(FontData font, int glyphBufferCapacity) {
+		this.rasterizer = new FreeTypeGlyphRasterizer(font);
 		this.placer = new TextPlacer(font);
 		this.byteBuffer = memAlloc(glyphBufferCapacity);
 		this.glyphsBuffer = new BitmapGlyphsBuffer(memAddress(byteBuffer), glyphBufferCapacity);
@@ -29,7 +30,7 @@ public abstract class CpuTextRenderer {
 	public void render(Collection<TextPlaceRequest> requests) {
 		var placedGlyphs = placer.place(requests.stream());
 		glyphsBuffer.startFrame();
-		var glyphQuads = glyphsBuffer.bufferGlyphs(font.rasterizer, placedGlyphs);
+		var glyphQuads = glyphsBuffer.bufferGlyphs(rasterizer, placedGlyphs);
 		glyphQuads.forEach(quad -> {
 			for (int offsetY = 0; offsetY < quad.getHeight(); offsetY++) {
 				for (int offsetX = 0; offsetX < quad.getActualWidth(); offsetX++) {

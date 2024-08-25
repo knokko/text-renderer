@@ -1,6 +1,7 @@
 package com.github.knokko.text.vulkan;
 
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
+import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.TextFont;
 
 import java.nio.IntBuffer;
@@ -21,7 +22,7 @@ public class VulkanTextPipeline {
 	}
 
 	public VulkanTextRenderer createRenderer(
-			TextFont font, long descriptorSet,
+			FontData font, long descriptorSet,
 			BitmapGlyphsBuffer glyphsBuffer, IntBuffer quadBuffer
 	) {
 		return new VulkanTextRenderer(font, instance, this, descriptorSet, glyphsBuffer, quadBuffer);

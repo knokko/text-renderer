@@ -1,5 +1,6 @@
 package com.github.knokko.text.renderer.cpu;
 
+import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.TextFont;
 
 import java.awt.*;
@@ -9,7 +10,7 @@ public class BufferedImageTextRenderer extends CpuTextRenderer {
 
 	public final BufferedImage image;
 
-	public BufferedImageTextRenderer(BufferedImage image, TextFont font, int glyphBufferCapacity) {
+	public BufferedImageTextRenderer(BufferedImage image, FontData font, int glyphBufferCapacity) {
 		super(font, glyphBufferCapacity);
 		this.image = image;
 	}

@@ -2,9 +2,10 @@ package com.github.knokko.text.vulkan;
 
 import com.github.knokko.boiler.commands.CommandRecorder;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
+import com.github.knokko.text.bitmap.FreeTypeGlyphRasterizer;
 import com.github.knokko.text.bitmap.GlyphQuad;
 import com.github.knokko.text.bitmap.GlyphRasterizer;
-import com.github.knokko.text.font.TextFont;
+import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.placement.TextPlaceRequest;
 import com.github.knokko.text.placement.TextPlacer;
 import org.lwjgl.system.MemoryStack;
@@ -33,7 +34,7 @@ public class VulkanTextRenderer {
 
 
 	public VulkanTextRenderer(
-			TextFont font, VulkanTextInstance instance, VulkanTextPipeline pipeline,
+			FontData font, VulkanTextInstance instance, VulkanTextPipeline pipeline,
 			long descriptorSet, BitmapGlyphsBuffer glyphsBuffer, IntBuffer quadBuffer
 	) {
 		this.instance = instance;
@@ -43,7 +44,7 @@ public class VulkanTextRenderer {
 		this.quadBuffer = quadBuffer;
 
 		this.placer = new TextPlacer(font);
-		this.rasterizer = font.rasterizer;
+		this.rasterizer = new FreeTypeGlyphRasterizer(font);
 	}
 
 	public void recordCommands(
