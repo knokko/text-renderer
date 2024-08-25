@@ -213,6 +213,6 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		unicodeFont.destroy();
 		textInstance.destroy();
 		profiler.stop();
-		profilerStorage.getThreadStorage(Thread.currentThread().getId()).print(System.out, 15, 5);
+		profilerStorage.getThreadStorage(Thread.currentThread().getId()).print(System.out, 35, 5);
 	}
 }

@@ -5,6 +5,7 @@ import com.github.knokko.text.placement.PlacedGlyph;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.lwjgl.system.MemoryUtil.memByteBuffer;
 
@@ -34,13 +35,11 @@ public class BitmapGlyphsBuffer {
 		currentFrame += 1;
 	}
 
-	public List<GlyphQuad> bufferGlyphs(GlyphRasterizer rasterizer, Collection<PlacedGlyph> placedGlyphs) {
-		List<GlyphQuad> quads = new ArrayList<>();
-
-		for (var placedGlyph : placedGlyphs) {
+	public Stream<GlyphQuad> bufferGlyphs(GlyphRasterizer rasterizer, Stream<PlacedGlyph> placedGlyphs) {
+		return placedGlyphs.flatMap(placedGlyph -> {
 			int scale = placedGlyph.glyph.scale;
 			var sections = getSections(rasterizer, placedGlyph.glyph);
-			for (var section : sections) {
+			return sections.stream().map(section -> {
 				int desiredMinX = placedGlyph.minX + scale * section.offsetX();
 				int desiredMinY = placedGlyph.minY + scale * section.offsetY();
 				int desiredMaxX = desiredMinX + scale * section.width() - 1;
@@ -61,15 +60,13 @@ public class BitmapGlyphsBuffer {
 
 				while ((1 + maxY - minY) % scale != 0) maxY -= 1;
 
-				quads.add(new GlyphQuad(
+				return new GlyphQuad(
 						section.bufferIndex(), minX, minY, maxX, maxY, scale, section.width(),
 						minX - desiredMinX + section.width() * (minY - desiredMinY),
 						placedGlyph.charIndex, placedGlyph.request.userData
-				));
-			}
-		}
-
-		return quads;
+				);
+			});
+		});
 	}
 
 	public List<BitmapGlyphSection> getSections(GlyphRasterizer rasterizer, SizedGlyph glyph) {

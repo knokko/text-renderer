@@ -32,12 +32,11 @@ class TextSplitter {
 		ByteBuffer originalStringBuffer = stack.UTF16(originalText);
 
 		for (int bidiRun = 0; bidiRun < bidi.getRunCount(); bidiRun++) {
-			String bidiRunString = originalText.substring(bidi.getRunStart(bidiRun), bidi.getRunLimit(bidiRun));
-			if (bidiRunString.isEmpty()) continue;
+			int runStart = bidi.getRunStart(bidiRun);
+			int runLimit = bidi.getRunLimit(bidiRun);
+			if (runStart == runLimit) continue;
 
-			List<TextRun> newRuns = splitForRightFace(
-					originalText, originalStringBuffer, bidi.getRunStart(bidiRun), bidi.getRunLimit(bidiRun), 0
-			);
+			List<TextRun> newRuns = splitForRightFace(originalText, originalStringBuffer, runStart, runLimit, 0);
 			if (bidi.getRunLevel(bidiRun) % 2 == 1) Collections.reverse(newRuns);
 
 			if (wasBaseLeftToRight) runs.addAll(merge(newRuns));

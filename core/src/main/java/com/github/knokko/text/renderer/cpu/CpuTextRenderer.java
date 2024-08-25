@@ -27,10 +27,10 @@ public abstract class CpuTextRenderer {
 	public abstract void setPixel(int x, int y, int value);
 
 	public void render(Collection<TextPlaceRequest> requests) {
-		var placedGlyphs = placer.place(requests);
+		var placedGlyphs = placer.place(requests.stream());
 		glyphsBuffer.startFrame();
 		var glyphQuads = glyphsBuffer.bufferGlyphs(font.rasterizer, placedGlyphs);
-		for (var quad : glyphQuads) {
+		glyphQuads.forEach(quad -> {
 			for (int offsetY = 0; offsetY < quad.getHeight(); offsetY++) {
 				for (int offsetX = 0; offsetX < quad.getActualWidth(); offsetX++) {
 
@@ -40,7 +40,7 @@ public abstract class CpuTextRenderer {
 					setPixel(imageX, imageY, byteBuffer.get(bufferIndex) & 0xFF);
 				}
 			}
-		}
+		});
 	}
 
 	public void destroy() {

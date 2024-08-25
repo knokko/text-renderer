@@ -7,7 +7,7 @@ import java.util.Objects;
 public class PlacedGlyph {
 
 	public final SizedGlyph glyph;
-	public final int minX, minY;
+	public int minX, minY;
 	public final TextPlaceRequest request;
 	public final int charIndex;
 

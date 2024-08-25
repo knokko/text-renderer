@@ -1,91 +1,183 @@
-11116 samples (100.00%)
-  11116 samples (100.00%) java.lang.Thread.run:
+9255 samples (100.00%)
+  9255 samples (100.00%) java.lang.Thread.run:
   line 833:
-    11116 samples (100.00%)
-      11116 samples (100.00%) com.github.knokko.boiler.window.WindowRenderLoop$$Lambda$67/0x0000000800c3b9d0.run:
+    9255 samples (100.00%)
+      9255 samples (100.00%) com.github.knokko.boiler.window.WindowRenderLoop$$Lambda$67/0x0000000800c3b9d0.run:
       line -1:
-        11116 samples (100.00%)
-          11116 samples (100.00%) com.github.knokko.boiler.window.WindowRenderLoop.run:
+        9255 samples (100.00%)
+          9255 samples (100.00%) com.github.knokko.boiler.window.WindowRenderLoop.run:
           line 64:
-            10544 samples (94.85%)
-              10544 samples (94.85%) com.github.knokko.boiler.window.SimpleWindowRenderLoop.renderFrame:
+            8030 samples (86.76%)
+              8030 samples (86.76%) com.github.knokko.boiler.window.SimpleWindowRenderLoop.renderFrame:
               line 77:
-                9545 samples (85.87%)
-                  9544 samples (85.86%) com.github.knokko.text.sample.UnicodeRendererSample.recordFrame:
+                6997 samples (75.60%)
+                  6997 samples (75.60%) com.github.knokko.text.sample.UnicodeRendererSample.recordFrame:
                   line 201:
-                    9464 samples (85.14%)
-                      9464 samples (85.14%) com.github.knokko.text.vulkan.VulkanTextRenderer.recordCommands:
-                      line 61:
-                        8478 samples (76.27%)
-                          8478 samples (76.27%) com.github.knokko.text.placement.TextPlacer.place:
-                          line 60:
-                            8397 samples (75.54%)
-                              8395 samples (75.52%) com.github.knokko.text.placement.TextPlacer.placeFree:
-                              line 118:
-                                4750 samples (42.73%)
-                                  4749 samples (42.72%) org.lwjgl.util.freetype.FreeType.FT_Load_Glyph:
-                                  line 3129:
-                                    4749 samples (42.72%)
-                                      4749 samples (42.72%) org.lwjgl.util.freetype.FreeType.nFT_Load_Glyph:
-                                      line 3124:
-                                        4749 samples (42.72%)
-                                          4749 samples (42.72%) org.lwjgl.system.JNI.invokePI:
-                                          line -2:
-                                            4749 samples (42.72%)
-                              line 79:
-                                2069 samples (18.61%)
-                                  2068 samples (18.60%) com.github.knokko.text.placement.TextSplitter.split:
-                                  line 38:
-                                    1977 samples (17.79%)
-                                      1976 samples (17.78%) com.github.knokko.text.placement.TextSplitter.splitForRightFace:
-                                      line 79:
-                                        1506 samples (13.55%)
-                                          1506 samples (13.55%) org.lwjgl.util.harfbuzz.HarfBuzz.hb_shape:
-                                          line 6242:
-                                            1506 samples (13.55%)
-                                              1506 samples (13.55%) org.lwjgl.util.harfbuzz.HarfBuzz.nhb_shape:
-                                              line 6238:
-                                                1506 samples (13.55%)
-                                                  1506 samples (13.55%) org.lwjgl.system.JNI.invokePPPV:
-                                                  line -2:
-                                                    1506 samples (13.55%)
-                              line 102:
-                                803 samples (7.22%)
-                                  803 samples (7.22%) org.lwjgl.util.harfbuzz.HarfBuzz.hb_shape:
-                                  line 6242:
-                                    803 samples (7.22%)
-                                      803 samples (7.22%) org.lwjgl.util.harfbuzz.HarfBuzz.nhb_shape:
-                                      line 6238:
-                                        803 samples (7.22%)
-                                          803 samples (7.22%) org.lwjgl.system.JNI.invokePPPV:
-                                          line -2:
-                                            803 samples (7.22%)
-                              line 78:
-                                622 samples (5.60%)
-                                  621 samples (5.59%) com.github.knokko.text.placement.TextPlacer.setHeight:
-                      line 71:
-                        722 samples (6.50%)
-                          722 samples (6.50%) com.github.knokko.text.bitmap.BitmapGlyphsBuffer.bufferGlyphs:
-                          line 42:
-                            600 samples (5.40%)
-                              594 samples (5.34%) com.github.knokko.text.bitmap.BitmapGlyphsBuffer.getSections:
+                    6853 samples (74.05%)
+                      6853 samples (74.05%) com.github.knokko.text.vulkan.VulkanTextRenderer.recordCommands:
+                      line 68:
+                        6745 samples (72.88%)
+                          6745 samples (72.88%) java.util.stream.ReferencePipeline.toList:
+                          line 627:
+                            6745 samples (72.88%)
+                              6745 samples (72.88%) java.util.stream.ReferencePipeline.toArray:
+                              line 622:
+                                6745 samples (72.88%)
+                                  6745 samples (72.88%) java.util.stream.ReferencePipeline.toArray:
+                                  line 616:
+                                    6731 samples (72.73%)
+                                      6731 samples (72.73%) java.util.stream.AbstractPipeline.evaluateToArrayNode:
+                                      line 260:
+                                        6731 samples (72.73%)
+                                          6731 samples (72.73%) java.util.stream.AbstractPipeline.evaluate:
+                                          line 575:
+                                            6729 samples (72.71%)
+                                              6728 samples (72.70%) java.util.stream.AbstractPipeline.wrapAndCopyInto:
+                                              line 499:
+                                                6728 samples (72.70%)
+                                                  6717 samples (72.58%) java.util.stream.AbstractPipeline.copyInto:
+                                                  line 510:
+                                                    6666 samples (72.03%)
+                                                      6666 samples (72.03%) java.util.stream.Sink$ChainedReference.end:
+                                                      line 258:
+                                                        6666 samples (72.03%)
+                                                          6666 samples (72.03%) java.util.stream.SortedOps$RefSortingSink.end:
+                                                          line 395:
+                                                            6652 samples (71.87%)
+                                                              6650 samples (71.85%) java.util.ArrayList.forEach:
+                                                              line 1511:
+                                                                6650 samples (71.85%)
+                                                                  6650 samples (71.85%) java.util.stream.SortedOps$RefSortingSink$$Lambda$110/0x0000000800c79fe0.accept:
+                                                                  line -1:
+                                                                    6650 samples (71.85%)
+                                                                      6650 samples (71.85%) java.util.stream.ReferencePipeline$7$1.accept:
+                                                                      line 273:
+                                                                        5409 samples (58.44%)
+                                                                          5409 samples (58.44%) com.github.knokko.text.placement.TextPlacer$$Lambda$105/0x0000000800ca0510.apply:
+                                                                          line -1:
+                                                                            5409 samples (58.44%)
+                                                                              5408 samples (58.43%) com.github.knokko.text.placement.TextPlacer.lambda$place$1:
+                                                                              line 59:
+                                                                                5407 samples (58.42%)
+                                                                                  5398 samples (58.33%) com.github.knokko.text.placement.TextPlacer.placeFree:
+                                                                                  line 73:
+                                                                                    2168 samples (23.43%)
+                                                                                      2167 samples (23.41%) com.github.knokko.text.placement.TextSplitter.split:
+                                                                                      line 38:
+                                                                                        2044 samples (22.09%)
+                                                                                          2044 samples (22.09%) com.github.knokko.text.placement.TextSplitter.splitForRightFace:
+                                                                                          line 79:
+                                                                                            1949 samples (21.06%)
+                                                                                              1949 samples (21.06%) org.lwjgl.util.harfbuzz.HarfBuzz.hb_shape:
+                                                                                              line 6242:
+                                                                                                1949 samples (21.06%)
+                                                                                                  1949 samples (21.06%) org.lwjgl.util.harfbuzz.HarfBuzz.nhb_shape:
+                                                                                                  line 6238:
+                                                                                                    1949 samples (21.06%)
+                                                                                                      1949 samples (21.06%) org.lwjgl.system.JNI.invokePPPV:
+                                                                                                      line -2:
+                                                                                                        1949 samples (21.06%)
+                                                                                  line 72:
+                                                                                    1828 samples (19.75%)
+                                                                                      1827 samples (19.74%) com.github.knokko.text.placement.TextPlacer.setHeight:
+                                                                                      line 47:
+                                                                                        1426 samples (15.41%)
+                                                                                          1425 samples (15.40%) org.lwjgl.util.harfbuzz.HarfBuzz.hb_ft_font_set_funcs:
+                                                                                          line 5088:
+                                                                                            1425 samples (15.40%)
+                                                                                              1425 samples (15.40%) org.lwjgl.system.JNI.invokePV:
+                                                                                              line -2:
+                                                                                                1425 samples (15.40%)
+                                                                                  line 96:
+                                                                                    976 samples (10.55%)
+                                                                                      976 samples (10.55%) org.lwjgl.util.harfbuzz.HarfBuzz.hb_shape:
+                                                                                      line 6242:
+                                                                                        976 samples (10.55%)
+                                                                                          976 samples (10.55%) org.lwjgl.util.harfbuzz.HarfBuzz.nhb_shape:
+                                                                                          line 6238:
+                                                                                            976 samples (10.55%)
+                                                                                              976 samples (10.55%) org.lwjgl.system.JNI.invokePPPV:
+                                                                                              line -2:
+                                                                                                976 samples (10.55%)
+                                                                      line 276:
+                                                                        1241 samples (13.41%)
+                                                                          1241 samples (13.41%) java.util.stream.ReferencePipeline.forEach:
+                                                                          line 596:
+                                                                            1241 samples (13.41%)
+                                                                              1241 samples (13.41%) java.util.stream.AbstractPipeline.evaluate:
+                                                                              line 234:
+                                                                                1241 samples (13.41%)
+                                                                                  1241 samples (13.41%) java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential:
+                                                                                  line 173:
+                                                                                    1241 samples (13.41%)
+                                                                                      1241 samples (13.41%) java.util.stream.ForEachOps$ForEachOp.evaluateSequential:
+                                                                                      line 150:
+                                                                                        1241 samples (13.41%)
+                                                                                          1241 samples (13.41%) java.util.stream.AbstractPipeline.wrapAndCopyInto:
+                                                                                          line 499:
+                                                                                            1241 samples (13.41%)
+                                                                                              1239 samples (13.39%) java.util.stream.AbstractPipeline.copyInto:
+                                                                                              line 509:
+                                                                                                1239 samples (13.39%)
+                                                                                                  1223 samples (13.21%) java.util.ArrayList$ArrayListSpliterator.forEachRemaining:
+                                                                                                  line 1625:
+                                                                                                    1220 samples (13.18%)
+                                                                                                      1209 samples (13.06%) java.util.stream.ReferencePipeline$3$1.accept:
+                                                                                                      line 197:
+                                                                                                        1209 samples (13.06%)
+                                                                                                          1207 samples (13.04%) java.util.stream.ForEachOps$ForEachOp$OfRef.accept:
+                                                                                                          line 183:
+                                                                                                            1207 samples (13.04%)
+                                                                                                              1207 samples (13.04%) java.util.stream.ReferencePipeline$2$1.accept:
+                                                                                                              line 179:
+                                                                                                                1204 samples (13.01%)
+                                                                                                                  1201 samples (12.98%) java.util.stream.ReferencePipeline$7$1.accept:
+                                                                                                                  line 273:
+                                                                                                                    902 samples (9.75%)
+                                                                                                                      902 samples (9.75%) com.github.knokko.text.bitmap.BitmapGlyphsBuffer$$Lambda$107/0x0000000800ca0ba0.apply:
+                                                                                                                      line -1:
+                                                                                                                        902 samples (9.75%)
+                                                                                                                          902 samples (9.75%) com.github.knokko.text.bitmap.BitmapGlyphsBuffer.lambda$bufferGlyphs$1:
+                                                                                                                          line 41:
+                                                                                                                            806 samples (8.71%)
+                                                                                                                              799 samples (8.63%) com.github.knokko.text.bitmap.BitmapGlyphsBuffer.getSections:
               line 64:
-                867 samples (7.80%)
-                  867 samples (7.80%) com.github.knokko.boiler.synchronization.VkbFence.waitAndReset:
+                795 samples (8.59%)
+                  795 samples (8.59%) com.github.knokko.boiler.synchronization.VkbFence.waitAndReset:
                   line 111:
-                    867 samples (7.80%)
-                      867 samples (7.80%) com.github.knokko.boiler.synchronization.VkbFence.waitAndReset:
+                    795 samples (8.59%)
+                      795 samples (8.59%) com.github.knokko.boiler.synchronization.VkbFence.waitAndReset:
                       line 115:
-                        867 samples (7.80%)
-                          867 samples (7.80%) com.github.knokko.boiler.synchronization.VkbFence.awaitSignal:
+                        792 samples (8.56%)
+                          792 samples (8.56%) com.github.knokko.boiler.synchronization.VkbFence.awaitSignal:
                           line 93:
-                            867 samples (7.80%)
-                              867 samples (7.80%) org.lwjgl.vulkan.VK10.vkWaitForFences:
+                            792 samples (8.56%)
+                              792 samples (8.56%) org.lwjgl.vulkan.VK10.vkWaitForFences:
                               line 6289:
-                                867 samples (7.80%)
-                                  867 samples (7.80%) org.lwjgl.vulkan.VK10.nvkWaitForFences:
+                                792 samples (8.56%)
+                                  792 samples (8.56%) org.lwjgl.vulkan.VK10.nvkWaitForFences:
                                   line 6224:
-                                    867 samples (7.80%)
-                                      867 samples (7.80%) org.lwjgl.system.JNI.callPPJI:
+                                    792 samples (8.56%)
+                                      792 samples (8.56%) org.lwjgl.system.JNI.callPPJI:
                                       line -2:
-                                        867 samples (7.80%)
+                                        792 samples (8.56%)
+          line 68:
+            899 samples (9.71%)
+              894 samples (9.66%) com.github.knokko.boiler.window.VkbWindow.presentSwapchainImage:
+              line 326:
+                894 samples (9.66%)
+                  894 samples (9.66%) com.github.knokko.boiler.window.VkbSwapchain.presentImage:
+                  line 144:
+                    882 samples (9.53%)
+                      880 samples (9.51%) com.github.knokko.boiler.queues.VkbQueue.present:
+                      line 98:
+                        880 samples (9.51%)
+                          880 samples (9.51%) org.lwjgl.vulkan.KHRSwapchain.vkQueuePresentKHR:
+                          line 684:
+                            880 samples (9.51%)
+                              880 samples (9.51%) org.lwjgl.vulkan.KHRSwapchain.nvkQueuePresentKHR:
+                              line 563:
+                                879 samples (9.50%)
+                                  879 samples (9.50%) org.lwjgl.system.JNI.callPPI:
+                                  line -2:
+                                    879 samples (9.50%)

@@ -111,7 +111,9 @@ public class TestBitmapGlyphsBuffer {
 		assertEquals(size - initialUsedSpace, glyphsBuffer.countAvailableSpace());
 		assertTrue(initialUsedSpace < 120, "initial used space is not smaller than slot size: " + initialUsedSpace);
 		glyphsBuffer.startFrame();
-		glyphsBuffer.bufferGlyphs(rasterizer, dummyGlyphs);
+
+		var quadCount = glyphsBuffer.bufferGlyphs(rasterizer, dummyGlyphs.stream()).count();
+		assertTrue(quadCount > 2, "Expected " + quadCount + " to be larger than 2");
 
 		assertTrue(glyphsBuffer.getUsedSpace() > 800);
 
@@ -132,11 +134,11 @@ public class TestBitmapGlyphsBuffer {
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20, 1), 2, 1, placeRequest, 0));
 
-		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs);
+		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs.stream());
 
 		byte[][] resultMap = new byte[16][30];
 
-		for (var quad : quads) {
+		quads.forEach(quad -> {
 			for (int offsetY = 0; offsetY < quad.getHeight(); offsetY++) {
 				for (int offsetX = 0; offsetX < quad.getActualWidth(); offsetX++) {
 
@@ -147,7 +149,7 @@ public class TestBitmapGlyphsBuffer {
 					resultMap[imageX - placeRequest.minX][imageY - placeRequest.minY] = memGetByte(bufferAddress + bufferIndex);
 				}
 			}
-		}
+		});
 
 		assertEquals(104, resultMap[0][0]);
 		assertEquals(119, resultMap[15][0]);
@@ -173,11 +175,11 @@ public class TestBitmapGlyphsBuffer {
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20, 1), 2, 1, placeRequest, 0));
 
-		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs);
+		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs.stream());
 
 		byte[][] resultMap = new byte[16][40];
 
-		for (var quad : quads) {
+		quads.forEach(quad -> {
 			for (int offsetY = 0; offsetY < quad.getHeight(); offsetY++) {
 				for (int offsetX = 0; offsetX < quad.getActualWidth(); offsetX++) {
 
@@ -188,7 +190,7 @@ public class TestBitmapGlyphsBuffer {
 					resultMap[imageX - placeRequest.minX][imageY - 1] = memGetByte(bufferAddress + bufferIndex);
 				}
 			}
-		}
+		});
 
 		assertEquals(4, resultMap[0][0]);
 		assertEquals(19, resultMap[15][0]);
@@ -217,7 +219,7 @@ public class TestBitmapGlyphsBuffer {
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 5, 2), 0, 0, placeRequest, 0));
 
-		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs);
+		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs.stream()).toList();
 		assertEquals(1, quads.size());
 
 		var quad = quads.get(0);

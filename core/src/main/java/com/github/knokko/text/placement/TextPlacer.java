@@ -6,10 +6,11 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.freetype.FT_Size;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -25,6 +26,7 @@ public class TextPlacer {
 	private final long[] hbFonts;
 	private final TextSplitter splitter;
 
+	private final Map<GlyphOffsetKey, GlyphOffset> glyphOffsets = new HashMap<>(); // TODO Throw old entries away
 	private int currentHeight;
 
 	public TextPlacer(TextFont font) {
@@ -48,29 +50,21 @@ public class TextPlacer {
 		currentHeight = height;
 	}
 
-	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requestCollection) {
-		TextPlaceRequest[] requests = requestCollection.toArray(new TextPlaceRequest[0]);
-		Arrays.sort(requests);
-
-		List<PlacedGlyph> placements = new ArrayList<>();
+	public Stream<PlacedGlyph> place(Stream<TextPlaceRequest> requests) {
 		currentHeight = -1;
 
-		for (var request : requests) {
+		// TODO Parallel stream?
+		return requests.sorted().flatMap(request -> {
 			try (var stack = stackPush()) {
-				var freePlacements = placeFree(request, stack);
-				for (var placement : freePlacements) {
-					placements.add(new PlacedGlyph(
-							placement.glyph,
-							request.minX + placement.minX,
-							request.minY + placement.minY,
-							placement.request,
-							placement.charIndex
-					));
-				}
+				return placeFree(request, stack).stream().map(placement -> new PlacedGlyph(
+						placement.glyph,
+						request.minX + placement.minX,
+						request.minY + placement.minY,
+						placement.request,
+						placement.charIndex
+				));
 			}
-		}
-
-		return placements;
+		});
 	}
 
 	@SuppressWarnings("resource")
@@ -114,16 +108,18 @@ public class TextPlacer {
 				if (info.cluster() >= run.text().length()) continue;
 
 				int glyph = info.codepoint();
-
-				assertFtSuccess(FT_Load_Glyph(font.getFreeTypeFaces()[run.faceIndex()], glyph, 0), "FT_Load_Glyph", context);
-				var glyphSlot = font.getFreeTypeFaces()[run.faceIndex()].glyph();
-				if (glyphSlot == null) throw new RuntimeException("Glyph slot should not be null right now");
+				var glyphOffset = glyphOffsets.computeIfAbsent(new GlyphOffsetKey(request.getHeight(), run.faceIndex(), glyph), key -> {
+					assertFtSuccess(FT_Load_Glyph(font.getFreeTypeFaces()[run.faceIndex()], glyph, 0), "FT_Load_Glyph", context);
+					var glyphSlot = font.getFreeTypeFaces()[run.faceIndex()].glyph();
+					if (glyphSlot == null) throw new RuntimeException("Glyph slot should not be null right now");
+					return new GlyphOffset(glyphSlot.bitmap_left(), glyphSlot.bitmap_top());
+				});
 
 				int scale = font.getScale();
 				placements.add(new PlacedGlyph(
 						new SizedGlyph(glyph, run.faceIndex(), font.getSize(false), scale),
-						cursorX + scale * (position.x_offset() + glyphSlot.bitmap_left()),
-						cursorY + scale * (position.y_offset() - glyphSlot.bitmap_top() + maxAscent),
+						cursorX + scale * (position.x_offset() + glyphOffset.bitmapLeft),
+						cursorY + scale * (position.y_offset() - glyphOffset.bitmapTop + maxAscent),
 						request, charIndex
 				));
 
@@ -159,4 +155,7 @@ public class TextPlacer {
 			hbFonts[faceIndex] = 0L;
 		}
 	}
+
+	record GlyphOffsetKey(int height, int fontIndex, int glyph) {}
+	record GlyphOffset(int bitmapLeft, int bitmapTop) {}
 }

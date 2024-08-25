@@ -27,7 +27,7 @@ public class TestTextPlacer {
 		// Note that unicode-quivira supports old italic characters, whereas unicode-freeserif does not.
 		// So unicode-freeserif should render all whitespaces (because it is the first font), but it should
 		// fall back to unicode-quivira to render the actual symbols
-		var result = placer.place(requests);
+		var result = placer.place(requests.stream()).toList();
 
 		// There are 34 whitespaces, which should be rendered with face 0
 		assertEquals(34, result.stream().filter(placedGlyph -> placedGlyph.glyph.faceIndex == 0).count());
@@ -60,7 +60,7 @@ public class TestTextPlacer {
 
 		// Since the thaana font doesn't support the syriac characters, the fallback syriac font must be used to
 		// render the syriac characters, whereas the primary thaana font renders the whitespaces.
-		var result = placer.place(requests);
+		var result = placer.place(requests.stream()).toList();
 
 		// There are 34 whitespaces, of which 33 should be rendered with thaana.
 		// The last one is rendered with syriac because it's unsafe to break.
@@ -102,7 +102,7 @@ public class TestTextPlacer {
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		requests.add(new TextPlaceRequest(tagalogText, 10, 10, 500, 40, true, null));
 
-		var result = placer.place(requests);
+		var result = placer.place(requests.stream()).toList();
 		assertEquals(37, result.size());
 
 		// The last 5 glyphs must NOT be broken up because they are part of the same cluster
@@ -124,7 +124,7 @@ public class TestTextPlacer {
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		requests.add(new TextPlaceRequest("ؤلاششششششش" + "  hi  " + "يييييييثب", 10, 50, 490, 80, true, null));
 
-		var result = placer.place(requests);
+		var result = placer.place(requests.stream()).toList();
 		assertEquals(24, result.size());
 
 		assertEquals(24, result.get(0).charIndex);
@@ -181,10 +181,8 @@ public class TestTextPlacer {
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		requests.add(new TextPlaceRequest(gujaratiText, 10, 10, 500, 40, true, null));
 
-		var result = placer.place(requests);
-		for (var placed : result) {
-			assertNotEquals(0, placed.glyph.id);
-		}
+		var result = placer.place(requests.stream());
+		assertTrue(result.noneMatch(placed -> placed.glyph.id == 0));
 
 		placer.destroy();
 		font.destroy();
