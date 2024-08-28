@@ -8,8 +8,10 @@ import com.github.knokko.text.placement.TextPlaceRequest;
 import com.github.knokko.text.util.UnicodeLines;
 import org.junit.jupiter.api.Test;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.github.knokko.text.util.ImageChecks.assertImageEquals;
@@ -36,6 +38,108 @@ public class TestBufferedImageRenderer {
 
 		renderer.destroy();
 		font.destroy();
+		instance.destroy();
+	}
+
+	private List<TextPlaceRequest> shift(List<TextPlaceRequest> original, int index) {
+		var old = original.get(index);
+		return Collections.singletonList(new TextPlaceRequest(
+				old.text, 1000 + old.minX, old.minY, 1000 + old.maxX, old.maxY, old.enforceBoundsY, old.userData
+		));
+	}
+
+	@Test
+	@SuppressWarnings({"UnnecessaryUnicodeEscape", "SpellCheckingInspection"})
+	public void testLargeAscentsAndDescents() {
+		var instance = new TextInstance();
+		var unicodeFont = new FontData(instance, 200, UnicodeFonts.SOURCE);
+		var freeserifFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/unicode-freeserif.ttf"));
+		var quiviraFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/unicode-quivira.ttf"));
+		var polyglottFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
+		var cjkFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/cjk.ttf"));
+		var thaanaFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/thaana.ttf"));
+		var syriacFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/syriac.otf"));
+		var gujaratiFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/gujarati.ttf"));
+		var oriyaFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/oriya.ttf"));
+		var teluguFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/telugu.otf"));
+		var kannadaFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/kannada.ttf"));
+		var tibetanFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/tibetan.ttf"));
+		var myanmarFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/myanmar.ttf"));
+		var hangulFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/hangul.ttf"));
+		var mongolianFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/mongolian.ttf"));
+		var yiFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/yi.ttf"));
+		var marksFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/marks.ttf"));
+
+		BufferedImage targetImage = new BufferedImage(2000, 3000, BufferedImage.TYPE_INT_RGB);
+		for (int y = 10; y < targetImage.getHeight(); y += 100) {
+			for (int x = 0; x < targetImage.getWidth(); x++) {
+				targetImage.setRGB(x, y, Color.RED.getRGB());
+			}
+		}
+		for (int y = 90; y < targetImage.getHeight(); y += 100) {
+			for (int x = 0; x < targetImage.getWidth(); x++) {
+				targetImage.setRGB(x, y, Color.RED.getRGB());
+			}
+		}
+
+		int glyphBufferCapacity = 75_000;
+
+		List<TextPlaceRequest> unicodeRequests = new ArrayList<>();
+		unicodeRequests.add(new TextPlaceRequest("aaa\u090Daaa\u0650aaa\u064Faaa", 10, 10, 1000, 90, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u23B0aaa\u1713aaa\u1699aaa", 10, 110, 1000, 190, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u06B3aaa\u065Caaa\u08D8aaa", 10, 210, 1000, 290, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u3031aaa\u302Aaaa\u3031aaa", 10, 310, 1000, 390, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u07B1aaa\u07A8aaa\u07B1aaa", 10, 410, 1000, 490, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u071Baaa\u0737aaa\u070Faaa", 10, 510, 1000, 590, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u0A90aaa\u0ABCaaa\u0A81aaa", 10, 610, 1000, 690, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u0B14aaa\u0B3Caaa\u0B01aaa", 10, 710, 1000, 790, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u0C58aaa\u1CDDaaa\u1CDAaaa", 10, 810, 1000, 890, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u0CC8aaa\u0CBCaaa\u0CBFaaa", 10, 910, 1000, 990, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa" + Character.toString(988802) + "aaa\uE298aaa\uE2BFaaa", 10, 1010, 1000, 1090, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\uA9E8aaa\u108Daaa\uA9E8aaa", 10, 1110, 1000, 1190, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\uC61Baaa\u1160aaa\u111Aaaa", 10, 1210, 1000, 1290, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u1840aaa\u18A9aaa\u1886aaa", 10, 1310, 1000, 1390, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\uA30Daaa\uA4A2aaa\uA022aaa", 10, 1410, 1000, 1490, false, null));
+		unicodeRequests.add(new TextPlaceRequest("aaa\u2E3Daaa\u1AB5aaa\u1DD8aaa", 10, 1510, 1000, 1590, false, null));
+
+		new BufferedImageTextRenderer(targetImage, unicodeFont, glyphBufferCapacity).render(unicodeRequests);
+
+		new BufferedImageTextRenderer(targetImage, freeserifFont, glyphBufferCapacity).render(shift(unicodeRequests, 0));
+		new BufferedImageTextRenderer(targetImage, quiviraFont, glyphBufferCapacity).render(shift(unicodeRequests, 1));
+		new BufferedImageTextRenderer(targetImage, polyglottFont, glyphBufferCapacity).render(shift(unicodeRequests, 2));
+		new BufferedImageTextRenderer(targetImage, cjkFont, glyphBufferCapacity).render(shift(unicodeRequests, 3));
+		new BufferedImageTextRenderer(targetImage, thaanaFont, glyphBufferCapacity).render(shift(unicodeRequests, 4));
+		new BufferedImageTextRenderer(targetImage, syriacFont, glyphBufferCapacity).render(shift(unicodeRequests, 5));
+		new BufferedImageTextRenderer(targetImage, gujaratiFont, glyphBufferCapacity).render(shift(unicodeRequests, 6));
+		new BufferedImageTextRenderer(targetImage, oriyaFont, glyphBufferCapacity).render(shift(unicodeRequests, 7));
+		new BufferedImageTextRenderer(targetImage, teluguFont, glyphBufferCapacity).render(shift(unicodeRequests, 8));
+		new BufferedImageTextRenderer(targetImage, kannadaFont, glyphBufferCapacity).render(shift(unicodeRequests, 9));
+		new BufferedImageTextRenderer(targetImage, tibetanFont, glyphBufferCapacity).render(shift(unicodeRequests, 10));
+		new BufferedImageTextRenderer(targetImage, myanmarFont, glyphBufferCapacity).render(shift(unicodeRequests, 11));
+		new BufferedImageTextRenderer(targetImage, hangulFont, glyphBufferCapacity).render(shift(unicodeRequests, 12));
+		new BufferedImageTextRenderer(targetImage, mongolianFont, glyphBufferCapacity).render(shift(unicodeRequests, 13));
+		new BufferedImageTextRenderer(targetImage, yiFont, glyphBufferCapacity).render(shift(unicodeRequests, 14));
+		new BufferedImageTextRenderer(targetImage, marksFont, glyphBufferCapacity).render(shift(unicodeRequests, 15));
+
+		assertImageEquals("expected-english-hebrew-mix.png", targetImage, "actual-ascends-and-descents.png");
+
+		unicodeFont.destroy();
+		freeserifFont.destroy();
+		quiviraFont.destroy();
+		polyglottFont.destroy();
+		cjkFont.destroy();
+		thaanaFont.destroy();
+		syriacFont.destroy();
+		gujaratiFont.destroy();
+		oriyaFont.destroy();
+		teluguFont.destroy();
+		kannadaFont.destroy();
+		tibetanFont.destroy();
+		myanmarFont.destroy();
+		hangulFont.destroy();
+		mongolianFont.destroy();
+		yiFont.destroy();
+		marksFont.destroy();
 		instance.destroy();
 	}
 
