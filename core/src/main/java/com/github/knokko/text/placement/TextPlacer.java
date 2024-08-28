@@ -3,7 +3,6 @@ package com.github.knokko.text.placement;
 import com.github.knokko.text.SizedGlyph;
 import com.github.knokko.text.font.FontData;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.freetype.FT_Size;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +39,7 @@ public class TextPlacer {
 				return placeFree(request, stack).stream().map(placement -> new PlacedGlyph(
 						placement.glyph,
 						request.minX + placement.minX,
-						request.minY + placement.minY,
+						request.baseY + placement.minY,
 						placement.request,
 						placement.charIndex
 				));
@@ -56,22 +55,10 @@ public class TextPlacer {
 		int cursorX = 0;
 		int cursorY = 0;
 
-		int maxAscent = 0;
-
-		for (TextRun run : runs) {
-			// TODO Cache this stuff
-			var tempFace = fontData.borrowFaceWithHeight(run.faceIndex(), request.getHeight());
-			FT_Size faceSize = tempFace.ftFace.size();
-			if (faceSize == null) throw new RuntimeException("Face size must not be null right now");
-			int ascent = Math.toIntExact(faceSize.metrics().ascender() / 64);
-			maxAscent = Math.max(maxAscent, ascent);
-			fontData.returnFace(tempFace);
-		}
-
 		runLoop:
 		for (TextRun run : runs) {
 			String context = "TextPlacer.placeFree(run = " + run.text() + ")";
-			var currentFace = fontData.borrowFaceWithHeight(run.faceIndex(), request.getHeight());
+			var currentFace = fontData.borrowFaceWithHeightA(run.faceIndex(), request.heightA);
 
 			hb_buffer_reset(hbBuffer);
 			hb_buffer_add_utf16(hbBuffer, stack.UTF16(run.text()), 0, -1);
@@ -92,8 +79,8 @@ public class TextPlacer {
 				if (info.cluster() >= run.text().length()) continue;
 
 				int glyph = info.codepoint();
-				var glyphOffset = glyphOffsets.computeIfAbsent(new GlyphOffsetKey(request.getHeight(), run.faceIndex(), glyph), key -> {
-					var tempFace = fontData.borrowFaceWithHeight(key.fontIndex, key.height);
+				var glyphOffset = glyphOffsets.computeIfAbsent(new GlyphOffsetKey(request.heightA, run.faceIndex(), glyph), key -> {
+					var tempFace = fontData.borrowFaceWithHeightA(key.fontIndex, key.heightA);
 					assertFtSuccess(FT_Load_Glyph(tempFace.ftFace, glyph, 0), "FT_Load_Glyph", context);
 					var glyphSlot = tempFace.ftFace.glyph();
 					if (glyphSlot == null) throw new RuntimeException("Glyph slot should not be null right now");
@@ -106,7 +93,7 @@ public class TextPlacer {
 				placements.add(new PlacedGlyph(
 						new SizedGlyph(glyph, run.faceIndex(), currentFace.getSize(false), scale),
 						cursorX + scale * (position.x_offset() + glyphOffset.bitmapLeft),
-						cursorY + scale * (position.y_offset() - glyphOffset.bitmapTop + maxAscent),
+						cursorY + scale * (position.y_offset() - glyphOffset.bitmapTop),
 						request, charIndex
 				));
 
@@ -141,6 +128,6 @@ public class TextPlacer {
 		hb_buffer_destroy(hbBuffer);
 	}
 
-	record GlyphOffsetKey(int height, int fontIndex, int glyph) {}
+	record GlyphOffsetKey(int heightA, int fontIndex, int glyph) {}
 	record GlyphOffset(int bitmapLeft, int bitmapTop) {}
 }

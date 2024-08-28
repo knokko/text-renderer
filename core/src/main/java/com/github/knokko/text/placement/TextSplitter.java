@@ -77,7 +77,7 @@ class TextSplitter {
 		hb_buffer_guess_segment_properties(hbBuffer);
 		hb_buffer_set_cluster_level(hbBuffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
 
-		var face = fontData.borrowFaceWithHeight(faceIndex, 10); // TODO Careful with the height: this might not be reusable
+		var face = fontData.borrowFaceWithHeightA(faceIndex, 10); // TODO Careful with the height: this might not be reusable
 		hb_shape(face.hbFont, hbBuffer, null);
 		var glyphInfo = hb_buffer_get_glyph_infos(hbBuffer);
 		fontData.returnFace(face);

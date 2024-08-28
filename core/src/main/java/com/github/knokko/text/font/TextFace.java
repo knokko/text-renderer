@@ -12,7 +12,7 @@ public class TextFace {
 	private final int scaledFontSize, unscaledFontSize, scale, heightScale;
 	public final long hbFont;
 
-	public TextFace(FT_Face ftFace, int size, int heightScale) {
+	TextFace(FT_Face ftFace, int size, int heightScale) {
 		this.ftFace = ftFace;
 
 		if (size <= 0) throw new IllegalArgumentException("Size (" + size + ") must be positive");
@@ -21,7 +21,6 @@ public class TextFace {
 		int currentUnscaledFontSize = size;
 
 		String context = "TextFace.setSize(" + size + ")";
-		long startTime = System.nanoTime();
 
 		while (true) {
 			int charSizeResult = FT_Set_Char_Size(
@@ -41,9 +40,6 @@ public class TextFace {
 			), "Set_Pixel_Sizes", context);
 			break;
 		}
-
-		long endTime = System.nanoTime();
-		//System.out.println("Sizing FT font took " + (endTime - startTime));
 
 		this.scaledFontSize = size;
 		this.unscaledFontSize = currentUnscaledFontSize;

@@ -188,7 +188,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 			int minX = virtualXtoScreenX(cameraX, scaleY, 0.0);
 			int maxY = minY + textHeight - 1;
 			int maxX = virtualXtoScreenX(cameraX, scaleY, 70);
-			requests.add(new TextPlaceRequest(line, minX, minY, maxX, maxY, false, Color.WHITE));
+			requests.add(new TextPlaceRequest(line, minX, minY, maxX, maxY, (minY + maxY) / 2, textHeight / 3, Color.WHITE));
 			offsetY += 1.0;
 		}
 

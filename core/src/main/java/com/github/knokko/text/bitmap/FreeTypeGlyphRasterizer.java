@@ -36,7 +36,6 @@ public class FreeTypeGlyphRasterizer implements GlyphRasterizer {
 		@SuppressWarnings("resource") FT_Bitmap bitmap = slot.bitmap();
 		this.width = bitmap.width();
 		this.height = bitmap.rows();
-		System.out.println("width is " + width + " and height is " + height);
 
 		if (this.width > 0 && this.height > 0) {
 			var bufferView = bitmap.buffer(this.width * this.height);

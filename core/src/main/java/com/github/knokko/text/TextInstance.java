@@ -45,7 +45,6 @@ public class TextInstance {
 
 		for (int index = 0; index < fonts.length; index++) {
 			loaded[index] = fonts[index].load(ftLibrary);
-			System.out.println();
 			fonts[index].load(ftLibrary);
 		}
 

@@ -4,13 +4,15 @@ import com.github.knokko.text.TextInstance;
 
 import java.util.Objects;
 
+import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.freetype.FreeType.FT_Load_Char;
 
 public class FontData {
 
 	private final TextInstance textInstance;
 	private final FreeTypeFaceSource[] faceSources;
-	private final HeightSearcher[] heightSearchers; // TODO Reconsider using relative sizes
+	private final HeightSearcher[] heightSearchers;
 	private final int maxHeight;
 
 	public FontData(TextInstance textInstance, int maxHeight, FontSource... fonts) {
@@ -36,8 +38,12 @@ public class FontData {
 			int faceIndex = index;
 			this.heightSearchers[faceIndex] = new HeightSearcher(5000, size -> {
 				var face = this.borrowFaceWithSize(faceIndex, size, 1);
-				var metrics = Objects.requireNonNull(face.ftFace.size()).metrics();
-				int height = Math.toIntExact(face.getScale() * (metrics.ascender() - metrics.descender()));
+
+				assertFtSuccess(FT_Load_Char(
+						face.ftFace, 'A', 0
+				), "Load_Char", "A size");
+
+				int height = face.getScale() * Math.toIntExact(Objects.requireNonNull(face.ftFace.glyph()).metrics().height());
 				this.returnFace(face);
 				return height;
 			});
@@ -48,7 +54,7 @@ public class FontData {
 		return faceSources.length;
 	}
 
-	public TextFace borrowFaceWithHeight(int faceIndex, int height) {
+	public TextFace borrowFaceWithHeightA(int faceIndex, int height) {
 		int size, heightScale;
 		synchronized (this.heightSearchers[faceIndex]) {
 			int originalHeight = height;

@@ -28,10 +28,10 @@ public class TestBufferedImageRenderer {
 		);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
-		requests.add(new TextPlaceRequest("hello world", 10, 10, 200, 40, true, null));
-		requests.add(new TextPlaceRequest("אלט", 210, 10, 300, 40, true, null));
-		requests.add(new TextPlaceRequest("ؤلاششششششش" + "  hi  " + "يييييييثب", 10, 50, 490, 80, true, null));
-		requests.add(new TextPlaceRequest("(Only) 1 word (אלט) is Hebrew", 10, 90, 490, 120, true, null));
+		requests.add(new TextPlaceRequest("hello world", 10, 10, 200, 40, 34, 18, null));
+		requests.add(new TextPlaceRequest("אלט", 210, 10, 300, 40, 34, 18, null));
+		requests.add(new TextPlaceRequest("ؤلاششششششش" + "  hi  " + "يييييييثب", 10, 50, 490, 80, 74, 18, null));
+		requests.add(new TextPlaceRequest("(Only) 1 word (אלט) is Hebrew", 10, 90, 490, 120, 114, 18, null));
 		renderer.render(requests);
 
 		assertImageEquals("expected-english-hebrew-mix.png", renderer.image, "actual-english-hebrew-mix.png");
@@ -44,7 +44,15 @@ public class TestBufferedImageRenderer {
 	private List<TextPlaceRequest> shift(List<TextPlaceRequest> original, int index) {
 		var old = original.get(index);
 		return Collections.singletonList(new TextPlaceRequest(
-				old.text, 1000 + old.minX, old.minY, 1000 + old.maxX, old.maxY, old.enforceBoundsY, old.userData
+				old.text, 1000 + old.minX, old.minY, 1000 + old.maxX, old.maxY, old.baseY, old.heightA, old.userData
+		));
+	}
+
+	private void addUnicodeRequest(List<TextPlaceRequest> unicodeRequests, String text) {
+		int offsetY = 100 * unicodeRequests.size();
+		unicodeRequests.add(new TextPlaceRequest(
+				text, 10, offsetY + 10, 1000, offsetY + 90,
+				offsetY + 60, 30, null
 		));
 	}
 
@@ -85,22 +93,22 @@ public class TestBufferedImageRenderer {
 		int glyphBufferCapacity = 75_000;
 
 		List<TextPlaceRequest> unicodeRequests = new ArrayList<>();
-		unicodeRequests.add(new TextPlaceRequest("aaa\u090Daaa\u0650aaa\u064Faaa", 10, 10, 1000, 90, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u23B0aaa\u1713aaa\u1699aaa", 10, 110, 1000, 190, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u06B3aaa\u065Caaa\u08D8aaa", 10, 210, 1000, 290, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u3031aaa\u302Aaaa\u3031aaa", 10, 310, 1000, 390, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u07B1aaa\u07A8aaa\u07B1aaa", 10, 410, 1000, 490, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u071Baaa\u0737aaa\u070Faaa", 10, 510, 1000, 590, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u0A90aaa\u0ABCaaa\u0A81aaa", 10, 610, 1000, 690, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u0B14aaa\u0B3Caaa\u0B01aaa", 10, 710, 1000, 790, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u0C58aaa\u1CDDaaa\u1CDAaaa", 10, 810, 1000, 890, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u0CC8aaa\u0CBCaaa\u0CBFaaa", 10, 910, 1000, 990, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa" + Character.toString(988802) + "aaa\uE298aaa\uE2BFaaa", 10, 1010, 1000, 1090, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\uA9E8aaa\u108Daaa\uA9E8aaa", 10, 1110, 1000, 1190, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\uC61Baaa\u1160aaa\u111Aaaa", 10, 1210, 1000, 1290, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u1840aaa\u18A9aaa\u1886aaa", 10, 1310, 1000, 1390, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\uA30Daaa\uA4A2aaa\uA022aaa", 10, 1410, 1000, 1490, false, null));
-		unicodeRequests.add(new TextPlaceRequest("aaa\u2E3Daaa\u1AB5aaa\u1DD8aaa", 10, 1510, 1000, 1590, false, null));
+		addUnicodeRequest(unicodeRequests, "aaa\u090Daaa\u0650aaa\u064Faaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u23B0aaa\u1713aaa\u1699aaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u06B3aaa\u065Caaa\u08D8aaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u3031aaa\u302Aaaa\u3031aaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u07B1aaa\u07A8aaa\u07B1aaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u071Baaa\u0737aaa\u070Faaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u0A90aaa\u0ABCaaa\u0A81aaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u0B14aaa\u0B3Caaa\u0B01aaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u0C58aaa\u1CDDaaa\u1CDAaaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u0CC8aaa\u0CBCaaa\u0CBFaaa");
+		addUnicodeRequest(unicodeRequests, "aaa" + Character.toString(988802) + "aaa\uE298aaa\uE2BFaaa");
+		addUnicodeRequest(unicodeRequests, "aaa\uA9E8aaa\u108Daaa\uA9E8aaa");
+		addUnicodeRequest(unicodeRequests, "aaa\uC61Baaa\u1160aaa\u111Aaaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u1840aaa\u18A9aaa\u1886aaa");
+		addUnicodeRequest(unicodeRequests, "aaa\uA30Daaa\uA4A2aaa\uA022aaa");
+		addUnicodeRequest(unicodeRequests, "aaa\u2E3Daaa\u1AB5aaa\u1DD8aaa");
 
 		new BufferedImageTextRenderer(targetImage, unicodeFont, glyphBufferCapacity).render(unicodeRequests);
 
@@ -121,7 +129,7 @@ public class TestBufferedImageRenderer {
 		new BufferedImageTextRenderer(targetImage, yiFont, glyphBufferCapacity).render(shift(unicodeRequests, 14));
 		new BufferedImageTextRenderer(targetImage, marksFont, glyphBufferCapacity).render(shift(unicodeRequests, 15));
 
-		assertImageEquals("expected-english-hebrew-mix.png", targetImage, "actual-ascends-and-descents.png");
+		assertImageEquals("expected-ascents-and-descents.png", targetImage, "actual-ascents-and-descents.png");
 
 		unicodeFont.destroy();
 		freeserifFont.destroy();
@@ -156,7 +164,7 @@ public class TestBufferedImageRenderer {
 		int minY = 5;
 		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(line, 0, minY, renderer.image.getWidth(), maxY, false, null));
+			requests.add(new TextPlaceRequest(line, 0, minY, renderer.image.getWidth(), maxY, minY + 20, 15, null));
 			minY = maxY;
 		}
 
@@ -182,7 +190,7 @@ public class TestBufferedImageRenderer {
 		int minY = 5;
 		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(line, 0, minY, renderer.image.getWidth(), maxY, false, null));
+			requests.add(new TextPlaceRequest(line, 0, minY, renderer.image.getWidth(), maxY, minY + 20, 15, null));
 			renderer.render(requests);
 			requests.clear();
 			minY = maxY;
@@ -211,7 +219,10 @@ public class TestBufferedImageRenderer {
 		int minX = 0;
 		int minY = 0;
 		for (int height = 1500; height < 5000; height += 900) {
-			requests.add(new TextPlaceRequest("Big", minX, minY, minX + height, minY + height, false, null));
+			requests.add(new TextPlaceRequest(
+					"Big", minX, minY, minX + height, minY + height,
+					minY + height / 2, height * 35 / 100, null
+			));
 			// noinspection SuspiciousNameCombination
 			minX += height;
 			if (minX > renderer.image.getWidth()) {
@@ -232,7 +243,7 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void setMaxHeight() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 100, UnicodeFonts.SOURCE);
+		var font = new FontData(instance, 38, UnicodeFonts.SOURCE);
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(4000, 300, BufferedImage.TYPE_INT_RGB),
 				font, 50_000
@@ -242,7 +253,10 @@ public class TestBufferedImageRenderer {
 		int minX = 0;
 		int minY = 0;
 		for (int height = 20; height < 500; height += 30) {
-			requests.add(new TextPlaceRequest("Big", minX, minY, minX + height, minY + height, false, null));
+			requests.add(new TextPlaceRequest(
+					"Big", minX, minY, minX + height, minY + height,
+					minY + (int) (height * 0.48), height * 38 / 100, null
+			));
 			// noinspection SuspiciousNameCombination
 			minX += height;
 			if (minX > renderer.image.getWidth()) {

@@ -5,6 +5,7 @@ import com.github.knokko.boiler.commands.CommandRecorder;
 import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
+import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.placement.TextPlaceRequest;
 import com.github.knokko.text.util.UnicodeLines;
@@ -32,13 +33,13 @@ public class TestUnicodeManyDraws {
 		int colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
 		var instance = new TextInstance();
-		var font = instance.createFont(UnicodeFonts.SOURCE);
+		var font = new FontData(instance, 10_000, UnicodeFonts.SOURCE);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		int minY = 5;
 		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(line, 0, minY, width, maxY, false, Color.WHITE));
+			requests.add(new TextPlaceRequest(line, 0, minY, width, maxY, minY + 20, 15, Color.WHITE));
 			minY = maxY;
 		}
 

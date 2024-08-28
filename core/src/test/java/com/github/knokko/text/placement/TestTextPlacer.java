@@ -23,7 +23,7 @@ public class TestTextPlacer {
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		String oldItalicText = "𐌀 𐌁 𐌂 𐌃 𐌄 𐌅 𐌆 𐌇 𐌈 𐌉 𐌊 𐌋 𐌌 𐌍 𐌎 𐌏 𐌐 𐌑 𐌒 𐌓 𐌔 𐌕 𐌖 𐌗 𐌘 𐌙 𐌚 𐌛 𐌜 𐌝 𐌞 𐌠 𐌡 𐌢 𐌣";
-		requests.add(new TextPlaceRequest(oldItalicText, 0, 5, 5000, 45, true, null));
+		requests.add(new TextPlaceRequest(oldItalicText, 0, 5, 5000, 45, 20, 20, null));
 
 		// Note that unicode-quivira supports old italic characters, whereas unicode-freeserif does not.
 		// So unicode-freeserif should render all whitespaces (because it is the first font), but it should
@@ -57,7 +57,7 @@ public class TestTextPlacer {
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		String syriacText = "܀ ܁ ܂ ܃ ܄ ܅ ܆ ܇ ܈ ܉ ܊ ܋ ܌ ܍ ܏ ܐ ܑ ܒ ܓ ܔ ܕ ܖ ܗ ܘ ܙ ܚ ܛ ܜ ܝ ܞ ܟ ܠ ܡ ܢ ܣ";
-		requests.add(new TextPlaceRequest(syriacText, 0, 5, 5000, 45, true, null));
+		requests.add(new TextPlaceRequest(syriacText, 0, 5, 5000, 45, 20, 20, null));
 
 		// Since the thaana font doesn't support the syriac characters, the fallback syriac font must be used to
 		// render the syriac characters, whereas the primary thaana font renders the whitespaces.
@@ -101,7 +101,7 @@ public class TestTextPlacer {
 		String tagalogText = "ᜀ ᜁ ᜂ ᜃ ᜄ ᜅ ᜆ ᜇ ᜈ ᜉ ᜊ ᜋ ᜌ ᜎ ᜏ ᜐ ᜑ ᜒ ᜓ";
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
-		requests.add(new TextPlaceRequest(tagalogText, 10, 10, 500, 40, true, null));
+		requests.add(new TextPlaceRequest(tagalogText, 10, 10, 800, 40, 20, 20, null));
 
 		var result = placer.place(requests.stream()).toList();
 		assertEquals(37, result.size());
@@ -123,7 +123,10 @@ public class TestTextPlacer {
 		var placer = new TextPlacer(font);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
-		requests.add(new TextPlaceRequest("ؤلاششششششش" + "  hi  " + "يييييييثب", 10, 50, 490, 80, true, null));
+		requests.add(new TextPlaceRequest(
+				"ؤلاششششششش" + "  hi  " + "يييييييثب",
+				10, 50, 490, 80, 60, 15, null
+		));
 
 		var result = placer.place(requests.stream()).toList();
 		assertEquals(24, result.size());
@@ -180,7 +183,7 @@ public class TestTextPlacer {
 		String gujaratiText = "૬ ૭ ૮ ૯";
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
-		requests.add(new TextPlaceRequest(gujaratiText, 10, 10, 500, 40, true, null));
+		requests.add(new TextPlaceRequest(gujaratiText, 10, 10, 500, 40, 20, 15, null));
 
 		var result = placer.place(requests.stream());
 		assertTrue(result.noneMatch(placed -> placed.glyph.id == 0));

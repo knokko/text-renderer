@@ -49,14 +49,8 @@ public class BitmapGlyphsBuffer {
 
 				while ((1 + maxX - minX) % scale != 0) maxX -= 1;
 
-				int minY, maxY;
-				if (placedGlyph.request.enforceBoundsY) {
-					minY = Math.max(placedGlyph.request.minY, desiredMinY);
-					maxY = Math.min(placedGlyph.request.maxY, desiredMaxY);
-				} else {
-					minY = desiredMinY;
-					maxY = desiredMaxY;
-				}
+				int minY = Math.max(placedGlyph.request.minY, desiredMinY);
+				int maxY = Math.min(placedGlyph.request.maxY, desiredMaxY);
 
 				while ((1 + maxY - minY) % scale != 0) maxY -= 1;
 
@@ -76,7 +70,6 @@ public class BitmapGlyphsBuffer {
 
 			rasterizer.set(glyph.id, glyph.faceIndex, glyph.size);
 			ByteBuffer bitmap = rasterizer.getBuffer();
-			System.out.println("width is " + rasterizer.getBufferWidth() + " and height is " + rasterizer.getBufferHeight());
 			List<BitmapGlyphSection> sections = BitmapGlyphSection.coverRectangle(
 					slotSize, rasterizer.getBufferWidth(), rasterizer.getBufferHeight(), (x, y, width, height) -> {
 						boolean hasNonZero = false;
