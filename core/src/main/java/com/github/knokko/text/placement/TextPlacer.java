@@ -15,7 +15,6 @@ import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.freetype.FreeType.FT_Load_Glyph;
 import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
-import static org.lwjgl.util.harfbuzz.HarfBuzz.hb_buffer_get_glyph_positions;
 
 public class TextPlacer {
 
@@ -49,7 +48,7 @@ public class TextPlacer {
 
 	@SuppressWarnings("resource")
 	private List<PlacedGlyph> placeFree(TextPlaceRequest request, MemoryStack stack) {
-		List<TextRun> runs = splitter.split(request.text, stack);
+		List<TextRun> runs = splitter.split(request.text, request.heightA, stack);
 		List<PlacedGlyph> placements = new ArrayList<>();
 
 		int cursorX = 0;
@@ -60,47 +59,38 @@ public class TextPlacer {
 			String context = "TextPlacer.placeFree(run = " + run.text() + ")";
 			var currentFace = fontData.borrowFaceWithHeightA(run.faceIndex(), request.heightA);
 
-			hb_buffer_reset(hbBuffer);
-			hb_buffer_add_utf16(hbBuffer, stack.UTF16(run.text()), 0, -1);
-			hb_buffer_guess_segment_properties(hbBuffer);
-			hb_buffer_set_cluster_level(hbBuffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-			hb_shape(currentFace.hbFont, hbBuffer, null);
+			if (run.glyphInfos() != null && run.glyphPositions() != null) {
+				for (int glyphIndex = 0; glyphIndex < run.glyphPositions().limit(); glyphIndex++) {
+					var position = run.glyphPositions().get(glyphIndex);
+					var info = run.glyphInfos().get(glyphIndex);
 
-			var glyphInfo = hb_buffer_get_glyph_infos(hbBuffer);
-			var glyphPositions = hb_buffer_get_glyph_positions(hbBuffer);
-			if (glyphInfo == null || glyphPositions == null)
-				throw new RuntimeException("Glyph info/positions are null");
+					int charIndex = info.cluster() + run.offset();
+					if (info.cluster() >= run.text().length()) continue;
 
-			for (int glyphIndex = 0; glyphIndex < glyphPositions.limit(); glyphIndex++) {
-				var position = glyphPositions.get(glyphIndex);
-				var info = glyphInfo.get(glyphIndex);
+					int glyph = info.codepoint();
+					var glyphOffset = glyphOffsets.computeIfAbsent(new GlyphOffsetKey(request.heightA, run.faceIndex(), glyph), key -> {
+						var tempFace = fontData.borrowFaceWithHeightA(key.fontIndex, key.heightA);
+						assertFtSuccess(FT_Load_Glyph(tempFace.ftFace, glyph, 0), "FT_Load_Glyph", context);
+						var glyphSlot = tempFace.ftFace.glyph();
+						if (glyphSlot == null) throw new RuntimeException("Glyph slot should not be null right now");
+						var result = new GlyphOffset(glyphSlot.bitmap_left(), glyphSlot.bitmap_top());
+						fontData.returnFace(tempFace);
+						return result;
+					});
 
-				int charIndex = info.cluster() + run.offset();
-				if (info.cluster() >= run.text().length()) continue;
+					int scale = currentFace.getScale();
+					placements.add(new PlacedGlyph(
+							new SizedGlyph(glyph, run.faceIndex(), currentFace.getSize(false), scale),
+							cursorX + scale * (position.x_offset() + glyphOffset.bitmapLeft),
+							cursorY + scale * (position.y_offset() - glyphOffset.bitmapTop),
+							request, charIndex
+					));
 
-				int glyph = info.codepoint();
-				var glyphOffset = glyphOffsets.computeIfAbsent(new GlyphOffsetKey(request.heightA, run.faceIndex(), glyph), key -> {
-					var tempFace = fontData.borrowFaceWithHeightA(key.fontIndex, key.heightA);
-					assertFtSuccess(FT_Load_Glyph(tempFace.ftFace, glyph, 0), "FT_Load_Glyph", context);
-					var glyphSlot = tempFace.ftFace.glyph();
-					if (glyphSlot == null) throw new RuntimeException("Glyph slot should not be null right now");
-					var result = new GlyphOffset(glyphSlot.bitmap_left(), glyphSlot.bitmap_top());
-					fontData.returnFace(tempFace);
-					return result;
-				});
+					cursorX += scale * position.x_advance() / 64;
+					cursorY += scale * position.y_advance() / 64;
 
-				int scale = currentFace.getScale();
-				placements.add(new PlacedGlyph(
-						new SizedGlyph(glyph, run.faceIndex(), currentFace.getSize(false), scale),
-						cursorX + scale * (position.x_offset() + glyphOffset.bitmapLeft),
-						cursorY + scale * (position.y_offset() - glyphOffset.bitmapTop),
-						request, charIndex
-				));
-
-				cursorX += scale * position.x_advance() / 64;
-				cursorY += scale * position.y_advance() / 64;
-
-				if (cursorX > request.getWidth() && splitter.wasBaseLeftToRight) break runLoop;
+					if (cursorX > request.getWidth() && splitter.wasBaseLeftToRight) break runLoop;
+				}
 			}
 
 			fontData.returnFace(currentFace);

@@ -3,14 +3,13 @@ package com.github.knokko.text.placement;
 import com.github.knokko.text.font.FontData;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.harfbuzz.hb_glyph_info_t;
+import org.lwjgl.util.harfbuzz.hb_glyph_position_t;
 
 import java.nio.ByteBuffer;
 import java.text.Bidi;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
+import static org.lwjgl.system.MemoryUtil.memCopy;
 import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 
 class TextSplitter {
@@ -25,7 +24,7 @@ class TextSplitter {
 		this.hbBuffer = hbBuffer;
 	}
 
-	List<TextRun> split(String originalText, MemoryStack stack) {
+	List<TextRun> split(String originalText, int height, MemoryStack stack) {
 		Bidi bidi = new Bidi(originalText, Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT);
 		wasBaseLeftToRight = bidi.baseIsLeftToRight();
 		List<TextRun> runs = new ArrayList<>();
@@ -37,17 +36,18 @@ class TextSplitter {
 			int runLimit = bidi.getRunLimit(bidiRun);
 			if (runStart == runLimit) continue;
 
-			List<TextRun> newRuns = splitForRightFace(originalText, originalStringBuffer, runStart, runLimit, 0);
+			List<TextRun> newRuns = splitForRightFace(originalText, originalStringBuffer, height, runStart, runLimit, 0, stack);
 			if (bidi.getRunLevel(bidiRun) % 2 == 1) Collections.reverse(newRuns);
 
-			if (wasBaseLeftToRight) runs.addAll(merge(newRuns));
-			else runs.addAll(0, merge(newRuns));
+			if (wasBaseLeftToRight) runs.addAll(merge(newRuns, stack));
+			else runs.addAll(0, merge(newRuns, stack));
 		}
 
 		return runs;
 	}
 
-	private List<TextRun> merge(List<TextRun> original) {
+	@SuppressWarnings("resource")
+	private List<TextRun> merge(List<TextRun> original, MemoryStack stack) {
 		List<TextRun> merged = new ArrayList<>();
 
 		for (TextRun run : original) {
@@ -59,16 +59,58 @@ class TextSplitter {
 			TextRun last = merged.get(merged.size() - 1);
 			if (last.faceIndex() == run.faceIndex()) {
 				merged.remove(merged.size() - 1);
-				merged.add(new TextRun(last.text() + run.text(), run.faceIndex(), last.offset()));
+				if (last.glyphInfos() == null || last.glyphPositions() == null) {
+					merged.add(new TextRun(last.text() + run.text(), run.faceIndex(), last.offset(), run.glyphInfos(), run.glyphPositions()));
+				} else {
+					int oldSize = last.glyphInfos().capacity();
+					int newSize = run.glyphInfos().capacity();
+					int totalSize = oldSize + newSize;
+
+					var mergedInfo = hb_glyph_info_t.calloc(totalSize, stack);
+					var mergedPositions = hb_glyph_position_t.calloc(totalSize, stack);
+					memCopy(last.glyphInfos().address(), mergedInfo.address(), (long) oldSize * hb_glyph_info_t.SIZEOF);
+					memCopy(last.glyphPositions().address(), mergedPositions.address(), (long) oldSize * hb_glyph_position_t.SIZEOF);
+					memCopy(run.glyphInfos().address(), mergedInfo.address(oldSize), (long) newSize * hb_glyph_info_t.SIZEOF);
+					memCopy(run.glyphPositions().address(), mergedPositions.address(), (long) newSize * hb_glyph_position_t.SIZEOF);
+
+					merged.add(new TextRun(last.text() + run.text(), run.faceIndex(), last.offset(), mergedInfo, mergedPositions));
+				}
 			} else merged.add(run);
 		}
 
 		return merged;
 	}
 
+	private TextRun extractGlyphIntoTextRun(
+			String smallString,
+			Substring substring,
+			hb_glyph_info_t.Buffer originalInfo,
+			hb_glyph_position_t.Buffer originalPositions,
+			MemoryStack stack
+	) {
+		int startIndex = 0;
+		while (startIndex < originalInfo.limit() && (originalInfo.get(startIndex).cluster() < substring.startIndex || originalInfo.get(startIndex).cluster() >= substring.limit)) {
+			startIndex += 1;
+		}
+
+		int limit = startIndex;
+		while (limit < originalInfo.limit() && originalInfo.get(limit).cluster() < substring.limit && originalInfo.get(limit).cluster() >= substring.startIndex) {
+			limit += 1;
+		}
+
+		int resultSize = limit - startIndex;
+		if (resultSize == 0) return new TextRun(smallString, substring.faceIndex, substring.startIndex, null, null);
+
+		var resultInfo = hb_glyph_info_t.calloc(resultSize, stack);
+		memCopy(originalInfo.address(startIndex), resultInfo.address(), (long) resultInfo.capacity() * hb_glyph_info_t.SIZEOF);
+		resultInfo.forEach(info -> info.cluster(info.cluster() - substring.startIndex));
+
+		return new TextRun(smallString, substring.faceIndex, substring.startIndex, resultInfo, originalPositions.slice(startIndex, resultSize));
+	}
+
 	private List<TextRun> splitForRightFace(
 			String originalString, ByteBuffer originalStringBuffer,
-			int offset, int limit, int faceIndex
+			int height, int offset, int limit, int faceIndex, MemoryStack stack
 	) {
 		if (limit <= offset) return Collections.emptyList();
 
@@ -77,9 +119,20 @@ class TextSplitter {
 		hb_buffer_guess_segment_properties(hbBuffer);
 		hb_buffer_set_cluster_level(hbBuffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
 
-		var face = fontData.borrowFaceWithHeightA(faceIndex, 10); // TODO Careful with the height: this might not be reusable
+		var face = fontData.borrowFaceWithHeightA(faceIndex, height);
 		hb_shape(face.hbFont, hbBuffer, null);
-		var glyphInfo = hb_buffer_get_glyph_infos(hbBuffer);
+		var glyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(hbBuffer));
+		var glyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(hbBuffer));
+
+		{
+			var newGlyphInfo = hb_glyph_info_t.calloc(glyphInfo.capacity(), stack);
+			var newGlyphPositions = hb_glyph_position_t.calloc(glyphPositions.capacity(), stack);
+			memCopy(glyphInfo.address(), newGlyphInfo.address(), (long) glyphInfo.capacity() * hb_glyph_info_t.SIZEOF);
+			memCopy(glyphPositions.address(), newGlyphPositions.address(), (long) glyphPositions.capacity() * hb_glyph_position_t.SIZEOF);
+			glyphInfo = newGlyphInfo;
+			glyphPositions = newGlyphPositions;
+		}
+
 		fontData.returnFace(face);
 		List<Substring> substrings = computeSubstrings(originalString, offset, limit, glyphInfo, faceIndex);
 
@@ -87,11 +140,16 @@ class TextSplitter {
 		for (Substring substring : substrings) {
 			String smallString = originalString.substring(substring.startIndex(), substring.limit());
 
-			if (substring.succeeded()) runs.add(new TextRun(smallString, faceIndex, substring.startIndex()));
+			if (substring.succeeded()) runs.add(extractGlyphIntoTextRun(smallString, substring, glyphInfo, glyphPositions, stack));
 			else if (faceIndex + 1 < fontData.getNumFaces()) runs.addAll(splitForRightFace(
-					originalString, originalStringBuffer, substring.startIndex(), substring.limit(), faceIndex + 1
+					originalString, originalStringBuffer,
+					height, substring.startIndex(), substring.limit(),
+					faceIndex + 1, stack
 			));
-			else runs.add(new TextRun(smallString, 0, substring.startIndex()));
+			else runs.add(extractGlyphIntoTextRun(
+					smallString, new Substring(substring.startIndex, substring.limit, 0, false),
+						glyphInfo, glyphPositions, stack
+			));
 		}
 		return runs;
 	}
