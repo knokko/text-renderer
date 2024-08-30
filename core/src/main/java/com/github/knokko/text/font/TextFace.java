@@ -11,9 +11,11 @@ public class TextFace {
 	public final FT_Face ftFace;
 	private final int scaledFontSize, unscaledFontSize, scale, heightScale;
 	public final long hbFont;
+	final FontData.TextFaceKey key;
 
-	TextFace(FT_Face ftFace, int size, int heightScale) {
+	TextFace(FT_Face ftFace, int size, int heightScale, FontData.TextFaceKey key) {
 		this.ftFace = ftFace;
+		this.key = key;
 
 		if (size <= 0) throw new IllegalArgumentException("Size (" + size + ") must be positive");
 

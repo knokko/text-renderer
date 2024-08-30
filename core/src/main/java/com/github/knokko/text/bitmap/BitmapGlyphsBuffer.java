@@ -116,9 +116,12 @@ public class BitmapGlyphsBuffer {
 			if (glyphMap.put(glyph, bufferedGlyph) != null) throw new RuntimeException("Didn't expect existing element");
 			if (!glyphSet.add(bufferedGlyph)) throw new RuntimeException("Didn't expect existing element in glyph set");
 		} else {
-			if (!glyphSet.remove(bufferedGlyph)) throw new IllegalStateException("Glyph was not in set");
-			bufferedGlyph.lastUsed = currentFrame;
-			if (!glyphSet.add(bufferedGlyph)) throw new IllegalStateException("Glyph should just have been removed");
+			if (bufferedGlyph.lastUsed != currentFrame) {
+				if (!glyphSet.remove(bufferedGlyph)) throw new IllegalStateException("Glyph was not in set");
+				bufferedGlyph.lastUsed = currentFrame;
+				if (!glyphSet.add(bufferedGlyph))
+					throw new IllegalStateException("Glyph should just have been removed");
+			}
 		}
 
 		return bufferedGlyph.sections;

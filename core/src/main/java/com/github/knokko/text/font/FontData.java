@@ -2,7 +2,7 @@ package com.github.knokko.text.font;
 
 import com.github.knokko.text.TextInstance;
 
-import java.util.Objects;
+import java.util.*;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -14,6 +14,7 @@ public class FontData {
 	private final FreeTypeFaceSource[] faceSources;
 	private final HeightSearcher[] heightSearchers;
 	private final int maxHeight;
+	private final Map<TextFaceKey, List<TextFace>> faceCache = new HashMap<>();
 
 	public FontData(TextInstance textInstance, int maxHeight, FontSource... fonts) {
 		this.textInstance = textInstance;
@@ -74,18 +75,28 @@ public class FontData {
 	public TextFace borrowFaceWithSize(int faceIndex, int size, int heightScale) {
 		// Performance measurements: creating a FT_Face takes 10 to 40 microseconds, and allocates 10 to 30 KB
 		// Resizing an existing FT_Face takes 1 to 15 microseconds
-		// TODO Consider reusing them
-		try (var stack = stackPush()) {
-			var ftFace = textInstance.createFreeTypeFace(faceSources[faceIndex], stack);
-			return new TextFace(ftFace, size, heightScale);
+		synchronized (faceCache) {
+			var key = new TextFaceKey(faceIndex, size, heightScale);
+			var faceList = faceCache.computeIfAbsent(key, k -> new ArrayList<>());
+			if (!faceList.isEmpty()) return faceList.remove(faceList.size() - 1);
+			try (var stack = stackPush()) {
+				var ftFace = textInstance.createFreeTypeFace(faceSources[faceIndex], stack);
+				return new TextFace(ftFace, size, heightScale, key);
+			}
+			// TODO Enforce maximum size
 		}
 	}
 
 	public void returnFace(TextFace face) {
-		face.destroy();
+		synchronized (faceCache) {
+			faceCache.get(face.key).add(face);
+		}
+		//face.destroy();
 	}
 
 	public void destroy() {
 		for (var source : faceSources) source.destroy();
 	}
+
+	record TextFaceKey(int faceIndex, int size, int heightScale) {}
 }
