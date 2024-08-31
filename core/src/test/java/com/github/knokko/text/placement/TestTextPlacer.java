@@ -4,6 +4,7 @@ import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.font.ClasspathFontsSource;
 import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
+import com.github.knokko.text.util.UnicodeLines;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -42,6 +43,27 @@ public class TestTextPlacer {
 			int glyphChar = oldItalicText.codePointAt(placedGlyph.charIndex);
 			if (placedGlyph.glyph.faceIndex == 0) assertEquals(' ', glyphChar);
 			else assertTrue(Character.isSupplementaryCodePoint(glyphChar));
+		}
+
+		placer.destroy();
+		font.destroy();
+		instance.destroy();
+	}
+
+	@Test
+	public void testRegressionParallel() {
+		var instance = new TextInstance();
+		var font = new FontData(instance, 100, new ClasspathFontsSource("fonts/thaana.ttf"));
+		var placer = new TextPlacer(font);
+
+		var requests = new ArrayList<TextPlaceRequest>();
+		for (String line : UnicodeLines.get()) {
+			requests.add(new TextPlaceRequest(line, 10, 10, 5000, 90, 60, 40, null));
+		}
+
+		for (int counter = 0; counter < 10; counter++) {
+			var result = placer.place(requests.parallelStream()).count();
+			assertEquals(18505, result);
 		}
 
 		placer.destroy();

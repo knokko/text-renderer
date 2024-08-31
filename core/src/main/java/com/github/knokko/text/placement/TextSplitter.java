@@ -60,6 +60,8 @@ class TextSplitter {
 				merged.remove(merged.size() - 1);
 				if (last.glyphInfos() == null || last.glyphPositions() == null) {
 					merged.add(new TextRun(last.text() + run.text(), run.faceIndex(), last.offset(), run.glyphInfos(), run.glyphPositions()));
+				} else if (run.glyphInfos() == null || run.glyphPositions() == null) {
+					merged.add(new TextRun(last.text() + run.text(), run.faceIndex(), last.offset(), last.glyphInfos(), last.glyphPositions()));
 				} else {
 					int oldSize = last.glyphInfos().limit();
 					int newSize = run.glyphInfos().limit();
@@ -140,17 +142,19 @@ class TextSplitter {
 		updateGlyphInfoAndPositions(originalStringBuffer, offset, limit, face);
 		var initialGlyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(face.hbBuffer));
 		var initialGlyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(face.hbBuffer));
-		fontData.returnFace(face);
 
 		List<Substring> substrings = computeSubstrings(originalString, offset, limit, initialGlyphInfo, faceIndex);
 		List<TextRun> runs = new ArrayList<>(substrings.size());
 		if (substrings.size() == 1 && substrings.get(0).succeeded) {
 
-
 			String smallString = originalString.substring(substrings.get(0).startIndex(), substrings.get(0).limit());
 			runs.add(extractGlyphIntoTextRun(smallString, substrings.get(0), initialGlyphInfo, initialGlyphPositions, stack));
+
+			fontData.returnFace(face);
 			return runs;
 		}
+
+		fontData.returnFace(face);
 
 		for (Substring substring : substrings) {
 
@@ -171,13 +175,14 @@ class TextSplitter {
 					updateGlyphInfoAndPositions(originalStringBuffer, substring.startIndex, substring.limit, face);
 					var newGlyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(face.hbBuffer));
 					var glyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(face.hbBuffer));
-					fontData.returnFace(face);
 
 					String smallString = originalString.substring(substring.startIndex(), substring.limit());
 					runs.add(extractGlyphIntoTextRun(
 							smallString, new Substring(substring.startIndex, substring.limit, 0, false),
 							newGlyphInfo, glyphPositions, stack
 					));
+
+					fontData.returnFace(face);
 				}
 			}
 		}

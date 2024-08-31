@@ -91,11 +91,10 @@ public class FontData {
 		synchronized (faceCache) {
 			faceCache.get(face.key).add(face);
 		}
-		//face.destroy();
 	}
 
 	public void destroy() {
-		synchronized (faceCache) {
+		synchronized (textInstance) {
 			for (var fonts : faceCache.values()) {
 				for (var font : fonts) font.destroy();
 			}
