@@ -65,6 +65,7 @@ public class TextPlacer {
 	private List<PlacedGlyph> placeFree(TextPlaceRequest request, MemoryStack stack) {
 		var splitter = new TextSplitter(fontData);
 		List<TextRun> runs = splitter.split(request.text, request.heightA, stack);
+		System.out.println("runs are " + runs);
 		List<PlacedGlyph> placements = new ArrayList<>();
 
 		int cursorX = 0;
@@ -72,12 +73,16 @@ public class TextPlacer {
 
 		runLoop:
 		for (TextRun run : runs) {
+			System.out.println("borrowing with face " + run.faceIndex() + " and heightA " + request.heightA);
 			var currentFace = fontData.borrowFaceWithHeightA(run.faceIndex(), request.heightA);
+			System.out.println("currentFace is " + currentFace);
 
 			if (run.glyphInfos() != null && run.glyphPositions() != null) {
 				for (int glyphIndex = 0; glyphIndex < run.glyphPositions().limit(); glyphIndex++) {
 					var position = run.glyphPositions().get(glyphIndex);
 					var info = run.glyphInfos().get(glyphIndex);
+
+					System.out.println("cluster is " + info.cluster() + " and codepoint is " + info.codepoint() + " and advance is " + position.x_advance());
 
 					int charIndex = info.cluster() + run.offset();
 					if (info.cluster() >= run.text().length()) continue;
@@ -101,6 +106,8 @@ public class TextPlacer {
 							cursorY + scale * (position.y_offset() - glyphOffset.bitmapTop),
 							request, charIndex
 					));
+
+					System.out.println("cursorY is " + cursorY + " and scale is " + scale + " and y offset is " + position.y_offset() + " and bitmap top is " + glyphOffset.bitmapTop);
 
 					cursorX += scale * position.x_advance() / 64;
 					cursorY += scale * position.y_advance() / 64;
