@@ -90,6 +90,47 @@ public class TestTextPlacer {
 	}
 
 	@Test
+	public void testSpecialsRegression() {
+		var instance = new TextInstance();
+		var unicodeFont = new FontData(instance, 200, UnicodeFonts.SOURCE);
+		var placer = new TextPlacer(unicodeFont);
+
+		var requests = new ArrayList<TextPlaceRequest>();
+		requests.add(new TextPlaceRequest("￹ ￺ ￻ ￼ �", 0, 10, 1000, 90, 60, 40, null));
+
+		var result = placer.place(requests.stream());
+		assertArrayEquals(new int[] { 5, 41, 60, 96, 115, 151, 167, 227, 242 }, result.mapToInt(placement -> placement.minX).toArray());
+
+		placer.destroy();
+		unicodeFont.destroy();
+		instance.destroy();
+	}
+
+	@Test
+	public void testAscentRegression() {
+		var instance = new TextInstance();
+		var unicodeFont = new FontData(instance, 200, UnicodeFonts.SOURCE);
+		var placer = new TextPlacer(unicodeFont);
+
+		@SuppressWarnings({"UnnecessaryUnicodeEscape", "SpellCheckingInspection"})
+		var testString = "aaa\u06B3aaa\u1713";
+
+		List<TextPlaceRequest> requests = new ArrayList<>();
+		requests.add(new TextPlaceRequest(testString, 10, 110, 1000, 1900, 160, 30, null));
+
+		var result = placer.place(requests.stream()).toList();
+		assertArrayEquals(new int[] { 11, 29, 47, 66, 87, 105, 124, 116 }, result.stream().mapToInt(glyph -> glyph.minX).toArray());
+		assertArrayEquals(new int[] { 0, 1, 2, 3, 4, 5, 6, 7 }, result.stream().mapToInt(glyph -> glyph.charIndex).toArray());
+		assertArrayEquals(new int[] { 68, 68, 68, 1521, 68, 68, 68, 2341 }, result.stream().mapToInt(glyph -> glyph.glyph.id).toArray());
+		assertArrayEquals(new int[] { 0, 0, 0, 2, 0, 0, 1, 1 }, result.stream().mapToInt(glyph -> glyph.glyph.faceIndex).toArray());
+		assertArrayEquals(new int[] { 44, 44, 44, 49, 44, 44, 44, 44 }, result.stream().mapToInt(glyph -> glyph.glyph.size).toArray());
+
+		placer.destroy();
+		unicodeFont.destroy();
+		instance.destroy();
+	}
+
+	@Test
 	public void testWrongFontRegressionTagalog() {
 		var instance = new TextInstance();
 		var font = new FontData(instance, 100, new ClasspathFontsSource(
