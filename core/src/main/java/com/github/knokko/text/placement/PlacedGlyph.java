@@ -20,6 +20,15 @@ public class PlacedGlyph {
 	}
 
 	@Override
+	public boolean equals(Object other) {
+		if (other instanceof PlacedGlyph) {
+			PlacedGlyph pg = (PlacedGlyph) other;
+			return this.glyph.equals(pg.glyph) && this.minX == pg.minX && this.minY == pg.minY &&
+					this.request == pg.request && this.charIndex == pg.charIndex;
+		} else return false;
+	}
+
+	@Override
 	public String toString() {
 		return "PlacedGlyph(" + minX + ", " + minY + ", glyph=" + glyph + ")";
 	}

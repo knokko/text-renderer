@@ -1,5 +1,6 @@
 package com.github.knokko.text.placement;
 
+import com.github.knokko.text.SizedGlyph;
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.font.ClasspathFontsSource;
 import com.github.knokko.text.font.FontData;
@@ -13,6 +14,44 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestTextPlacer {
+
+	@Test
+	public void testRegressionVeryLargeText() {
+		var instance = new TextInstance();
+		var font = new FontData(instance, 20_000, UnicodeFonts.SOURCE);
+		var placer = new TextPlacer(font);
+
+		var requests = new ArrayList<TextPlaceRequest>();
+		int minX = 0;
+		int minY = 0;
+		for (int height = 1500; height < 3000; height += 900) {
+			requests.add(new TextPlaceRequest(
+					"Big", minX, minY, minX + height, minY + height,
+					minY + height / 2, height * 35 / 100, null
+			));
+			// noinspection SuspiciousNameCombination
+			minX += height;
+			if (minX > 11000) {
+				minX = 0;
+				minY += height;
+			}
+		}
+
+		var result = placer.place(requests.stream()).toArray();
+		assertArrayEquals(new PlacedGlyph[] {
+				new PlacedGlyph(new SizedGlyph(37, 0, 778, 1), 13, 234, requests.get(0), 0),
+				new PlacedGlyph(new SizedGlyph(76, 0, 778, 1), 499, 218, requests.get(0), 1),
+				new PlacedGlyph(new SizedGlyph(74, 0, 778, 1), 693, 392, requests.get(0), 2),
+
+				new PlacedGlyph(new SizedGlyph(37, 0, 623, 2), 1520, 374, requests.get(1), 0),
+				new PlacedGlyph(new SizedGlyph(76, 0, 623, 2), 2299, 348, requests.get(1), 1),
+				new PlacedGlyph(new SizedGlyph(74, 0, 623, 2), 2611, 626, requests.get(1), 2)
+		}, result);
+
+		placer.destroy();
+		font.destroy();
+		instance.destroy();
+	}
 
 	@Test
 	public void testWrongFontRegressionItalic() {
