@@ -1,0 +1,3 @@
+Ubuntu placements:
+placedGlyphs are [PlacedGlyph(13, 234, glyph=SizedGlyph(37[0] * 778 * 1)), PlacedGlyph(499, 218, glyph=SizedGlyph(76[0] * 778 * 1)), PlacedGlyph(693, 392, glyph=SizedGlyph(74[0] * 778 * 1)), PlacedGlyph(1520, 376, glyph=SizedGlyph(37[0] * 622 * 2)), PlacedGlyph(2298, 350, glyph=SizedGlyph(76[0] * 622 * 2)), PlacedGlyph(2610, 626, glyph=SizedGlyph(74[0] * 622 * 2)), PlacedGlyph(3928, 514, glyph=SizedGlyph(37[0] * 857 * 2)), PlacedGlyph(5000, 478, glyph=SizedGlyph(76[0] * 857 * 2)), PlacedGlyph(5429, 860, glyph=SizedGlyph(74[0] * 857 * 2)), PlacedGlyph(7236, 657, glyph=SizedGlyph(37[0] * 726 * 3)), PlacedGlyph(8598, 612, glyph=SizedGlyph(76[0] * 726 * 3)), PlacedGlyph(9143, 1098, glyph=SizedGlyph(74[0] * 726 * 3))]
+there are 7649 glyph quads
