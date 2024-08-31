@@ -121,24 +121,28 @@ class TextSplitter {
 		return new TextRun(smallString, substring.faceIndex, substring.startIndex, resultInfo, resultPositions);
 	}
 
+	private void updateGlyphInfoAndPositions(
+			ByteBuffer originalStringBuffer, int offset, int limit, long hbFont
+	) {
+		hb_buffer_reset(hbBuffer); // TODO Maybe make hbBuffer part of TextFace
+		hb_buffer_add_utf16(hbBuffer, originalStringBuffer, offset, limit - offset);
+		hb_buffer_guess_segment_properties(hbBuffer);
+		hb_buffer_set_cluster_level(hbBuffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
+		hb_shape(hbFont, hbBuffer, null);
+	}
+
 	private List<TextRun> splitForRightFace(
 			String originalString, ByteBuffer originalStringBuffer,
 			int height, int offset, int limit, int faceIndex, MemoryStack stack
 	) {
 		if (limit <= offset) return Collections.emptyList();
 
-		hb_buffer_reset(hbBuffer); // TODO Maybe make hbBuffer part of TextFace
-		hb_buffer_add_utf16(hbBuffer, originalStringBuffer, offset, limit - offset);
-		hb_buffer_guess_segment_properties(hbBuffer);
-		hb_buffer_set_cluster_level(hbBuffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-
 		var face = fontData.borrowFaceWithHeightA(faceIndex, height);
-		hb_shape(face.hbFont, hbBuffer, null);
+		updateGlyphInfoAndPositions(originalStringBuffer, offset, limit, face.hbFont);
 		var glyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(hbBuffer));
-
 		fontData.returnFace(face);
-		List<Substring> substrings = computeSubstrings(originalString, offset, limit, glyphInfo, faceIndex);
 
+		List<Substring> substrings = computeSubstrings(originalString, offset, limit, glyphInfo, faceIndex);
 		List<TextRun> runs = new ArrayList<>(substrings.size());
 		if (substrings.size() == 1 && substrings.get(0).succeeded) {
 			var glyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(hbBuffer));
@@ -164,15 +168,11 @@ class TextSplitter {
 					));
 				} else {
 					face = fontData.borrowFaceWithHeightA(0, height);
-					hb_buffer_reset(hbBuffer); // TODO Code reuse
-					hb_buffer_add_utf16(hbBuffer, originalStringBuffer, substring.startIndex, substring.limit - substring.startIndex);
-					hb_buffer_guess_segment_properties(hbBuffer);
-					hb_buffer_set_cluster_level(hbBuffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-					hb_shape(face.hbFont, hbBuffer, null);
+					updateGlyphInfoAndPositions(originalStringBuffer, substring.startIndex, substring.limit, face.hbFont);
 					var newGlyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(hbBuffer));
 					var glyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(hbBuffer));
-
 					fontData.returnFace(face);
+
 					String smallString = originalString.substring(substring.startIndex(), substring.limit());
 					runs.add(extractGlyphIntoTextRun(
 							smallString, new Substring(substring.startIndex, substring.limit, 0, false),
