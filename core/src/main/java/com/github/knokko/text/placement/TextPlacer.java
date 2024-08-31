@@ -4,32 +4,48 @@ import com.github.knokko.text.SizedGlyph;
 import com.github.knokko.text.font.FontData;
 import org.lwjgl.system.MemoryStack;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
-import static org.lwjgl.system.MemoryUtil.memCalloc;
-import static org.lwjgl.system.MemoryUtil.memFree;
+import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.util.freetype.FreeType.FT_Load_Glyph;
 
 public class TextPlacer {
 
 	private final FontData fontData;
-	private final Map<GlyphOffsetKey, GlyphOffset> glyphOffsets = new HashMap<>(); // TODO Throw old entries away
+	private final ConcurrentHashMap<GlyphOffsetKey, GlyphOffset> glyphOffsets = new ConcurrentHashMap<>(); // TODO Throw old entries away
+	private final ConcurrentSkipListSet<ByteBuffer> allocations = new ConcurrentSkipListSet<>((a, b) -> {
+		if (a.capacity() > b.capacity()) return 1;
+		if (a.capacity() < b.capacity()) return -1;
+		return Long.compare(memAddress(a), memAddress(b));
+	});
 
 	public TextPlacer(FontData font) {
 		this.fontData = font;
 	}
 
 	public Stream<PlacedGlyph> place(Stream<TextPlaceRequest> requests) {
-		// TODO Parallel stream?
 		return requests.sorted().flatMap(request -> {
 			double sizeFactor = ((request.text.length() + 1) * Math.log(request.text.length() + Math.E));
-			var stackBuffer = memCalloc((int) (250 * sizeFactor));
+			int requiredSize = (int) (250 * sizeFactor);
+
+			while (allocations.size() > 4) {
+				ByteBuffer smallest = allocations.pollFirst();
+				if (smallest != null) memFree(smallest);
+			}
+
+			ByteBuffer stackBuffer = allocations.pollLast();
+			if (stackBuffer == null || stackBuffer.capacity() < requiredSize) {
+				if (stackBuffer != null) allocations.add(stackBuffer);
+				stackBuffer = memCalloc(requiredSize);
+			}
+
 			try {
 				var stack = MemoryStack.create(stackBuffer);
 				return placeFree(request, stack).stream().map(placement -> new PlacedGlyph(
@@ -40,7 +56,7 @@ public class TextPlacer {
 						placement.charIndex
 				));
 			} finally {
-				memFree(stackBuffer);
+				allocations.add(stackBuffer);
 			}
 		});
 	}
@@ -115,7 +131,8 @@ public class TextPlacer {
 	}
 
 	public void destroy() {
-		// TODO Maybe remove this method
+		for (var buffer : allocations) memFree(buffer);
+		allocations.clear();
 	}
 
 	record GlyphOffsetKey(int heightA, int fontIndex, int glyph) {}
