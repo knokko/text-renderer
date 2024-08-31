@@ -71,6 +71,7 @@ public class FontData {
 	}
 
 	public TextFace borrowFaceWithSize(int faceIndex, int size, int heightScale) {
+		System.out.println("borrowFaceWithSize(" + faceIndex + ", " + size + ", " + heightScale + ")");
 		// Performance measurements: creating a FT_Face takes 10 to 40 microseconds, and allocates 10 to 30 KB
 		// Resizing an existing FT_Face takes 1 to 15 microseconds
 		synchronized (faceCache) {
