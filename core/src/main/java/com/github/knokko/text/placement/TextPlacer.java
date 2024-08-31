@@ -19,14 +19,10 @@ import static org.lwjgl.util.freetype.FreeType.FT_Load_Glyph;
 public class TextPlacer {
 
 	private final FontData fontData;
-
-	private final TextSplitter splitter;
-
 	private final Map<GlyphOffsetKey, GlyphOffset> glyphOffsets = new HashMap<>(); // TODO Throw old entries away
 
 	public TextPlacer(FontData font) {
 		this.fontData = font;
-		this.splitter = new TextSplitter(fontData);
 	}
 
 	public Stream<PlacedGlyph> place(Stream<TextPlaceRequest> requests) {
@@ -51,6 +47,7 @@ public class TextPlacer {
 
 	@SuppressWarnings("resource")
 	private List<PlacedGlyph> placeFree(TextPlaceRequest request, MemoryStack stack) {
+		var splitter = new TextSplitter(fontData);
 		List<TextRun> runs = splitter.split(request.text, request.heightA, stack);
 		List<PlacedGlyph> placements = new ArrayList<>();
 
