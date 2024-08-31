@@ -46,6 +46,7 @@ public class FontData {
 
 				int height = face.getScale() * Math.toIntExact(Objects.requireNonNull(face.ftFace.glyph()).metrics().height());
 				this.returnFace(face);
+				System.out.println("size = " + size + " -> height = " + height);
 				return height;
 			});
 		}
