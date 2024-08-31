@@ -54,6 +54,12 @@ public class TextFace {
 		hb_ft_font_set_funcs(this.hbFont);
 	}
 
+	@Override
+	public String toString() {
+		return "TextFace((scaledSize, unscaledSize) = (" + scaledFontSize + ", " + unscaledFontSize +
+				"), (scale, heightScale) = (" + scale + ", " + heightScale + "))";
+	}
+
 	public int getSize(boolean scaled) {
 		if (scaled) return scaledFontSize;
 		else return unscaledFontSize;
