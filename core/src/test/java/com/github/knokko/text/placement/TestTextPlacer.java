@@ -7,13 +7,53 @@ import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.util.UnicodeLines;
 import org.junit.jupiter.api.Test;
+import org.lwjgl.system.Configuration;
+import org.lwjgl.util.freetype.FT_Face;
+import org.lwjgl.util.freetype.FreeType;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.util.freetype.FreeType.*;
 
 public class TestTextPlacer {
+
+	@Test
+	public void testPotentialFreeTypeBug() {
+		Configuration.HARFBUZZ_LIBRARY_NAME.set(FreeType.getLibrary());
+		try (var stack = stackPush()) {
+			var pLibrary = stack.callocPointer(1);
+			assertFtSuccess(FT_Init_FreeType(pLibrary), "Init_FreeType", "TestTextPlacer");
+			var ftLibrary = pLibrary.get(0);
+
+			var pFace = stack.callocPointer(1);
+			assertFtSuccess(FT_New_Face(
+					ftLibrary, stack.ASCII("../unicode-fonts/src/main/resources/fonts/unicode-freeserif.ttf"), 0, pFace
+			), "New_Face", "unicode-freeserif");
+			var ftFace = FT_Face.create(pFace.get(0));
+
+			int size = 875;
+			assertFtSuccess(FT_Set_Char_Size(
+					ftFace, 0, size * 64L, 0, 5 * size
+			), "Set_Char_Size", "test");
+			assertFtSuccess(FT_Set_Pixel_Sizes(
+					ftFace, 0, size
+			), "Set_Pixel_Sizes", "test");
+
+			assertFtSuccess(FT_Load_Char(
+					ftFace, 'A', 0
+			), "Load_Char", "A size");
+
+			System.out.println(ftFace.glyph().metrics().height());
+			// Ubuntu prints 226560
+
+			assertFtSuccess(FT_Done_Face(ftFace), "Done_Face", "freeserif");
+			assertFtSuccess(FT_Done_FreeType(ftLibrary), "Done_FreeType", "TestTextPlacer");
+		}
+	}
 
 	@Test
 	public void testRegressionVeryLargeText() {
