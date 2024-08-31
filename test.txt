@@ -1,3 +1,23 @@
 Ubuntu placements:
 placedGlyphs are [PlacedGlyph(13, 234, glyph=SizedGlyph(37[0] * 778 * 1)), PlacedGlyph(499, 218, glyph=SizedGlyph(76[0] * 778 * 1)), PlacedGlyph(693, 392, glyph=SizedGlyph(74[0] * 778 * 1)), PlacedGlyph(1520, 376, glyph=SizedGlyph(37[0] * 622 * 2)), PlacedGlyph(2298, 350, glyph=SizedGlyph(76[0] * 622 * 2)), PlacedGlyph(2610, 626, glyph=SizedGlyph(74[0] * 622 * 2)), PlacedGlyph(3928, 514, glyph=SizedGlyph(37[0] * 857 * 2)), PlacedGlyph(5000, 478, glyph=SizedGlyph(76[0] * 857 * 2)), PlacedGlyph(5429, 860, glyph=SizedGlyph(74[0] * 857 * 2)), PlacedGlyph(7236, 657, glyph=SizedGlyph(37[0] * 726 * 3)), PlacedGlyph(8598, 612, glyph=SizedGlyph(76[0] * 726 * 3)), PlacedGlyph(9143, 1098, glyph=SizedGlyph(74[0] * 726 * 3))]
-there are 7649 glyph quads
+
+Windows placements:
+placedGlyphs are [PlacedGlyph(13, 234, glyph=SizedGlyph(37[0] * 778 * 1)), PlacedGlyph(499, 218, glyph=SizedGlyph(76[0] * 778 * 1)), PlacedGlyph(693, 392, glyph=SizedGlyph(74[0] * 778 * 1)), PlacedGlyph(1520, 374, glyph=SizedGlyph(37[0] * 623 * 2)), PlacedGlyph(2299, 348, glyph=SizedGlyph(76[0] * 623 * 2)), PlacedGlyph(2611, 626, glyph=SizedGlyph(74[0] * 623 * 2)), PlacedGlyph(3928, 514, glyph=SizedGlyph(37[0] * 857 * 2)), PlacedGlyph(5000, 478, glyph=SizedGlyph(76[0] * 857 * 2)), PlacedGlyph(5429, 860, glyph=SizedGlyph(74[0] * 857 * 2)), PlacedGlyph(7236, 654, glyph=SizedGlyph(37[0] * 727 * 3)), PlacedGlyph(8600, 609, glyph=SizedGlyph(76[0] * 727 * 3)), PlacedGlyph(9146, 1095, glyph=SizedGlyph(74[0] * 727 * 3))]
+runs are [TextRun(Big, face=0, offset=0, info-count=3)]
+borrowing with face 0 and heightA 525
+currentFace is TextFace((scaledSize, unscaledSize) = (778, 778), (scale, heightScale) = (1, 1))
+cluster is 0 and codepoint is 37 and advance is 31219
+cursorY is 0 and scale is 1 and y offset is 0 and bitmap top is 516
+cluster is 1 and codepoint is 76 and advance is 11850
+cursorY is 0 and scale is 1 and y offset is 0 and bitmap top is 532
+cluster is 2 and codepoint is 74 and advance is 24896
+cursorY is 0 and scale is 1 and y offset is 0 and bitmap top is 358
+runs are [TextRun(Big, face=0, offset=0, info-count=3)]
+borrowing with face 0 and heightA 840
+currentFace is TextFace((scaledSize, unscaledSize) = (1245, 623), (scale, heightScale) = (2, 1))
+cluster is 0 and codepoint is 37 and advance is 25000
+cursorY is 0 and scale is 2 and y offset is 0 and bitmap top is 413
+cluster is 1 and codepoint is 76 and advance is 9489
+cursorY is 0 and scale is 2 and y offset is 0 and bitmap top is 426
+cluster is 2 and codepoint is 74 and advance is 19936
+cursorY is 0 and scale is 2 and y offset is 0 and bitmap top is 287
