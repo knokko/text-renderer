@@ -95,6 +95,12 @@ public class FontData {
 	}
 
 	public void destroy() {
+		synchronized (faceCache) {
+			for (var fonts : faceCache.values()) {
+				for (var font : fonts) font.destroy();
+			}
+			faceCache.clear();
+		}
 		for (var source : faceSources) source.destroy();
 	}
 

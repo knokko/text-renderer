@@ -11,10 +11,12 @@ public class TextFace {
 	public final FT_Face ftFace;
 	private final int scaledFontSize, unscaledFontSize, scale, heightScale;
 	public final long hbFont;
+	public final long hbBuffer;
 	final FontData.TextFaceKey key;
 
 	TextFace(FT_Face ftFace, int size, int heightScale, FontData.TextFaceKey key) {
 		this.ftFace = ftFace;
+		this.hbBuffer = hb_buffer_create();
 		this.key = key;
 
 		if (size <= 0) throw new IllegalArgumentException("Size (" + size + ") must be positive");
@@ -62,7 +64,7 @@ public class TextFace {
 	}
 
 	void destroy() {
-		// TODO HB resources
 		assertFtSuccess(FT_Done_Face(ftFace), "Done_Face", "TextFace.destroy");
+		hb_buffer_destroy(hbBuffer);
 	}
 }

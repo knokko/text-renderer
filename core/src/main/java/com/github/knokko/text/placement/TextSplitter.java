@@ -1,6 +1,7 @@
 package com.github.knokko.text.placement;
 
 import com.github.knokko.text.font.FontData;
+import com.github.knokko.text.font.TextFace;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.harfbuzz.hb_glyph_info_t;
 import org.lwjgl.util.harfbuzz.hb_glyph_position_t;
@@ -15,13 +16,11 @@ import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 class TextSplitter {
 
 	private final FontData fontData;
-	private final long hbBuffer;
 
 	boolean wasBaseLeftToRight;
 
-	TextSplitter(FontData fontData, long hbBuffer) {
+	TextSplitter(FontData fontData) {
 		this.fontData = fontData;
-		this.hbBuffer = hbBuffer;
 	}
 
 	List<TextRun> split(String originalText, int height, MemoryStack stack) {
@@ -122,13 +121,13 @@ class TextSplitter {
 	}
 
 	private void updateGlyphInfoAndPositions(
-			ByteBuffer originalStringBuffer, int offset, int limit, long hbFont
+			ByteBuffer originalStringBuffer, int offset, int limit, TextFace font
 	) {
-		hb_buffer_reset(hbBuffer); // TODO Maybe make hbBuffer part of TextFace
-		hb_buffer_add_utf16(hbBuffer, originalStringBuffer, offset, limit - offset);
-		hb_buffer_guess_segment_properties(hbBuffer);
-		hb_buffer_set_cluster_level(hbBuffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-		hb_shape(hbFont, hbBuffer, null);
+		hb_buffer_reset(font.hbBuffer);
+		hb_buffer_add_utf16(font.hbBuffer, originalStringBuffer, offset, limit - offset);
+		hb_buffer_guess_segment_properties(font.hbBuffer);
+		hb_buffer_set_cluster_level(font.hbBuffer, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
+		hb_shape(font.hbFont, font.hbBuffer, null);
 	}
 
 	private List<TextRun> splitForRightFace(
@@ -138,17 +137,18 @@ class TextSplitter {
 		if (limit <= offset) return Collections.emptyList();
 
 		var face = fontData.borrowFaceWithHeightA(faceIndex, height);
-		updateGlyphInfoAndPositions(originalStringBuffer, offset, limit, face.hbFont);
-		var glyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(hbBuffer));
+		updateGlyphInfoAndPositions(originalStringBuffer, offset, limit, face);
+		var initialGlyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(face.hbBuffer));
+		var initialGlyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(face.hbBuffer));
 		fontData.returnFace(face);
 
-		List<Substring> substrings = computeSubstrings(originalString, offset, limit, glyphInfo, faceIndex);
+		List<Substring> substrings = computeSubstrings(originalString, offset, limit, initialGlyphInfo, faceIndex);
 		List<TextRun> runs = new ArrayList<>(substrings.size());
 		if (substrings.size() == 1 && substrings.get(0).succeeded) {
-			var glyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(hbBuffer));
+
 
 			String smallString = originalString.substring(substrings.get(0).startIndex(), substrings.get(0).limit());
-			runs.add(extractGlyphIntoTextRun(smallString, substrings.get(0), glyphInfo, glyphPositions, stack));
+			runs.add(extractGlyphIntoTextRun(smallString, substrings.get(0), initialGlyphInfo, initialGlyphPositions, stack));
 			return runs;
 		}
 
@@ -168,9 +168,9 @@ class TextSplitter {
 					));
 				} else {
 					face = fontData.borrowFaceWithHeightA(0, height);
-					updateGlyphInfoAndPositions(originalStringBuffer, substring.startIndex, substring.limit, face.hbFont);
-					var newGlyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(hbBuffer));
-					var glyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(hbBuffer));
+					updateGlyphInfoAndPositions(originalStringBuffer, substring.startIndex, substring.limit, face);
+					var newGlyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(face.hbBuffer));
+					var glyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(face.hbBuffer));
 					fontData.returnFace(face);
 
 					String smallString = originalString.substring(substring.startIndex(), substring.limit());

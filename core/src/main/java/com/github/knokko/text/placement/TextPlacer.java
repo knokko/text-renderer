@@ -15,12 +15,10 @@ import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.system.MemoryUtil.memCalloc;
 import static org.lwjgl.system.MemoryUtil.memFree;
 import static org.lwjgl.util.freetype.FreeType.FT_Load_Glyph;
-import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 
 public class TextPlacer {
 
 	private final FontData fontData;
-	private final long hbBuffer;
 
 	private final TextSplitter splitter;
 
@@ -28,8 +26,7 @@ public class TextPlacer {
 
 	public TextPlacer(FontData font) {
 		this.fontData = font;
-		this.hbBuffer = hb_buffer_create();
-		this.splitter = new TextSplitter(fontData, hbBuffer);
+		this.splitter = new TextSplitter(fontData);
 	}
 
 	public Stream<PlacedGlyph> place(Stream<TextPlaceRequest> requests) {
@@ -121,7 +118,7 @@ public class TextPlacer {
 	}
 
 	public void destroy() {
-		hb_buffer_destroy(hbBuffer);
+		// TODO Maybe remove this method
 	}
 
 	record GlyphOffsetKey(int heightA, int fontIndex, int glyph) {}
