@@ -71,7 +71,7 @@ class TextSplitter {
 					memCopy(last.glyphInfos().address(), mergedInfo.address(), (long) oldSize * hb_glyph_info_t.SIZEOF);
 					memCopy(last.glyphPositions().address(), mergedPositions.address(), (long) oldSize * hb_glyph_position_t.SIZEOF);
 					memCopy(run.glyphInfos().address(), mergedInfo.address(oldSize), (long) newSize * hb_glyph_info_t.SIZEOF);
-					memCopy(run.glyphPositions().address(), mergedPositions.address(), (long) newSize * hb_glyph_position_t.SIZEOF);
+					memCopy(run.glyphPositions().address(), mergedPositions.address(oldSize), (long) newSize * hb_glyph_position_t.SIZEOF);
 
 					merged.add(new TextRun(last.text() + run.text(), run.faceIndex(), last.offset(), mergedInfo, mergedPositions));
 				}
