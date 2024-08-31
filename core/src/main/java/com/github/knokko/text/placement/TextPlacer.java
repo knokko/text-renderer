@@ -56,7 +56,6 @@ public class TextPlacer {
 
 		runLoop:
 		for (TextRun run : runs) {
-			String context = "TextPlacer.placeFree(run = " + run.text() + ")";
 			var currentFace = fontData.borrowFaceWithHeightA(run.faceIndex(), request.heightA);
 
 			if (run.glyphInfos() != null && run.glyphPositions() != null) {
@@ -70,7 +69,8 @@ public class TextPlacer {
 					int glyph = info.codepoint();
 					var glyphOffset = glyphOffsets.computeIfAbsent(new GlyphOffsetKey(request.heightA, run.faceIndex(), glyph), key -> {
 						var tempFace = fontData.borrowFaceWithHeightA(key.fontIndex, key.heightA);
-						assertFtSuccess(FT_Load_Glyph(tempFace.ftFace, glyph, 0), "FT_Load_Glyph", context);
+						String context = "face=" + tempFace.ftFace + ", glyph=" + key.glyph + ", string=" + run.text();
+						assertFtSuccess(FT_Load_Glyph(tempFace.ftFace, key.glyph, 0), "FT_Load_Glyph", context);
 						var glyphSlot = tempFace.ftFace.glyph();
 						if (glyphSlot == null) throw new RuntimeException("Glyph slot should not be null right now");
 						var result = new GlyphOffset(glyphSlot.bitmap_left(), glyphSlot.bitmap_top());

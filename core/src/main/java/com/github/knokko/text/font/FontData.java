@@ -56,18 +56,16 @@ public class FontData {
 	}
 
 	public TextFace borrowFaceWithHeightA(int faceIndex, int height) {
-		int size, heightScale;
-		synchronized (this.heightSearchers[faceIndex]) {
-			int originalHeight = height;
-			heightScale = 1;
-			while (height > maxHeight) {
-				heightScale += 1;
-				height = originalHeight / heightScale;
-			}
-
-			int desiredRawHeight = height * 64;
-			size = heightSearchers[faceIndex].search(desiredRawHeight, height, 3, 10 * height);
+		int originalHeight = height;
+		int heightScale = 1;
+		while (height > maxHeight) {
+			heightScale += 1;
+			height = originalHeight / heightScale;
 		}
+
+		int desiredRawHeight = height * 64;
+
+		int size = heightSearchers[faceIndex].search(desiredRawHeight, height, 3, 10 * height);
 
 		return borrowFaceWithSize(faceIndex, size, heightScale);
 	}
