@@ -62,14 +62,24 @@ class TextSplitter {
 				if (last.glyphInfos() == null || last.glyphPositions() == null) {
 					merged.add(new TextRun(last.text() + run.text(), run.faceIndex(), last.offset(), run.glyphInfos(), run.glyphPositions()));
 				} else {
-					int oldSize = last.glyphInfos().capacity();
-					int newSize = run.glyphInfos().capacity();
+					int oldSize = last.glyphInfos().limit();
+					int newSize = run.glyphInfos().limit();
 					int totalSize = oldSize + newSize;
 
-					var mergedInfo = hb_glyph_info_t.calloc(totalSize); // TODO Add stack parameter back to all the callocs?
-					var mergedPositions = hb_glyph_position_t.calloc(totalSize);
-					memCopy(last.glyphInfos().address(), mergedInfo.address(), (long) oldSize * hb_glyph_info_t.SIZEOF);
-					memCopy(last.glyphPositions().address(), mergedPositions.address(), (long) oldSize * hb_glyph_position_t.SIZEOF);
+					hb_glyph_info_t.Buffer mergedInfo;
+					hb_glyph_position_t.Buffer mergedPositions;
+					if (totalSize > last.glyphInfos().capacity()) {
+						mergedInfo = hb_glyph_info_t.calloc(totalSize * 2, stack);
+						mergedInfo.limit(totalSize);
+						mergedPositions = hb_glyph_position_t.calloc(totalSize * 2, stack);
+						mergedPositions.limit(totalSize);
+						memCopy(last.glyphInfos().address(), mergedInfo.address(), (long) oldSize * hb_glyph_info_t.SIZEOF);
+						memCopy(last.glyphPositions().address(), mergedPositions.address(), (long) oldSize * hb_glyph_position_t.SIZEOF);
+					} else {
+						mergedInfo = last.glyphInfos().limit(totalSize);
+						mergedPositions = last.glyphPositions().limit(totalSize);
+					}
+
 					memCopy(run.glyphInfos().address(), mergedInfo.address(oldSize), (long) newSize * hb_glyph_info_t.SIZEOF);
 					memCopy(run.glyphPositions().address(), mergedPositions.address(oldSize), (long) newSize * hb_glyph_position_t.SIZEOF);
 
@@ -101,11 +111,11 @@ class TextSplitter {
 		int resultSize = limit - startIndex;
 		if (resultSize == 0) return new TextRun(smallString, substring.faceIndex, substring.startIndex, null, null);
 
-		var resultInfo = hb_glyph_info_t.calloc(resultSize);
+		var resultInfo = hb_glyph_info_t.calloc(resultSize, stack);
 		memCopy(originalInfo.address(startIndex), resultInfo.address(), (long) resultInfo.capacity() * hb_glyph_info_t.SIZEOF);
 		resultInfo.forEach(info -> info.cluster(info.cluster() - substring.startIndex));
 
-		var resultPositions = hb_glyph_position_t.calloc(resultSize);
+		var resultPositions = hb_glyph_position_t.calloc(resultSize, stack);
 		memCopy(originalPositions.address(startIndex), resultPositions.address(), (long) resultPositions.capacity() * hb_glyph_position_t.SIZEOF);
 
 		return new TextRun(smallString, substring.faceIndex, substring.startIndex, resultInfo, resultPositions);
@@ -132,13 +142,6 @@ class TextSplitter {
 		List<TextRun> runs = new ArrayList<>(substrings.size());
 		if (substrings.size() == 1 && substrings.get(0).succeeded) {
 			var glyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(hbBuffer));
-
-			var newGlyphInfo = hb_glyph_info_t.calloc(glyphInfo.capacity());
-			var newGlyphPositions = hb_glyph_position_t.calloc(glyphPositions.capacity());
-			memCopy(glyphInfo.address(), newGlyphInfo.address(), (long) glyphInfo.capacity() * hb_glyph_info_t.SIZEOF);
-			memCopy(glyphPositions.address(), newGlyphPositions.address(), (long) glyphPositions.capacity() * hb_glyph_position_t.SIZEOF);
-			glyphInfo = newGlyphInfo;
-			glyphPositions = newGlyphPositions;
 
 			String smallString = originalString.substring(substrings.get(0).startIndex(), substrings.get(0).limit());
 			runs.add(extractGlyphIntoTextRun(smallString, substrings.get(0), glyphInfo, glyphPositions, stack));

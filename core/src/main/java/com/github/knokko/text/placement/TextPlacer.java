@@ -12,7 +12,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
-import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.memCalloc;
+import static org.lwjgl.system.MemoryUtil.memFree;
 import static org.lwjgl.util.freetype.FreeType.FT_Load_Glyph;
 import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 
@@ -34,7 +35,10 @@ public class TextPlacer {
 	public Stream<PlacedGlyph> place(Stream<TextPlaceRequest> requests) {
 		// TODO Parallel stream?
 		return requests.sorted().flatMap(request -> {
-			try (var stack = stackPush()) {
+			double sizeFactor = ((request.text.length() + 1) * Math.log(request.text.length() + Math.E));
+			var stackBuffer = memCalloc((int) (250 * sizeFactor));
+			try {
+				var stack = MemoryStack.create(stackBuffer);
 				return placeFree(request, stack).stream().map(placement -> new PlacedGlyph(
 						placement.glyph,
 						request.minX + placement.minX,
@@ -42,6 +46,8 @@ public class TextPlacer {
 						placement.request,
 						placement.charIndex
 				));
+			} finally {
+				memFree(stackBuffer);
 			}
 		});
 	}
