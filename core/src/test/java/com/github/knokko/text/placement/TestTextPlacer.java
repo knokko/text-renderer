@@ -49,6 +49,7 @@ public class TestTextPlacer {
 
 			System.out.println(ftFace.glyph().metrics().height());
 			// Ubuntu prints 226560
+			// Windows prints 37760
 
 			assertFtSuccess(FT_Done_Face(ftFace), "Done_Face", "freeserif");
 			assertFtSuccess(FT_Done_FreeType(ftLibrary), "Done_FreeType", "TestTextPlacer");
