@@ -115,12 +115,12 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 	}
 
 	@Override
-	protected void setup(BoilerInstance boiler) {
+	protected void setup(BoilerInstance boiler, MemoryStack stack) {
 		profilerStorage = SampleStorage.frequency();
 		profiler = new SampleProfiler(profilerStorage);
 		profiler.start();
 
-		super.setup(boiler);
+		super.setup(boiler, stack);
 		this.swapchainImageViews = new SwapchainResourceManager<>(swapchainImage -> boiler.images.createSimpleView(
 				swapchainImage.vkImage(), window.surfaceFormat, VK_IMAGE_ASPECT_COLOR_BIT, "SwapchainImageView"
 		), swapchainImageView -> vkDestroyImageView(boiler.vkDevice(), swapchainImageView, null));
@@ -138,10 +138,8 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
 		long descriptorSet;
 
-		try (var stack = stackPush()) { // TODO Add stack parameter for convenience?
-			descriptorSet = textDescriptorPool.allocate(stack, 1)[0];
-			vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
-		}
+		descriptorSet = textDescriptorPool.allocate(stack, 1)[0];
+		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
 
 		vkTextRenderer = vkTextPipeline.createRenderer(unicodeFont, descriptorSet, glyphsBuffer, quadHostBuffer);
 		unicodeTestCase = UnicodeLines.get();
