@@ -141,7 +141,7 @@ public class TestUnicodeManyDraws {
 		assertImageEquals(
 				"expected-unicode-test-result.png",
 				boiler.buffers.decodeBufferedImageRGBA(resultBuffer, 0, width, height),
-				"actual-unicode-test-result-vulkan-many.png"
+				"actual-unicode-test-result-vulkan-many.png", false
 		);
 
 		resultBuffer.destroy(boiler);

@@ -34,7 +34,12 @@ public class TestBufferedImageRenderer {
 		requests.add(new TextPlaceRequest("(Only) 1 word (אלט) is Hebrew", 10, 90, 490, 120, 114, 18, null));
 		renderer.render(requests);
 
-		assertImageEquals("expected-english-hebrew-mix.png", renderer.image, "actual-english-hebrew-mix.png");
+		assertImageEquals(
+				"expected-english-hebrew-mix.png",
+				renderer.image,
+				"actual-english-hebrew-mix.png",
+				true
+		);
 
 		renderer.destroy();
 		font.destroy();
@@ -129,7 +134,12 @@ public class TestBufferedImageRenderer {
 		new BufferedImageTextRenderer(targetImage, yiFont, glyphBufferCapacity).render(shift(unicodeRequests, 14));
 		new BufferedImageTextRenderer(targetImage, marksFont, glyphBufferCapacity).render(shift(unicodeRequests, 15));
 
-		assertImageEquals("expected-ascents-and-descents.png", targetImage, "actual-ascents-and-descents.png");
+		assertImageEquals(
+				"expected-ascents-and-descents.png",
+				targetImage,
+				"actual-ascents-and-descents.png",
+				true
+		);
 
 		unicodeFont.destroy();
 		freeserifFont.destroy();
@@ -170,7 +180,12 @@ public class TestBufferedImageRenderer {
 
 		renderer.render(requests);
 
-		assertImageEquals("expected-unicode-test-result.png", renderer.image, "actual-unicode-test-result.png");
+		assertImageEquals(
+				"expected-unicode-test-result.png",
+				renderer.image,
+				"actual-unicode-test-result.png",
+				true
+		);
 
 		renderer.destroy();
 		font.destroy();
@@ -198,7 +213,7 @@ public class TestBufferedImageRenderer {
 
 		assertImageEquals(
 				"expected-unicode-test-result.png", renderer.image,
-				"actual-unicode-test-result-multiple-frames.png"
+				"actual-unicode-test-result-multiple-frames.png", true
 		);
 
 		renderer.destroy();
@@ -234,7 +249,10 @@ public class TestBufferedImageRenderer {
 
 		renderer.render(requests);
 
-		assertImageEquals("expected-very-large-text.png", renderer.image, "actual-very-large-text.png");
+		assertImageEquals(
+				"expected-very-large-text.png", renderer.image,
+				"actual-very-large-text.png", true
+		);
 
 		renderer.destroy();
 		font.destroy();
@@ -269,7 +287,10 @@ public class TestBufferedImageRenderer {
 
 		renderer.render(requests);
 
-		assertImageEquals("expected-large-text.png", renderer.image, "actual-large-text.png");
+		assertImageEquals(
+				"expected-large-text.png", renderer.image,
+				"actual-large-text.png", true
+		);
 
 		renderer.destroy();
 		font.destroy();
