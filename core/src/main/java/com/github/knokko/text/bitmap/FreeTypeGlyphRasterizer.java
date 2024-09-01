@@ -3,11 +3,9 @@ package com.github.knokko.text.bitmap;
 import com.github.knokko.text.font.FontData;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.freetype.FT_Bitmap;
-import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FT_GlyphSlot;
 
 import java.nio.ByteBuffer;
-import java.util.function.IntConsumer;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.util.freetype.FreeType.FT_LOAD_RENDER;
