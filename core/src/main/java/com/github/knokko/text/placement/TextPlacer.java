@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.system.MemoryUtil.*;
-import static org.lwjgl.util.freetype.FreeType.FT_Load_Glyph;
+import static org.lwjgl.util.freetype.FreeType.*;
 
 public class TextPlacer {
 
@@ -69,6 +69,7 @@ public class TextPlacer {
 
 		int cursorX = 0;
 		int cursorY = 0;
+		int previousRsbDelta = 0;
 
 		runLoop:
 		for (TextRun run : runs) {
@@ -86,26 +87,34 @@ public class TextPlacer {
 					var glyphOffset = glyphOffsets.computeIfAbsent(new GlyphOffsetKey(request.heightA, run.faceIndex(), glyph), key -> {
 						var tempFace = fontData.borrowFaceWithHeightA(key.fontIndex, key.heightA);
 						String context = "face=" + tempFace.ftFace + ", glyph=" + key.glyph + ", string=" + run.text();
-						assertFtSuccess(FT_Load_Glyph(tempFace.ftFace, key.glyph, 0), "FT_Load_Glyph", context);
+						assertFtSuccess(FT_Load_Glyph(tempFace.ftFace, key.glyph, FT_LOAD_BITMAP_METRICS_ONLY), "FT_Load_Glyph", context);
 						var glyphSlot = tempFace.ftFace.glyph();
 						if (glyphSlot == null) throw new RuntimeException("Glyph slot should not be null right now");
-						var result = new GlyphOffset(glyphSlot.bitmap_left(), glyphSlot.bitmap_top());
+						var result = new GlyphOffset(
+								glyphSlot.bitmap_left(), glyphSlot.bitmap_top(),
+								(int) glyphSlot.lsb_delta(), (int) glyphSlot.rsb_delta()
+						);
 						fontData.returnFace(tempFace);
 						return result;
 					});
 
-					int scale = currentFace.getScale();
+					if (previousRsbDelta - glyphOffset.lsbDelta > 32) cursorX -= 64;
+					else if (previousRsbDelta - glyphOffset.lsbDelta < -31) cursorX += 64;
+
+					previousRsbDelta = glyphOffset.rsbDelta;
+
+					int scale = currentFace.scale;
 					placements.add(new PlacedGlyph(
-							new SizedGlyph(glyph, run.faceIndex(), currentFace.getSize(false), scale),
-							cursorX + scale * (position.x_offset() + glyphOffset.bitmapLeft),
-							cursorY + scale * (position.y_offset() - glyphOffset.bitmapTop),
+							new SizedGlyph(glyph, run.faceIndex(), currentFace.fontSize, scale),
+							cursorX / 64 + scale * (position.x_offset() + glyphOffset.bitmapLeft),
+							cursorY / 64 + scale * (position.y_offset() - glyphOffset.bitmapTop),
 							request, charIndex
 					));
 
-					cursorX += scale * position.x_advance() / 64;
-					cursorY += scale * position.y_advance() / 64;
+					cursorX += scale * position.x_advance();
+					cursorY += scale * position.y_advance();
 
-					if (cursorX > request.getWidth() && splitter.wasBaseLeftToRight) break runLoop;
+					if (cursorX > 64 * request.getWidth() && splitter.wasBaseLeftToRight) break runLoop;
 				}
 			}
 
@@ -113,7 +122,7 @@ public class TextPlacer {
 		}
 
 		if (!splitter.wasBaseLeftToRight) {
-			int shift = request.getWidth() - cursorX;
+			int shift = request.getWidth() - cursorX / 64;
 			placements = placements.stream().map(placement -> new PlacedGlyph(
 					placement.glyph, placement.minX + shift,
 					placement.minY, placement.request, placement.charIndex
@@ -136,5 +145,5 @@ public class TextPlacer {
 	}
 
 	record GlyphOffsetKey(int heightA, int fontIndex, int glyph) {}
-	record GlyphOffset(int bitmapLeft, int bitmapTop) {}
+	record GlyphOffset(int bitmapLeft, int bitmapTop, int lsbDelta, int rsbDelta) {}
 }

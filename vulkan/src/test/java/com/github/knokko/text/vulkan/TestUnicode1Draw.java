@@ -32,7 +32,7 @@ public class TestUnicode1Draw {
 		int colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
 		var instance = new TextInstance();
-		var font = new FontData(instance, 10_000, UnicodeFonts.SOURCE);
+		var font = new FontData(instance, UnicodeFonts.SOURCE);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		int minY = 5;
@@ -67,8 +67,6 @@ public class TestUnicode1Draw {
 		);
 
 		try (var stack = stackPush()) {
-
-
 			var descriptorSet = textDescriptorPool.allocate(stack, 1)[0];
 			vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
 
@@ -109,6 +107,8 @@ public class TestUnicode1Draw {
 
 			vkDestroyCommandPool(boiler.vkDevice(), commandPool, null);
 			image.destroy(boiler);
+
+			vkTextRenderer.destroy();
 		}
 
 		assertImageEquals(

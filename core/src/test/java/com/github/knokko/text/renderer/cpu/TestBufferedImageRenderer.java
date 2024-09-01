@@ -21,7 +21,7 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void testPartialHebrew() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 200, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
+		var font = new FontData(instance, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(500, 130, BufferedImage.TYPE_INT_RGB),
 				font, 10_000
@@ -60,23 +60,23 @@ public class TestBufferedImageRenderer {
 	@SuppressWarnings({"UnnecessaryUnicodeEscape", "SpellCheckingInspection"})
 	public void testLargeAscentsAndDescents() {
 		var instance = new TextInstance();
-		var unicodeFont = new FontData(instance, 200, UnicodeFonts.SOURCE);
-		var freeserifFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/unicode-freeserif.ttf"));
-		var quiviraFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/unicode-quivira.ttf"));
-		var polyglottFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
-		var cjkFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/cjk.ttf"));
-		var thaanaFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/thaana.ttf"));
-		var syriacFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/syriac.otf"));
-		var gujaratiFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/gujarati.ttf"));
-		var oriyaFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/oriya.ttf"));
-		var teluguFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/telugu.otf"));
-		var kannadaFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/kannada.ttf"));
-		var tibetanFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/tibetan.ttf"));
-		var myanmarFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/myanmar.ttf"));
-		var hangulFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/hangul.ttf"));
-		var mongolianFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/mongolian.ttf"));
-		var yiFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/yi.ttf"));
-		var marksFont = new FontData(instance, 200, new ClasspathFontsSource("fonts/marks.ttf"));
+		var unicodeFont = new FontData(instance, UnicodeFonts.SOURCE);
+		var freeserifFont = new FontData(instance, new ClasspathFontsSource("fonts/unicode-freeserif.ttf"));
+		var quiviraFont = new FontData(instance, new ClasspathFontsSource("fonts/unicode-quivira.ttf"));
+		var polyglottFont = new FontData(instance, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
+		var cjkFont = new FontData(instance, new ClasspathFontsSource("fonts/cjk.ttf"));
+		var thaanaFont = new FontData(instance, new ClasspathFontsSource("fonts/thaana.ttf"));
+		var syriacFont = new FontData(instance, new ClasspathFontsSource("fonts/syriac.otf"));
+		var gujaratiFont = new FontData(instance, new ClasspathFontsSource("fonts/gujarati.ttf"));
+		var oriyaFont = new FontData(instance, new ClasspathFontsSource("fonts/oriya.ttf"));
+		var teluguFont = new FontData(instance, new ClasspathFontsSource("fonts/telugu.otf"));
+		var kannadaFont = new FontData(instance, new ClasspathFontsSource("fonts/kannada.ttf"));
+		var tibetanFont = new FontData(instance, new ClasspathFontsSource("fonts/tibetan.ttf"));
+		var myanmarFont = new FontData(instance, new ClasspathFontsSource("fonts/myanmar.ttf"));
+		var hangulFont = new FontData(instance, new ClasspathFontsSource("fonts/hangul.ttf"));
+		var mongolianFont = new FontData(instance, new ClasspathFontsSource("fonts/mongolian.ttf"));
+		var yiFont = new FontData(instance, new ClasspathFontsSource("fonts/yi.ttf"));
+		var marksFont = new FontData(instance, new ClasspathFontsSource("fonts/marks.ttf"));
 
 		BufferedImage targetImage = new BufferedImage(2000, 3000, BufferedImage.TYPE_INT_RGB);
 		for (int y = 10; y < targetImage.getHeight(); y += 100) {
@@ -154,7 +154,7 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void unicodeTestCase() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 20_000, UnicodeFonts.SOURCE);
+		var font = new FontData(instance, UnicodeFonts.SOURCE);
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(3500, 9700, BufferedImage.TYPE_INT_RGB),
 				font, 3_000_000
@@ -180,7 +180,7 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void unicodeTestCaseInMultipleFrames() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 20_000, UnicodeFonts.SOURCE);
+		var font = new FontData(instance, UnicodeFonts.SOURCE);
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(3500, 9700, BufferedImage.TYPE_INT_RGB),
 				font, 90_000
@@ -209,7 +209,8 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void testVeryLargeText() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 20_000, UnicodeFonts.SOURCE);
+		var font = new FontData(instance, UnicodeFonts.SOURCE);
+		font.setMaxHeight(300);
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(11000, 3000, BufferedImage.TYPE_INT_RGB),
 				font, 1_000_000
@@ -243,7 +244,8 @@ public class TestBufferedImageRenderer {
 	@Test
 	public void setMaxHeight() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 38, UnicodeFonts.SOURCE);
+		var font = new FontData(instance, UnicodeFonts.SOURCE);
+		font.setMaxHeight(38);
 		var renderer = new BufferedImageTextRenderer(
 				new BufferedImage(4000, 300, BufferedImage.TYPE_INT_RGB),
 				font, 50_000

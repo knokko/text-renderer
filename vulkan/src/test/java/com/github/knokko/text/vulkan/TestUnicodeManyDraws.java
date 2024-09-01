@@ -33,7 +33,7 @@ public class TestUnicodeManyDraws {
 		int colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
 		var instance = new TextInstance();
-		var font = new FontData(instance, 10_000, UnicodeFonts.SOURCE);
+		var font = new FontData(instance, UnicodeFonts.SOURCE);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		int minY = 5;
@@ -134,6 +134,7 @@ public class TestUnicodeManyDraws {
 
 		System.out.println("finished drawing: " + (System.nanoTime() - startTime) / 1000_000);
 
+		vkTextRenderer.destroy();
 		vkDestroyCommandPool(boiler.vkDevice(), commandPool, null);
 		image.destroy(boiler);
 

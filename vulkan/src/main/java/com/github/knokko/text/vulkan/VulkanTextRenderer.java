@@ -122,4 +122,8 @@ public class VulkanTextRenderer {
 
 		memPutInt(address + 32, color);
 	}
+
+	public void destroy() {
+		placer.destroy();
+	}
 }

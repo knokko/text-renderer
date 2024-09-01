@@ -17,7 +17,7 @@ public class TestTextPlacer {
 	@Test
 	public void testWrongFontRegressionItalic() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 100, new ClasspathFontsSource(
+		var font = new FontData(instance, new ClasspathFontsSource(
 				"fonts/unicode-freeserif.ttf", "fonts/unicode-quivira.ttf"
 		));
 		var placer = new TextPlacer(font);
@@ -53,7 +53,7 @@ public class TestTextPlacer {
 	@Test
 	public void testRegressionParallel() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 100, new ClasspathFontsSource("fonts/thaana.ttf"));
+		var font = new FontData(instance, new ClasspathFontsSource("fonts/thaana.ttf"));
 		var placer = new TextPlacer(font);
 
 		var requests = new ArrayList<TextPlaceRequest>();
@@ -63,7 +63,7 @@ public class TestTextPlacer {
 
 		for (int counter = 0; counter < 10; counter++) {
 			var result = placer.place(requests.parallelStream()).count();
-			assertEquals(18505, result);
+			assertEquals(18317, result);
 		}
 
 		placer.destroy();
@@ -74,7 +74,7 @@ public class TestTextPlacer {
 	@Test
 	public void testWrongFontRegressionSyriac() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 100, new ClasspathFontsSource("fonts/thaana.ttf", "fonts/syriac.otf"));
+		var font = new FontData(instance, new ClasspathFontsSource("fonts/thaana.ttf", "fonts/syriac.otf"));
 		var placer = new TextPlacer(font);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
@@ -114,14 +114,14 @@ public class TestTextPlacer {
 	@Test
 	public void testSpecialsRegression() {
 		var instance = new TextInstance();
-		var unicodeFont = new FontData(instance, 200, UnicodeFonts.SOURCE);
+		var unicodeFont = new FontData(instance, UnicodeFonts.SOURCE);
 		var placer = new TextPlacer(unicodeFont);
 
 		var requests = new ArrayList<TextPlaceRequest>();
 		requests.add(new TextPlaceRequest("￹ ￺ ￻ ￼ �", 0, 10, 1000, 90, 60, 40, null));
 
 		var result = placer.place(requests.stream());
-		assertArrayEquals(new int[] { 5, 41, 60, 96, 115, 151, 167, 227, 242 }, result.mapToInt(placement -> placement.minX).toArray());
+		assertArrayEquals(new int[] { 5, 41, 61, 97, 117, 154, 170, 231, 247 }, result.mapToInt(placement -> placement.minX).toArray());
 
 		placer.destroy();
 		unicodeFont.destroy();
@@ -131,7 +131,7 @@ public class TestTextPlacer {
 	@Test
 	public void testAscentRegression() {
 		var instance = new TextInstance();
-		var unicodeFont = new FontData(instance, 200, UnicodeFonts.SOURCE);
+		var unicodeFont = new FontData(instance, UnicodeFonts.SOURCE);
 		var placer = new TextPlacer(unicodeFont);
 
 		@SuppressWarnings({"UnnecessaryUnicodeEscape", "SpellCheckingInspection"})
@@ -141,11 +141,11 @@ public class TestTextPlacer {
 		requests.add(new TextPlaceRequest(testString, 10, 110, 1000, 1900, 160, 30, null));
 
 		var result = placer.place(requests.stream()).toList();
-		assertArrayEquals(new int[] { 11, 29, 47, 66, 87, 105, 124, 116 }, result.stream().mapToInt(glyph -> glyph.minX).toArray());
+		assertArrayEquals(new int[] { 11, 29, 48, 68, 90, 109, 128, 120 }, result.stream().mapToInt(glyph -> glyph.minX).toArray());
 		assertArrayEquals(new int[] { 0, 1, 2, 3, 4, 5, 6, 7 }, result.stream().mapToInt(glyph -> glyph.charIndex).toArray());
 		assertArrayEquals(new int[] { 68, 68, 68, 1521, 68, 68, 68, 2341 }, result.stream().mapToInt(glyph -> glyph.glyph.id).toArray());
 		assertArrayEquals(new int[] { 0, 0, 0, 2, 0, 0, 1, 1 }, result.stream().mapToInt(glyph -> glyph.glyph.faceIndex).toArray());
-		assertArrayEquals(new int[] { 44, 44, 44, 49, 44, 44, 44, 44 }, result.stream().mapToInt(glyph -> glyph.glyph.size).toArray());
+		assertArrayEquals(new int[] { 2822, 2822, 2822, 3123, 2822, 2822, 2765, 2765 }, result.stream().mapToInt(glyph -> glyph.glyph.size).toArray());
 
 		placer.destroy();
 		unicodeFont.destroy();
@@ -155,7 +155,7 @@ public class TestTextPlacer {
 	@Test
 	public void testWrongFontRegressionTagalog() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 100, new ClasspathFontsSource(
+		var font = new FontData(instance, new ClasspathFontsSource(
 				"fonts/unicode-freeserif.ttf",
 				"fonts/unicode-quivira.ttf"
 		));
@@ -182,7 +182,7 @@ public class TestTextPlacer {
 	@Test
 	public void regressionHiInsideArabic() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 100, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
+		var font = new FontData(instance, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
 		var placer = new TextPlacer(font);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
@@ -240,7 +240,7 @@ public class TestTextPlacer {
 	@Test
 	public void testOffsetRegressionGujarati() {
 		var instance = new TextInstance();
-		var font = new FontData(instance, 100, UnicodeFonts.SOURCE);
+		var font = new FontData(instance, UnicodeFonts.SOURCE);
 		var placer = new TextPlacer(font);
 
 		String gujaratiText = "૬ ૭ ૮ ૯";

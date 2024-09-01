@@ -1,7 +1,6 @@
 package com.github.knokko.text.renderer.cpu;
 
 import com.github.knokko.text.font.FontData;
-import com.github.knokko.text.font.TextFont;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

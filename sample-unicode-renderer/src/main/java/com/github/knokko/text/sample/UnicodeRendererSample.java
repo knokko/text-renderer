@@ -126,7 +126,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		), swapchainImageView -> vkDestroyImageView(boiler.vkDevice(), swapchainImageView, null));
 
 		textInstance = new TextInstance();
-		unicodeFont = new FontData(textInstance, 200, UnicodeFonts.SOURCE);
+		unicodeFont = new FontData(textInstance, UnicodeFonts.SOURCE);
 		vkTextInstance = new VulkanTextInstance(boiler);
 		vkTextPipeline = vkTextInstance.createPipelineWithDynamicRendering(
 				0, window.surfaceFormat, null, null
@@ -206,6 +206,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		glyphBuffer.destroy(boiler);
 		quadBuffer.destroy(boiler);
 		textDescriptorPool.destroy();
+		vkTextRenderer.destroy();
 		vkTextPipeline.destroy();
 		vkTextInstance.destroyInitialObjects();
 		unicodeFont.destroy();

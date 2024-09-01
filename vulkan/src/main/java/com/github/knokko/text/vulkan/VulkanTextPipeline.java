@@ -2,7 +2,6 @@ package com.github.knokko.text.vulkan;
 
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.FontData;
-import com.github.knokko.text.font.TextFont;
 
 import java.nio.IntBuffer;
 

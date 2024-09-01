@@ -4,39 +4,31 @@ import com.github.knokko.text.TextInstance;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.lwjgl.util.freetype.FreeType.FT_LOAD_BITMAP_METRICS_ONLY;
+import static org.lwjgl.util.freetype.FreeType.FT_Load_Char;
 
 public class TestFont {
 
 	@Test
 	public void testSetHeight() {
 		var instance = new TextInstance();
-		var font = instance.createFont(new FilesFontSource(new File(
+		var font = new FontData(instance, new FilesFontSource(new File(
 				"../unicode-fonts/src/main/resources/fonts/unicode-freeserif.ttf"
 		)));
 
-		font.setHeight(15);
-		int height = font.getHeight(true);
-		assertEquals(height, font.getHeight(false));
+		var face = font.borrowFaceWithHeightA(0, 15);
+		assertFtSuccess(FT_Load_Char(
+				face.ftFace, 'A', FT_LOAD_BITMAP_METRICS_ONLY
+		), "Load_Char", "TestFont.testSetHeight");
+
+		long height = Objects.requireNonNull(face.ftFace.glyph()).metrics().height() / 64;
 		assertTrue(height >= 14 && height <= 16, "Font height (" + height + ") should be in range [14, 16]");
 
-		font.destroy();
-		instance.destroy();
-	}
-
-	@Test
-	public void testSetHeightRegression() {
-		var instance = new TextInstance();
-		var font = instance.createFont(new FilesFontSource(new File(
-				"../unicode-fonts/src/main/resources/fonts/unicode-freeserif.ttf"
-		)));
-
-		font.setHeight(21);
-		int height = font.getHeight(false);
-		assertTrue(height >= 20 && height <= 22, "Font height (" + height + ") should be in range [20, 22]");
-
+		font.returnFace(face);
 		font.destroy();
 		instance.destroy();
 	}
@@ -44,12 +36,15 @@ public class TestFont {
 	@Test
 	public void testSetSize() {
 		var instance = new TextInstance();
-		var font = instance.createFont(new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
+		var font = new FontData(instance, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
+		var face = font.borrowFaceWithSize(0, 10 * 64, 1);
 
-		font.setSize(10);
-		int height = font.getHeight(true);
-		assertEquals(height, font.getHeight(false));
-		assertTrue(height >= 11 && height <= 15, "Font height (" + height + ") should be in range [11, 15]");
+		assertFtSuccess(FT_Load_Char(
+				face.ftFace, 'A', FT_LOAD_BITMAP_METRICS_ONLY
+		), "Load_Char", "TestFont.testSetHeight");
+
+		long height = Objects.requireNonNull(face.ftFace.glyph()).metrics().height() / 64;
+		assertTrue(height >= 7 && height <= 9, "Font height (" + height + ") should be in range [7, 9]");
 
 		font.destroy();
 		instance.destroy();

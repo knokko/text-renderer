@@ -6,8 +6,6 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FreeType;
 
-import java.nio.ByteBuffer;
-
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.freetype.FreeType.*;
@@ -38,36 +36,6 @@ public class TextInstance {
 
 	public synchronized FT_Face createFreeTypeFace(FreeTypeFaceSource source, MemoryStack stack) {
 		return source.createFreeTypeFace(ftLibrary, stack);
-	}
-
-	public synchronized TextFont createFont(FontSource... fonts) {
-		LoadedFonts[] loaded = new LoadedFonts[fonts.length];
-
-		for (int index = 0; index < fonts.length; index++) {
-			loaded[index] = fonts[index].load(ftLibrary);
-			fonts[index].load(ftLibrary);
-		}
-
-		int numFaces = 0;
-		int numBuffers = 0;
-		for (LoadedFonts font : loaded) {
-			numFaces += font.ftFaces().length;
-			numBuffers += font.fontBuffers().length;
-		}
-
-		FT_Face[] faces = new FT_Face[numFaces];
-		ByteBuffer[] buffers = new ByteBuffer[numBuffers];
-
-		int faceIndex = 0;
-		int bufferIndex = 0;
-		for (LoadedFonts font : loaded) {
-			System.arraycopy(font.ftFaces(), 0, faces, faceIndex, font.ftFaces().length);
-			faceIndex += font.ftFaces().length;
-			System.arraycopy(font.fontBuffers(), 0, buffers, bufferIndex, font.fontBuffers().length);
-			bufferIndex += font.fontBuffers().length;
-		}
-
-		return new TextFont(faces, buffers);
 	}
 
 	public void destroy() {

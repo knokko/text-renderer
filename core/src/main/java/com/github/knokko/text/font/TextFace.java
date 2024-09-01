@@ -9,46 +9,25 @@ import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 public class TextFace {
 
 	public final FT_Face ftFace;
-	private final int scaledFontSize, unscaledFontSize, scale, heightScale;
+	public final int fontSize, scale;
 	public final long hbFont;
 	public final long hbBuffer;
 	final FontData.TextFaceKey key;
 
-	TextFace(FT_Face ftFace, int size, int heightScale, FontData.TextFaceKey key) {
+	TextFace(FT_Face ftFace, int size, int scale, FontData.TextFaceKey key) {
 		this.ftFace = ftFace;
 		this.hbBuffer = hb_buffer_create();
 		this.key = key;
 
 		if (size <= 0) throw new IllegalArgumentException("Size (" + size + ") must be positive");
 
-		int currentScale = 1;
-		int currentUnscaledFontSize = size;
+		// TODO Test pixel sizes < ~3 pixels
+		assertFtSuccess(FT_Set_Char_Size(
+				ftFace, size, 0, 0, 0
+		), "Set_Char_Size", "TextFace.setSize(" + size + ")");
 
-		String context = "TextFace.setSize(" + size + ")";
-
-		while (true) {
-			int charSizeResult = FT_Set_Char_Size(
-					ftFace, 0, currentUnscaledFontSize * 64L, 0, 5 * currentUnscaledFontSize
-			);
-			// TODO Handle very small sizes by downscaling
-			if (charSizeResult == FT_Err_Invalid_Pixel_Size) {
-				currentScale += 1;
-				currentUnscaledFontSize = size / currentScale;
-				if (size % currentScale != 0) currentUnscaledFontSize += 1;
-				continue;
-			}
-
-			assertFtSuccess(charSizeResult, "Set_Char_Size", context);
-			assertFtSuccess(FT_Set_Pixel_Sizes(
-					ftFace, 0, currentUnscaledFontSize
-			), "Set_Pixel_Sizes", context);
-			break;
-		}
-
-		this.scaledFontSize = size;
-		this.unscaledFontSize = currentUnscaledFontSize;
-		this.scale = currentScale;
-		this.heightScale = heightScale;
+		this.fontSize = size;
+		this.scale = scale;
 
 		this.hbFont = hb_ft_font_create_referenced(this.ftFace.address());
 		hb_ft_font_set_funcs(this.hbFont);
@@ -56,17 +35,7 @@ public class TextFace {
 
 	@Override
 	public String toString() {
-		return "TextFace((scaledSize, unscaledSize) = (" + scaledFontSize + ", " + unscaledFontSize +
-				"), (scale, heightScale) = (" + scale + ", " + heightScale + "))";
-	}
-
-	public int getSize(boolean scaled) {
-		if (scaled) return scaledFontSize;
-		else return unscaledFontSize;
-	}
-
-	public int getScale() {
-		return scale * heightScale;
+		return "TextFace(size = " + fontSize + ", scale = " + scale + ")";
 	}
 
 	void destroy() {
