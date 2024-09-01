@@ -104,17 +104,19 @@ public class TextPlacer {
 					previousRsbDelta = glyphOffset.rsbDelta;
 
 					int scale = currentFace.scale;
-					placements.add(new PlacedGlyph(
-							new SizedGlyph(glyph, run.faceIndex(), currentFace.fontSize, scale),
-							cursorX / 64 + scale * (position.x_offset() + glyphOffset.bitmapLeft),
-							cursorY / 64 + scale * (position.y_offset() - glyphOffset.bitmapTop),
-							request, charIndex
-					));
+					int placedMinX = cursorX / 64 + scale * (position.x_offset() + glyphOffset.bitmapLeft);
+					int placedMinY = cursorY / 64 + scale * (position.y_offset() - glyphOffset.bitmapTop);
+					if (placedMinX <= (request.maxX - request.minX) && placedMinY <= (request.maxY - request.minY)) {
+						placements.add(new PlacedGlyph(
+								new SizedGlyph(glyph, run.faceIndex(), currentFace.fontSize, scale),
+								placedMinX, placedMinY, request, charIndex
+						));
+					}
 
 					cursorX += scale * position.x_advance();
 					cursorY += scale * position.y_advance();
 
-					if (cursorX > 64 * request.getWidth() && splitter.wasBaseLeftToRight) break runLoop;
+					if (cursorX > 64 * (request.getWidth() + 2 * request.heightA) && splitter.wasBaseLeftToRight) break runLoop;
 				}
 			}
 

@@ -7,12 +7,35 @@ import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.util.UnicodeLines;
 import org.junit.jupiter.api.Test;
 
+import java.awt.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestTextPlacer {
+
+	@Test
+	public void testAggressiveCursorXRegression() {
+		int width = 18;
+		int height = 22;
+
+		var instance = new TextInstance();
+		var font = new FontData(instance, UnicodeFonts.SOURCE);
+
+		List<TextPlaceRequest> requests = new ArrayList<>();
+		String testCase = new String(HexFormat.of().parseHex("20E0B79120E0B79220E0B793"), StandardCharsets.UTF_8);
+		requests.add(new TextPlaceRequest(testCase, -4, -2, width - 1, height - 1, 18, 15, Color.WHITE));
+
+		var placer = new TextPlacer(font);
+		assertEquals(6, placer.place(requests.stream()).count());
+
+		placer.destroy();
+		font.destroy();
+		instance.destroy();
+	}
 
 	@Test
 	public void testWrongFontRegressionItalic() {
@@ -63,7 +86,7 @@ public class TestTextPlacer {
 
 		for (int counter = 0; counter < 10; counter++) {
 			var result = placer.place(requests.parallelStream()).count();
-			assertEquals(18317, result);
+			assertEquals(18104, result);
 		}
 
 		placer.destroy();
