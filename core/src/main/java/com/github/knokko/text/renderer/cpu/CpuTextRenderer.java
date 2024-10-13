@@ -28,7 +28,7 @@ public abstract class CpuTextRenderer {
 	public abstract void setPixel(int x, int y, int value);
 
 	public void render(Collection<TextPlaceRequest> requests) {
-		var placedGlyphs = placer.place(requests.stream());
+		var placedGlyphs = placer.place(requests);
 		glyphsBuffer.startFrame();
 		var glyphQuads = glyphsBuffer.bufferGlyphs(rasterizer, placedGlyphs);
 		glyphQuads.forEach(quad -> {

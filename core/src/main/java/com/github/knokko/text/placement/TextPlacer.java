@@ -6,11 +6,11 @@ import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.system.MemoryUtil.*;
@@ -30,8 +30,12 @@ public class TextPlacer {
 		this.fontData = font;
 	}
 
-	public Stream<PlacedGlyph> place(Stream<TextPlaceRequest> requests) {
-		return requests.sorted().flatMap(request -> {
+	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests) {
+		var requestList = new ArrayList<>(requests);
+		requestList.sort(null);
+		var placedGlyphs = new ArrayList<PlacedGlyph>(requests.size());
+
+		for (var request : requestList) {
 			double sizeFactor = ((request.text.length() + 1) * Math.log(request.text.length() + Math.E));
 			int requiredSize = (int) (250 * sizeFactor);
 
@@ -48,17 +52,23 @@ public class TextPlacer {
 
 			try {
 				var stack = MemoryStack.create(stackBuffer);
-				return placeFree(request, stack).stream().map(placement -> new PlacedGlyph(
-						placement.glyph,
-						request.minX + placement.minX,
-						request.baseY + placement.minY,
-						placement.request,
-						placement.charIndex
-				));
+				var localGlyphs = placeFree(request, stack);
+
+				for (var placement: localGlyphs) {
+					placedGlyphs.add(new PlacedGlyph(
+							placement.glyph,
+							request.minX + placement.minX,
+							request.baseY + placement.minY,
+							placement.request,
+							placement.charIndex
+					));
+				}
 			} finally {
 				allocations.add(stackBuffer);
 			}
-		});
+		}
+
+		return placedGlyphs;
 	}
 
 	@SuppressWarnings("resource")

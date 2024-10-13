@@ -112,7 +112,7 @@ public class TestBitmapGlyphsBuffer {
 		assertTrue(initialUsedSpace < 120, "initial used space is not smaller than slot size: " + initialUsedSpace);
 		glyphsBuffer.startFrame();
 
-		var quadCount = glyphsBuffer.bufferGlyphs(rasterizer, dummyGlyphs.stream()).count();
+		var quadCount = glyphsBuffer.bufferGlyphs(rasterizer, dummyGlyphs).size();
 		assertTrue(quadCount > 2, "Expected " + quadCount + " to be larger than 2");
 
 		assertTrue(glyphsBuffer.getUsedSpace() > 800);
@@ -134,7 +134,7 @@ public class TestBitmapGlyphsBuffer {
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20, 1), 2, 1, placeRequest, 0));
 
-		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs.stream());
+		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs);
 
 		byte[][] resultMap = new byte[16][30];
 
@@ -175,7 +175,7 @@ public class TestBitmapGlyphsBuffer {
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20, 1), 2, 1, placeRequest, 0));
 
-		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs.stream());
+		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs);
 
 		byte[][] resultMap = new byte[16][40];
 
@@ -219,7 +219,7 @@ public class TestBitmapGlyphsBuffer {
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 5, 2), 0, 0, placeRequest, 0));
 
-		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs.stream()).toList();
+		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs);
 		assertEquals(1, quads.size());
 
 		var quad = quads.get(0);
