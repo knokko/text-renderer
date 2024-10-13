@@ -131,11 +131,13 @@ public class VulkanTextRenderer {
 		memPutInt(address + 24, quad.sectionWidth);
 		memPutInt(address + 28, quad.scale);
 
-		int color;
-		if (quad.userData instanceof Color) color = ((Color) quad.userData).getRGB();
-		else color = Color.BLACK.getRGB();
+		Color color = Color.BLACK;
+		if (quad.userData instanceof Color) color = (Color) quad.userData;
 
-		memPutInt(address + 32, color);
+		memPutByte(address + 32, (byte) color.getRed());
+		memPutByte(address + 33, (byte) color.getGreen());
+		memPutByte(address + 34, (byte) color.getBlue());
+		memPutByte(address + 35, (byte) color.getAlpha());
 	}
 
 	public void destroy() {

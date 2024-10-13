@@ -41,7 +41,7 @@ void main() {
 	int red = rawColor & 255;
 	int green = (rawColor >> 8) & 255;
 	int blue = (rawColor >> 16) & 255;
-	// TODO Alpha?
+	int alpha = (rawColor >> 24) & 255;
 
-	outColor = vec4(red / 255.0, green / 255.0, blue / 255.0, intensity / 255.0);
+	outColor = vec4(red / 255.0, green / 255.0, blue / 255.0, (alpha / 255.0) * intensity / 255.0);
 }

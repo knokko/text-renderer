@@ -4,7 +4,7 @@ import java.util.function.IntUnaryOperator;
 
 public class HeightSearcher {
 
-	private final int[] cache;
+	private final int[] cache; // TODO Replace with hashmap?
 	private final IntUnaryOperator computeHeight;
 
 	HeightSearcher(int capacity, IntUnaryOperator computeHeight) {
