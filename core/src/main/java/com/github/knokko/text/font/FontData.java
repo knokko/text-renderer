@@ -15,7 +15,11 @@ public class FontData {
 	private final FreeTypeFaceSource[] faceSources;
 	private final HeightSearcher[] heightSearchers;
 	private int maxHeight = 100;
-	private final Map<TextFaceKey, List<TextFace>> faceCache = new HashMap<>();
+	private final Map<TextFaceKey, TextFaceList> faceCache = new HashMap<>();
+
+	private long totalBorrowCounter;
+	private long openFaceCounter;
+	private long openBorrowCounter;
 
 	public FontData(TextInstance textInstance, FontSource... fonts) {
 		this.textInstance = textInstance;
@@ -79,27 +83,58 @@ public class FontData {
 		// Performance measurements: creating a FT_Face takes 10 to 40 microseconds, and allocates 10 to 30 KB
 		// Resizing an existing FT_Face takes 1 to 15 microseconds
 		synchronized (faceCache) {
+			totalBorrowCounter += 1;
+
 			var key = new TextFaceKey(faceIndex, size, scale);
-			var faceList = faceCache.computeIfAbsent(key, k -> new ArrayList<>());
-			if (!faceList.isEmpty()) return faceList.remove(faceList.size() - 1);
+			var faceList = faceCache.computeIfAbsent(key, k -> new TextFaceList());
+			faceList.lastUsed = totalBorrowCounter;
+			faceList.borrowCounter += 1;
+			openBorrowCounter += 1;
+
+			if (openBorrowCounter > 50) throw new Error("Uh ooh");
+
+			if (!faceList.faces.isEmpty()) {
+				return faceList.faces.remove(faceList.faces.size() - 1);
+			}
 			try (var stack = stackPush()) {
 				var ftFace = textInstance.createFreeTypeFace(faceSources[faceIndex], stack);
+				openFaceCounter += 1;
+
+				if (openFaceCounter > 100) {
+					long oldestLastUsed = totalBorrowCounter;
+
+					for (var value : faceCache.values()) {
+						if (value.lastUsed < oldestLastUsed && !value.faces.isEmpty()) oldestLastUsed = value.lastUsed;
+					}
+
+					for (var value : faceCache.values()) {
+						if (value.lastUsed == oldestLastUsed) {
+							openFaceCounter -= value.faces.size();
+							for (var face : value.faces) face.destroy();
+							value.faces.clear();
+						}
+					}
+
+					faceCache.values().removeIf(value -> value.faces.isEmpty() && value.borrowCounter == 0);
+				}
 				return new TextFace(ftFace, size, scale, key);
 			}
-			// TODO Enforce maximum size
 		}
 	}
 
 	public void returnFace(TextFace face) {
 		synchronized (faceCache) {
-			faceCache.get(face.key).add(face);
+			var faceList = faceCache.get(face.key);
+			faceList.faces.add(face);
+			faceList.borrowCounter -= 1;
+			openBorrowCounter -= 1;
 		}
 	}
 
 	public void destroy() {
 		synchronized (textInstance) {
-			for (var fonts : faceCache.values()) {
-				for (var font : fonts) font.destroy();
+			for (var faceList : faceCache.values()) {
+				for (var face : faceList.faces) face.destroy();
 			}
 			faceCache.clear();
 		}
@@ -107,4 +142,16 @@ public class FontData {
 	}
 
 	record TextFaceKey(int faceIndex, int size, int heightScale) {}
+
+	static class TextFaceList {
+
+		final List<TextFace> faces = new ArrayList<>();
+		long lastUsed = 0;
+		long borrowCounter = 0;
+
+		@Override
+		public String toString() {
+			return "TextFaceList(lastUsed=" + lastUsed + ",borrowCounter=" + borrowCounter + "," + faces + ")";
+		}
+	}
 }
