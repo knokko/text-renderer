@@ -14,7 +14,10 @@ public class HeightSearcher {
 
 	int getHeight(int size) {
 		if (size <= 0) throw new IllegalArgumentException("Size (" + size + ") must be positive");
-		if (size >= cache.length) return computeHeight.applyAsInt(size);
+		if (size >= cache.length) {
+			System.out.println("text-renderer HeightSearches: cache is too small (" + cache.length + ") for " + size);
+			return computeHeight.applyAsInt(size);
+		}
 
 		int cachedHeight = cache[size];
 		if (cachedHeight != 0) return cachedHeight - 10;
