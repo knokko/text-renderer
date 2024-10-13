@@ -41,7 +41,7 @@ public class FontData {
 		this.heightSearchers = new HeightSearcher[faceSources.length];
 		for (index = 0; index < faceSources.length; index++) {
 			int faceIndex = index;
-			this.heightSearchers[faceIndex] = new HeightSearcher(50_000, size -> {
+			this.heightSearchers[faceIndex] = new HeightSearcher(100, size -> {
 				var face = this.borrowFaceWithSize(faceIndex, size, 1);
 
 				assertFtSuccess(FT_Load_Char(

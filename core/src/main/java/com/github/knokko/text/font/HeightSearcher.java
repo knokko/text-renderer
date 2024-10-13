@@ -1,29 +1,30 @@
 package com.github.knokko.text.font;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntUnaryOperator;
 
 public class HeightSearcher {
 
-	private final int[] cache; // TODO Replace with hashmap?
+	private final ConcurrentHashMap<Integer, Integer> cache = new ConcurrentHashMap<>();
 	private final IntUnaryOperator computeHeight;
+	private final int capacity;
 
 	HeightSearcher(int capacity, IntUnaryOperator computeHeight) {
-		this.cache = new int[capacity];
+		this.capacity = capacity;
 		this.computeHeight = computeHeight;
 	}
 
 	int getHeight(int size) {
 		if (size <= 0) throw new IllegalArgumentException("Size (" + size + ") must be positive");
-		if (size >= cache.length) {
-			System.out.println("text-renderer HeightSearches: cache is too small (" + cache.length + ") for " + size);
-			return computeHeight.applyAsInt(size);
-		}
 
-		int cachedHeight = cache[size];
-		if (cachedHeight != 0) return cachedHeight - 10;
+		Integer cachedHeight = cache.get(size);
+		if (cachedHeight != null) return cachedHeight;
+
+		// Prevent the cache from getting too large
+		if (cache.size() > capacity) cache.clear();
 
 		int height = computeHeight.applyAsInt(size);
-		cache[size] = height + 10;
+		cache.put(size, height);
 		return height;
 	}
 
