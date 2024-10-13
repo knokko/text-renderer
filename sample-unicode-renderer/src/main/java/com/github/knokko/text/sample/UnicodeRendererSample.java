@@ -88,8 +88,6 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		boiler.destroyInitialObjects();
 	}
 
-	private SwapchainResourceManager<Long> swapchainImageViews;
-
 	private TextInstance textInstance;
 	private FontData unicodeFont;
 
@@ -121,9 +119,6 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		profiler.start();
 
 		super.setup(boiler, stack);
-		this.swapchainImageViews = new SwapchainResourceManager<>(swapchainImage -> boiler.images.createSimpleView(
-				swapchainImage.vkImage(), window.surfaceFormat, VK_IMAGE_ASPECT_COLOR_BIT, "SwapchainImageView"
-		), swapchainImageView -> vkDestroyImageView(boiler.vkDevice(), swapchainImageView, null));
 
 		textInstance = new TextInstance();
 		unicodeFont = new FontData(textInstance, UnicodeFonts.SOURCE);
@@ -138,7 +133,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
 		long descriptorSet;
 
-		descriptorSet = textDescriptorPool.allocate(stack, 1)[0];
+		descriptorSet = textDescriptorPool.allocate(1)[0];
 		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
 
 		vkTextRenderer = vkTextPipeline.createRenderer(unicodeFont, descriptorSet, glyphsBuffer, quadHostBuffer);
@@ -167,7 +162,10 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 	private long lastFrame;
 
 	@Override
-	protected void recordFrame(MemoryStack stack, CommandRecorder recorder, AcquiredImage acquiredImage, BoilerInstance instance) {
+	protected void recordFrame(
+			MemoryStack stack, int frameIndex, CommandRecorder recorder,
+			AcquiredImage acquiredImage, BoilerInstance boiler
+	) {
 		long currentTime = System.nanoTime();
 		if (Math.random() < 0.01) {
 			System.out.println("FPS is approximately " + 1_000_000_000L / (currentTime - lastFrame));
@@ -192,7 +190,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 
 		var colorAttachments = VkRenderingAttachmentInfo.calloc(1, stack);
 		recorder.simpleColorRenderingAttachment(
-				colorAttachments.get(0), swapchainImageViews.get(acquiredImage), VK_ATTACHMENT_LOAD_OP_CLEAR,
+				colorAttachments.get(0), acquiredImage.image().vkImageView(), VK_ATTACHMENT_LOAD_OP_CLEAR,
 				VK_ATTACHMENT_STORE_OP_STORE, 0.2f, 0.2f, 0.2f, 1f
 		);
 		recorder.beginSimpleDynamicRendering(acquiredImage.width(), acquiredImage.height(), colorAttachments, null, null);

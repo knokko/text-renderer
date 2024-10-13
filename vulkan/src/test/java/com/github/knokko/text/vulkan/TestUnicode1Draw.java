@@ -67,7 +67,7 @@ public class TestUnicode1Draw {
 		);
 
 		try (var stack = stackPush()) {
-			var descriptorSet = textDescriptorPool.allocate(stack, 1)[0];
+			var descriptorSet = textDescriptorPool.allocate(1)[0];
 			vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
 
 			var vkTextRenderer = vkTextPipeline.createRenderer(font, descriptorSet, glyphsBuffer, quadHostBuffer);
@@ -78,8 +78,7 @@ public class TestUnicode1Draw {
 			System.out.println("start recording: " + (System.nanoTime() - startTime) / 1000_000);
 
 			var recorder = CommandRecorder.begin(commandBuffer, boiler, stack, "Drawing");
-
-			recorder.transitionColorLayout(image.vkImage(), null, ResourceUsage.COLOR_ATTACHMENT_WRITE);
+			recorder.transitionLayout(image, null, ResourceUsage.COLOR_ATTACHMENT_WRITE);
 
 			var colorAttachments = VkRenderingAttachmentInfo.calloc(1, stack);
 			recorder.simpleColorRenderingAttachment(
@@ -94,10 +93,8 @@ public class TestUnicode1Draw {
 			System.out.println("finished heavy lifting: " + (System.nanoTime() - startTime) / 1000_000);
 
 			recorder.endDynamicRendering();
-
-			recorder.transitionColorLayout(image.vkImage(), ResourceUsage.COLOR_ATTACHMENT_WRITE, ResourceUsage.TRANSFER_SOURCE);
-			recorder.copyImageToBuffer(VK_IMAGE_ASPECT_COLOR_BIT, image.vkImage(), width, height, resultBuffer.vkBuffer());
-
+			recorder.transitionLayout(image, ResourceUsage.COLOR_ATTACHMENT_WRITE, ResourceUsage.TRANSFER_SOURCE);
+			recorder.copyImageToBuffer(image, resultBuffer.fullRange());
 			recorder.end();
 
 			System.out.println("finished recording: " + (System.nanoTime() - startTime) / 1000_000);

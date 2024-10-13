@@ -76,12 +76,8 @@ public class TestUnicodeManyDraws {
 				renderPass, width, height,
 				"TextFramebuffer", image.vkImageView()
 		);
-		long descriptorSet;
-
-		try (var stack = stackPush()) {
-			descriptorSet = textDescriptorPool.allocate(stack, 1)[0];
-			vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
-		}
+		long descriptorSet = textDescriptorPool.allocate(1)[0];
+		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
 
 		var commandPool = boiler.commands.createPool(0, boiler.queueFamilies().graphics().index(), "CommandPool");
 		var commandBuffer = boiler.commands.createPrimaryBuffers(commandPool, 1, "CommandBuffer")[0];
@@ -95,15 +91,13 @@ public class TestUnicodeManyDraws {
 				var recorder = CommandRecorder.begin(commandBuffer, boiler, stack, "Drawing");
 
 				if (request == requests.get(0)) {
-					recorder.transitionColorLayout(image.vkImage(), null, ResourceUsage.TRANSFER_DEST);
+					recorder.transitionLayout(image, null, ResourceUsage.TRANSFER_DEST);
 					recorder.clearColorImage(image.vkImage(), 0f, 0f, 0f, 1f);
-					recorder.transitionColorLayout(
-							image.vkImage(), ResourceUsage.TRANSFER_DEST, new ResourceUsage(
-									VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-									VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
-									VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-							)
-					);
+					recorder.transitionLayout(image, ResourceUsage.TRANSFER_DEST, new ResourceUsage(
+							VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+							VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+							VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+					));
 				}
 
 				var biRenderPass = VkRenderPassBeginInfo.calloc(stack);
@@ -120,8 +114,8 @@ public class TestUnicodeManyDraws {
 				vkCmdEndRenderPass(commandBuffer);
 
 				if (request == requests.get(requests.size() - 1)) {
-					recorder.transitionColorLayout(image.vkImage(), ResourceUsage.COLOR_ATTACHMENT_WRITE, ResourceUsage.TRANSFER_SOURCE);
-					recorder.copyImageToBuffer(VK_IMAGE_ASPECT_COLOR_BIT, image.vkImage(), width, height, resultBuffer.vkBuffer());
+					recorder.transitionLayout(image, ResourceUsage.COLOR_ATTACHMENT_WRITE, ResourceUsage.TRANSFER_SOURCE);
+					recorder.copyImageToBuffer(image, resultBuffer.fullRange());
 				}
 
 				recorder.end();

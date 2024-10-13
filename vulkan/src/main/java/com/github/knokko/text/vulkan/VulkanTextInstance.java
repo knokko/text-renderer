@@ -29,7 +29,7 @@ public class VulkanTextInstance {
 			pushConstants.offset(0);
 			pushConstants.size(8);
 			pipelineLayout = boiler.pipelines.createLayout(
-					stack, pushConstants, "TextPipelineLayout", descriptorSetLayout.vkDescriptorSetLayout
+					pushConstants, "TextPipelineLayout", descriptorSetLayout.vkDescriptorSetLayout
 			);
 		}
 	}
@@ -103,10 +103,12 @@ public class VulkanTextInstance {
 		try (var stack = stackPush()) {
 			var descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
 			boiler.descriptors.writeBuffer(
-					stack, descriptorWrites, descriptorSet, 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, quadBuffer
+					stack, descriptorWrites, descriptorSet, 0,
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, quadBuffer.fullRange()
 			);
 			boiler.descriptors.writeBuffer(
-					stack, descriptorWrites, descriptorSet, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, glyphBuffer
+					stack, descriptorWrites, descriptorSet, 1,
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, glyphBuffer.fullRange()
 			);
 			vkUpdateDescriptorSets(boiler.vkDevice(), descriptorWrites, null);
 		}
