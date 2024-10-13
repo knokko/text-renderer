@@ -8,8 +8,10 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
@@ -17,6 +19,10 @@ import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.util.freetype.FreeType.*;
 
 public class TextPlacer {
+
+	private static final TextPlaceRequest TERMINATE_REQUEST = new TextPlaceRequest(
+			"TERMINATE", 0, 0, 0, 0, 0, 0, null
+	);
 
 	private final FontData fontData;
 	private final ConcurrentHashMap<GlyphOffsetKey, GlyphOffset> glyphOffsets = new ConcurrentHashMap<>(); // TODO Throw old entries away
@@ -26,47 +32,94 @@ public class TextPlacer {
 		return Long.compare(memAddress(a), memAddress(b));
 	});
 
+	private Thread[] workerThreads;
+	private LinkedBlockingQueue<TextPlaceRequest> asyncRequests;
+	private BlockingQueue<List<PlacedGlyph>> asyncResults;
+
 	public TextPlacer(FontData font) {
 		this.fontData = font;
 	}
 
-	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests) {
-		var requestList = new ArrayList<>(requests);
-		requestList.sort(null);
-		var placedGlyphs = new ArrayList<PlacedGlyph>(requests.size());
+	private List<PlacedGlyph> handleRequest(TextPlaceRequest request) {
+		double sizeFactor = ((request.text.length() + 1) * Math.log(request.text.length() + Math.E));
+		int requiredSize = (int) (250 * sizeFactor);
 
-		for (var request : requestList) {
-			double sizeFactor = ((request.text.length() + 1) * Math.log(request.text.length() + Math.E));
-			int requiredSize = (int) (250 * sizeFactor);
+		while (allocations.size() > 4) {
+			ByteBuffer smallest = allocations.pollFirst();
+			if (smallest != null) memFree(smallest);
+		}
 
-			while (allocations.size() > 4) {
-				ByteBuffer smallest = allocations.pollFirst();
-				if (smallest != null) memFree(smallest);
+		ByteBuffer stackBuffer = allocations.pollLast();
+		if (stackBuffer == null || stackBuffer.capacity() < requiredSize) {
+			if (stackBuffer != null) allocations.add(stackBuffer);
+			stackBuffer = memCalloc(requiredSize);
+		}
+
+		try {
+			var stack = MemoryStack.create(stackBuffer);
+			var localGlyphs = placeFree(request, stack);
+			var placedGlyphs = new ArrayList<PlacedGlyph>(localGlyphs.size());
+
+			for (var placement: localGlyphs) {
+				placedGlyphs.add(new PlacedGlyph(
+						placement.glyph,
+						request.minX + placement.minX,
+						request.baseY + placement.minY,
+						placement.request,
+						placement.charIndex
+				));
 			}
+			return placedGlyphs;
+		} finally {
+			allocations.add(stackBuffer);
+		}
+	}
 
-			ByteBuffer stackBuffer = allocations.pollLast();
-			if (stackBuffer == null || stackBuffer.capacity() < requiredSize) {
-				if (stackBuffer != null) allocations.add(stackBuffer);
-				stackBuffer = memCalloc(requiredSize);
-			}
-
+	private void keepServingRequests() {
+		while (true) {
 			try {
-				var stack = MemoryStack.create(stackBuffer);
-				var localGlyphs = placeFree(request, stack);
-
-				for (var placement: localGlyphs) {
-					placedGlyphs.add(new PlacedGlyph(
-							placement.glyph,
-							request.minX + placement.minX,
-							request.baseY + placement.minY,
-							placement.request,
-							placement.charIndex
-					));
-				}
-			} finally {
-				allocations.add(stackBuffer);
+				var next = asyncRequests.take();
+				if (next == TERMINATE_REQUEST) break;
+				asyncResults.add(handleRequest(next));
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests) {
+		return place(requests, false);
+	}
+
+	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests, boolean parallel) {
+		if (parallel && workerThreads == null) {
+			int numThreads = 5;
+			workerThreads = new Thread[numThreads];
+			asyncRequests = new LinkedBlockingQueue<>();
+			asyncResults = new LinkedBlockingQueue<>();
+
+			for (int index = 0; index < numThreads; index++) {
+				workerThreads[index] = new Thread(this::keepServingRequests);
+				workerThreads[index].setDaemon(true);
+				workerThreads[index].start();
+			}
+		}
+		var placedGlyphs = new ArrayList<PlacedGlyph>(requests.size());
+
+		if (parallel) {
+			if (!asyncResults.isEmpty()) throw new IllegalStateException("Can't use TextPlacer concurrently!");
+			asyncRequests.addAll(requests);
+			try {
+				for (int counter = 0; counter < requests.size(); counter++) placedGlyphs.addAll(asyncResults.take());
+			} catch (InterruptedException shouldNotHappen) {
+				throw new RuntimeException(shouldNotHappen);
+			}
+		} else {
+			var requestList = new ArrayList<>(requests);
+			requestList.sort(null);
+			for (var request : requestList) placedGlyphs.addAll(handleRequest(request));
+		}
+
 
 		return placedGlyphs;
 	}
@@ -154,6 +207,9 @@ public class TextPlacer {
 	public void destroy() {
 		for (var buffer : allocations) memFree(buffer);
 		allocations.clear();
+		if (workerThreads != null) {
+			for (int counter = 0; counter < workerThreads.length; counter++) asyncRequests.add(TERMINATE_REQUEST);
+		}
 	}
 
 	record GlyphOffsetKey(int heightA, int fontIndex, int glyph) {}

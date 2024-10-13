@@ -63,7 +63,7 @@ public class VulkanTextRenderer {
 			}
 		}
 
-		var placedGlyphs = placer.place(filteredRequests);
+		var placedGlyphs = placer.place(filteredRequests, true);
 		var filteredPlacedGlyphs = new ArrayList<PlacedGlyph>(placedGlyphs.size());
 		for (var placedGlyph : placedGlyphs) {
 			if (placedGlyph.minX < framebufferWidth &&
