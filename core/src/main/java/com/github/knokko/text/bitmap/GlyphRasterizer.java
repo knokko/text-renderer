@@ -11,4 +11,6 @@ public interface GlyphRasterizer {
 	int getBufferHeight();
 
 	ByteBuffer getBuffer();
+
+	void destroy();
 }

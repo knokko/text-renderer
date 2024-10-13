@@ -46,6 +46,9 @@ public class TestBitmapGlyphsBuffer {
 		public ByteBuffer getBuffer() {
 			return buffer;
 		}
+
+		@Override
+		public void destroy() {}
 	}
 
 	@Test

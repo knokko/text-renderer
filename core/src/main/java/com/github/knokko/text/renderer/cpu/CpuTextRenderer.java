@@ -47,5 +47,6 @@ public abstract class CpuTextRenderer {
 	public void destroy() {
 		placer.destroy();
 		memFree(byteBuffer);
+		rasterizer.destroy();
 	}
 }

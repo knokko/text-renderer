@@ -8,6 +8,8 @@ import org.lwjgl.util.freetype.FT_GlyphSlot;
 import java.nio.ByteBuffer;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
+import static org.lwjgl.system.MemoryUtil.memAlloc;
+import static org.lwjgl.system.MemoryUtil.memFree;
 import static org.lwjgl.util.freetype.FreeType.FT_LOAD_RENDER;
 import static org.lwjgl.util.freetype.FreeType.FT_Load_Glyph;
 
@@ -16,7 +18,7 @@ public class FreeTypeGlyphRasterizer implements GlyphRasterizer {
 	private final FontData font;
 
 	private int width, height;
-	private ByteBuffer buffer = BufferUtils.createByteBuffer(10_000 * 10_000); // TODO Do this smarter
+	private ByteBuffer buffer;
 
 	public FreeTypeGlyphRasterizer(FontData font) {
 		this.font = font;
@@ -34,6 +36,11 @@ public class FreeTypeGlyphRasterizer implements GlyphRasterizer {
 		@SuppressWarnings("resource") FT_Bitmap bitmap = slot.bitmap();
 		this.width = bitmap.width();
 		this.height = bitmap.rows();
+
+		if (this.buffer == null || this.buffer.capacity() < this.width * this.height) {
+			if (this.buffer != null) memFree(this.buffer);
+			this.buffer = memAlloc(2 * this.width * this.height);
+		}
 
 		if (this.width > 0 && this.height > 0) {
 			var bufferView = bitmap.buffer(this.width * this.height);
@@ -60,5 +67,10 @@ public class FreeTypeGlyphRasterizer implements GlyphRasterizer {
 	@Override
 	public ByteBuffer getBuffer() {
 		return buffer;
+	}
+
+	@Override
+	public void destroy() {
+		if (this.buffer != null) memFree(this.buffer);
 	}
 }

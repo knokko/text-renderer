@@ -140,5 +140,6 @@ public class VulkanTextRenderer {
 
 	public void destroy() {
 		placer.destroy();
+		rasterizer.destroy();
 	}
 }
