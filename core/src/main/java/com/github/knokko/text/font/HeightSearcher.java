@@ -37,7 +37,7 @@ public class HeightSearcher {
 			int oldLowInput = lowInput;
 			int oldHighInput = highInput;
 
-			int result = computeHeight.applyAsInt(input);
+			int result = getHeight(input);
 			if (result == desiredResult) return input;
 
 			if (result > desiredResult) {

@@ -179,7 +179,10 @@ public class TextPlacer {
 					cursorX += scale * position.x_advance();
 					cursorY += scale * position.y_advance();
 
-					if (cursorX > 64 * (request.getWidth() + 2 * request.heightA) && splitter.wasBaseLeftToRight) break runLoop;
+					if (cursorX > 64 * (request.getWidth() + 2 * request.heightA) && splitter.wasBaseLeftToRight) {
+						fontData.returnFace(currentFace);
+						break runLoop;
+					}
 				}
 			}
 
