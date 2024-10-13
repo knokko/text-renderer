@@ -160,6 +160,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 	}
 
 	private long lastFrame;
+	private long lastCounter;
 
 	@Override
 	protected void recordFrame(
@@ -167,10 +168,15 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 			AcquiredImage acquiredImage, BoilerInstance boiler
 	) {
 		long currentTime = System.nanoTime();
-		if (Math.random() < 0.01) {
-			System.out.println("FPS is approximately " + 1_000_000_000L / (currentTime - lastFrame));
+		if (currentTime - lastFrame > 1_000_000_000) {
+			if (lastCounter > 0) {
+				System.out.println("FPS is approximately " + lastCounter);
+			}
+			lastFrame = currentTime;
+			lastCounter = 0;
 		}
-		lastFrame = currentTime;
+
+		lastCounter += 1;
 
 		double cameraX = this.cameraX;
 		double cameraY = this.cameraY;
