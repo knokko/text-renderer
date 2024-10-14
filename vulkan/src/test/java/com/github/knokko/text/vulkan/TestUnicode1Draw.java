@@ -70,7 +70,7 @@ public class TestUnicode1Draw {
 			var descriptorSet = textDescriptorPool.allocate(1)[0];
 			vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
 
-			var vkTextRenderer = vkTextPipeline.createRenderer(font, descriptorSet, glyphsBuffer, quadHostBuffer);
+			var vkTextRenderer = vkTextPipeline.createRenderer(font, descriptorSet, glyphsBuffer, quadHostBuffer, 10);
 
 			var commandPool = boiler.commands.createPool(0, boiler.queueFamilies().graphics().index(), "CommandPool");
 			var commandBuffer = boiler.commands.createPrimaryBuffers(commandPool, 1, "CommandBuffer")[0];

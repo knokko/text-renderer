@@ -136,7 +136,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		descriptorSet = textDescriptorPool.allocate(1)[0];
 		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
 
-		vkTextRenderer = vkTextPipeline.createRenderer(unicodeFont, descriptorSet, glyphsBuffer, quadHostBuffer);
+		vkTextRenderer = vkTextPipeline.createRenderer(unicodeFont, descriptorSet, glyphsBuffer, quadHostBuffer, 3);
 		unicodeTestCase = UnicodeLines.get();
 	}
 

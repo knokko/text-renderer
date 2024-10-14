@@ -85,7 +85,7 @@ public class TestTextPlacer {
 		}
 
 		for (int counter = 0; counter < 10; counter++) {
-			var result = placer.place(requests, true).size();
+			var result = placer.place(requests, 3).size();
 			assertEquals(18104, result);
 		}
 

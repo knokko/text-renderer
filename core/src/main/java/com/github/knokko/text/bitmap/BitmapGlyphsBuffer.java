@@ -35,7 +35,7 @@ public class BitmapGlyphsBuffer {
 	}
 
 	public List<GlyphQuad> bufferGlyphs(GlyphRasterizer rasterizer, List<PlacedGlyph> placedGlyphs) {
-		var glyphQuads = new ArrayList<GlyphQuad>();
+		var glyphQuads = new ArrayList<GlyphQuad>(placedGlyphs.size());
 		for (var placedGlyph : placedGlyphs) {
 			int scale = placedGlyph.glyph.scale;
 			var sections = getSections(rasterizer, placedGlyph.glyph);

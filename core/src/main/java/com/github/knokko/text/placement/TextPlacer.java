@@ -88,17 +88,17 @@ public class TextPlacer {
 	}
 
 	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests) {
-		return place(requests, false);
+		return place(requests, 1);
 	}
 
-	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests, boolean parallel) {
-		if (parallel && workerThreads == null) {
-			int numThreads = 5;
-			workerThreads = new Thread[numThreads];
+	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests, int numThreads) {
+		if (numThreads > 1 && workerThreads == null) {
+			int numWorkerThreads = numThreads - 1;
+			workerThreads = new Thread[numWorkerThreads];
 			asyncRequests = new LinkedBlockingQueue<>();
 			asyncResults = new LinkedBlockingQueue<>();
 
-			for (int index = 0; index < numThreads; index++) {
+			for (int index = 0; index < numWorkerThreads; index++) {
 				workerThreads[index] = new Thread(this::keepServingRequests);
 				workerThreads[index].setDaemon(true);
 				workerThreads[index].start();
@@ -106,9 +106,16 @@ public class TextPlacer {
 		}
 		var placedGlyphs = new ArrayList<PlacedGlyph>(requests.size());
 
-		if (parallel) {
+		if (numThreads > 1) {
 			if (!asyncResults.isEmpty()) throw new IllegalStateException("Can't use TextPlacer concurrently!");
 			asyncRequests.addAll(requests);
+
+			while (true) {
+				var nextRequest = asyncRequests.poll();
+				if (nextRequest == null) break;
+				asyncResults.add(handleRequest(nextRequest));
+			}
+
 			try {
 				for (int counter = 0; counter < requests.size(); counter++) placedGlyphs.addAll(asyncResults.take());
 			} catch (InterruptedException shouldNotHappen) {

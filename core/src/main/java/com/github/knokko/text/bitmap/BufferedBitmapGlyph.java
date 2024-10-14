@@ -13,7 +13,7 @@ class BufferedBitmapGlyph implements Comparable<BufferedBitmapGlyph> {
 
 	BufferedBitmapGlyph(SizedGlyph glyph, List<BitmapGlyphSection> sections, long currentFrame) {
 		this.glyph = glyph;
-		this.sections = Collections.unmodifiableList(sections);
+		this.sections = sections;
 		this.lastUsed = currentFrame;
 	}
 

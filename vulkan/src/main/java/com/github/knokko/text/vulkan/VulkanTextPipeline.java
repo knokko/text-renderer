@@ -21,10 +21,12 @@ public class VulkanTextPipeline {
 	}
 
 	public VulkanTextRenderer createRenderer(
-			FontData font, long descriptorSet,
-			BitmapGlyphsBuffer glyphsBuffer, IntBuffer quadBuffer
+			FontData font, long descriptorSet, BitmapGlyphsBuffer glyphsBuffer,
+			IntBuffer quadBuffer, int numTextPlacerThreads
 	) {
-		return new VulkanTextRenderer(font, instance, this, descriptorSet, glyphsBuffer, quadBuffer);
+		return new VulkanTextRenderer(
+				font, instance, this, descriptorSet, glyphsBuffer, quadBuffer, numTextPlacerThreads
+		);
 	}
 
 	public void destroy() {

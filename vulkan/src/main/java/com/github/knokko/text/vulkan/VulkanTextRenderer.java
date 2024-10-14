@@ -33,11 +33,12 @@ public class VulkanTextRenderer {
 
 	private final TextPlacer placer;
 	private final GlyphRasterizer rasterizer;
-
+	private final int numTextPlacerThreads;
 
 	public VulkanTextRenderer(
 			FontData font, VulkanTextInstance instance, VulkanTextPipeline pipeline,
-			long descriptorSet, BitmapGlyphsBuffer glyphsBuffer, IntBuffer quadBuffer
+			long descriptorSet, BitmapGlyphsBuffer glyphsBuffer, IntBuffer quadBuffer,
+			int numTextPlacerThreads
 	) {
 		this.instance = instance;
 		this.pipeline = pipeline;
@@ -47,6 +48,7 @@ public class VulkanTextRenderer {
 
 		this.placer = new TextPlacer(font);
 		this.rasterizer = new FreeTypeGlyphRasterizer(font);
+		this.numTextPlacerThreads = numTextPlacerThreads;
 	}
 
 	public void recordCommands(
@@ -63,7 +65,7 @@ public class VulkanTextRenderer {
 			}
 		}
 
-		var placedGlyphs = placer.place(filteredRequests, true);
+		var placedGlyphs = placer.place(filteredRequests, numTextPlacerThreads);
 		var filteredPlacedGlyphs = new ArrayList<PlacedGlyph>(placedGlyphs.size());
 		for (var placedGlyph : placedGlyphs) {
 			if (placedGlyph.minX < framebufferWidth &&
