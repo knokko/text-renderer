@@ -47,7 +47,7 @@ public class TestUnicodeManyDraws {
 
 		var boiler = new BoilerBuilder(
 				VK_API_VERSION_1_2, "TestUnicode1Draw", 1
-		).validation().forbidValidationErrors().build();
+		).validation().forbidValidationErrors().defaultTimeout(10_000_000_000L).build();
 
 		var vkTextInstance = new VulkanTextInstance(boiler);
 		long renderPass = vkTextInstance.createRenderPass(

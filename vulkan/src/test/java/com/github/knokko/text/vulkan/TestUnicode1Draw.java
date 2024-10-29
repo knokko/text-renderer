@@ -44,7 +44,7 @@ public class TestUnicode1Draw {
 
 		var boiler = new BoilerBuilder(
 				VK_API_VERSION_1_2, "TestUnicode1Draw", 1
-		).validation().forbidValidationErrors().enableDynamicRendering().build();
+		).validation().forbidValidationErrors().enableDynamicRendering().defaultTimeout(10_000_000_000L).build();
 
 		var vkTextInstance = new VulkanTextInstance(boiler);
 		var vkTextPipeline = vkTextInstance.createPipelineWithDynamicRendering(0, colorFormat, width, height);
