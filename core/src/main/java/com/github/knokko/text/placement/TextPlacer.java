@@ -13,9 +13,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
+import static java.lang.Math.min;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.util.freetype.FreeType.*;
 
@@ -26,7 +28,7 @@ public class TextPlacer {
 	);
 
 	private final FontData fontData;
-	private final ConcurrentHashMap<GlyphOffsetKey, GlyphOffset> glyphOffsets = new ConcurrentHashMap<>(); // TODO Throw old entries away
+	private final ConcurrentHashMap<GlyphOffsetKey, GlyphOffset> glyphOffsets = new ConcurrentHashMap<>();
 	private final ConcurrentSkipListSet<ByteBuffer> allocations = new ConcurrentSkipListSet<>((a, b) -> {
 		if (a.capacity() > b.capacity()) return 1;
 		if (a.capacity() < b.capacity()) return -1;
@@ -36,6 +38,7 @@ public class TextPlacer {
 	private Thread[] workerThreads;
 	private LinkedBlockingQueue<TextPlaceRequest> asyncRequests;
 	private BlockingQueue<List<PlacedGlyph>> asyncResults;
+	private final AtomicLong offsetCounter = new AtomicLong(0);
 
 	public TextPlacer(FontData font) {
 		this.fontData = font;
@@ -169,6 +172,18 @@ public class TextPlacer {
 						fontData.returnFace(tempFace);
 						return result;
 					});
+					glyphOffset.lastUsed = offsetCounter.incrementAndGet();
+
+					if (glyphOffsets.size() > 10_000) {
+						long oldest = glyphOffset.lastUsed;
+						for (var offset : glyphOffsets.values()) {
+							long lastUsed = offset.lastUsed;
+							if (lastUsed != 0L) oldest = min(oldest, lastUsed);
+						}
+						long threshold = (oldest + glyphOffset.lastUsed) / 2L;
+
+						glyphOffsets.values().removeIf(glyphOffset1 -> glyphOffset1.lastUsed < threshold);
+					}
 
 					if (previousRsbDelta - glyphOffset.lsbDelta > 32) cursorX -= 64;
 					else if (previousRsbDelta - glyphOffset.lsbDelta < -31) cursorX += 64;
@@ -225,5 +240,16 @@ public class TextPlacer {
 	}
 
 	record GlyphOffsetKey(int heightA, int fontIndex, int glyph) {}
-	record GlyphOffset(int bitmapLeft, int bitmapTop, int lsbDelta, int rsbDelta) {}
+
+	static class GlyphOffset {
+		final int bitmapLeft, bitmapTop, lsbDelta, rsbDelta;
+		long lastUsed;
+
+		GlyphOffset(int bitmapLeft, int bitmapTop, int lsbDelta, int rsbDelta) {
+			this.bitmapLeft = bitmapLeft;
+			this.bitmapTop = bitmapTop;
+			this.lsbDelta = lsbDelta;
+			this.rsbDelta = rsbDelta;
+		}
+	}
 }
