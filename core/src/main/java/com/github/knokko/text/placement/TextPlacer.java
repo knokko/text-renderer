@@ -7,6 +7,7 @@ import org.lwjgl.system.MemoryStack;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +42,7 @@ public class TextPlacer {
 	}
 
 	private List<PlacedGlyph> handleRequest(TextPlaceRequest request) {
+		if (request.heightA <= 0) return Collections.emptyList();
 		double sizeFactor = ((request.text.length() + 1) * Math.log(request.text.length() + Math.E));
 		int requiredSize = (int) (250 * sizeFactor);
 

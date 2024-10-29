@@ -296,4 +296,31 @@ public class TestBufferedImageRenderer {
 		font.destroy();
 		instance.destroy();
 	}
+
+	@Test
+	public void testVerySmallText() {
+		var instance = new TextInstance();
+		var font = new FontData(instance, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
+		var renderer = new BufferedImageTextRenderer(
+				new BufferedImage(50, 10, BufferedImage.TYPE_INT_RGB),
+				font, 1_000
+		);
+
+		List<TextPlaceRequest> requests = new ArrayList<>();
+		requests.add(new TextPlaceRequest("hello", 0, 0, 10, 9, 7, 0, null));
+		requests.add(new TextPlaceRequest("hello", 10, 0, 20, 9, 7, 1, null));
+		requests.add(new TextPlaceRequest("hello", 20, 0, 40, 9, 7, 2, null));
+		renderer.render(requests);
+
+		assertImageEquals(
+				"expected-very-small-text.png",
+				renderer.image,
+				"actual-very-small-text.png",
+				true
+		);
+
+		renderer.destroy();
+		font.destroy();
+		instance.destroy();
+	}
 }

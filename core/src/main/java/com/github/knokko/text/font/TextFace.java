@@ -21,7 +21,6 @@ public class TextFace {
 
 		if (size <= 0) throw new IllegalArgumentException("Size (" + size + ") must be positive");
 
-		// TODO Test pixel sizes < ~3 pixels
 		assertFtSuccess(FT_Set_Char_Size(
 				ftFace, size, 0, 0, 0
 		), "Set_Char_Size", "TextFace.setSize(" + size + ")");
