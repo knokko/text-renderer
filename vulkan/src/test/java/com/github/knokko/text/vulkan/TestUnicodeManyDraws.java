@@ -1,7 +1,7 @@
 package com.github.knokko.text.vulkan;
 
 import com.github.knokko.boiler.builders.BoilerBuilder;
-import com.github.knokko.boiler.commands.CommandRecorder;
+import com.github.knokko.boiler.commands.SingleTimeCommands;
 import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
@@ -12,13 +12,11 @@ import com.github.knokko.text.util.UnicodeLines;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.vulkan.VkRenderPassBeginInfo;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static com.github.knokko.boiler.exceptions.VulkanFailureException.assertVkSuccess;
+import static com.github.knokko.boiler.utilities.ColorPacker.rgba;
 import static com.github.knokko.text.util.ImageChecks.assertImageEquals;
-import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.memIntBuffer;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK12.VK_API_VERSION_1_2;
@@ -39,7 +37,7 @@ public class TestUnicodeManyDraws {
 		int minY = 5;
 		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(line, 0, minY, width, maxY, minY + 20, 15, Color.WHITE));
+			requests.add(new TextPlaceRequest(line, 0, minY, width, maxY, minY + 20, 15, rgba(255, 255, 255, 255)));
 			minY = maxY;
 		}
 
@@ -64,7 +62,6 @@ public class TestUnicodeManyDraws {
 		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), (int) glyphBuffer.size());
 		var quadBuffer = boiler.buffers.createMapped(30_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
 		var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
-		var fence = boiler.sync.fenceBank.borrowFence(false, "DrawFence");
 
 		var resultBuffer = boiler.buffers.createMapped(4 * width * height, VK_BUFFER_USAGE_TRANSFER_DST_BIT, "ResultBuffer");
 		var image = boiler.images.createSimple(
@@ -79,17 +76,14 @@ public class TestUnicodeManyDraws {
 		long descriptorSet = textDescriptorPool.allocate(1)[0];
 		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
 
-		var commandPool = boiler.commands.createPool(0, boiler.queueFamilies().graphics().index(), "CommandPool");
-		var commandBuffer = boiler.commands.createPrimaryBuffers(commandPool, 1, "CommandBuffer")[0];
-
 		var vkTextRenderer = vkTextPipeline.createRenderer(font, descriptorSet, glyphsBuffer, quadHostBuffer, 1);
 
 		System.out.println("created resources: " + (System.nanoTime() - startTime) / 1000_000);
 
-		for (var request : requests) {
-			try (var stack = stackPush()) {
-				var recorder = CommandRecorder.begin(commandBuffer, boiler, stack, "Drawing");
+		var commands = new SingleTimeCommands(boiler);
 
+		for (var request : requests) {
+			commands.submit("Rendering " + request.text, recorder -> {
 				if (request == requests.get(0)) {
 					recorder.transitionLayout(image, null, ResourceUsage.TRANSFER_DEST);
 					recorder.clearColorImage(image.vkImage(), 0f, 0f, 0f, 1f);
@@ -100,7 +94,7 @@ public class TestUnicodeManyDraws {
 					));
 				}
 
-				var biRenderPass = VkRenderPassBeginInfo.calloc(stack);
+				var biRenderPass = VkRenderPassBeginInfo.calloc(recorder.stack);
 				biRenderPass.sType$Default();
 				biRenderPass.renderPass(renderPass);
 				biRenderPass.framebuffer(framebuffer);
@@ -109,27 +103,21 @@ public class TestUnicodeManyDraws {
 				biRenderPass.clearValueCount(0);
 				biRenderPass.pClearValues(null);
 
-				vkCmdBeginRenderPass(commandBuffer, biRenderPass, VK_SUBPASS_CONTENTS_INLINE);
-				vkTextRenderer.recordCommands(commandBuffer, stack, width, height, Collections.singletonList(request));
-				vkCmdEndRenderPass(commandBuffer);
+				vkCmdBeginRenderPass(recorder.commandBuffer, biRenderPass, VK_SUBPASS_CONTENTS_INLINE);
+				vkTextRenderer.recordCommands(recorder, width, height, Collections.singletonList(request));
+				vkCmdEndRenderPass(recorder.commandBuffer);
 
 				if (request == requests.get(requests.size() - 1)) {
 					recorder.transitionLayout(image, ResourceUsage.COLOR_ATTACHMENT_WRITE, ResourceUsage.TRANSFER_SOURCE);
 					recorder.copyImageToBuffer(image, resultBuffer.fullRange());
 				}
-
-				recorder.end();
-
-				boiler.queueFamilies().graphics().first().submit(commandBuffer, "Draw", null, fence);
-				fence.waitAndReset();
-				assertVkSuccess(vkResetCommandPool(boiler.vkDevice(), commandPool, 0), "ResetCommandPool", "draw");
-			}
+			}).awaitCompletion();
 		}
 
 		System.out.println("finished drawing: " + (System.nanoTime() - startTime) / 1000_000);
 
+		commands.destroy();
 		vkTextRenderer.destroy();
-		vkDestroyCommandPool(boiler.vkDevice(), commandPool, null);
 		image.destroy(boiler);
 
 		assertImageEquals(
@@ -140,7 +128,6 @@ public class TestUnicodeManyDraws {
 
 		resultBuffer.destroy(boiler);
 		vkDestroyFramebuffer(boiler.vkDevice(), framebuffer, null);
-		boiler.sync.fenceBank.returnFence(fence);
 		glyphBuffer.destroy(boiler);
 		quadBuffer.destroy(boiler);
 		textDescriptorPool.destroy();

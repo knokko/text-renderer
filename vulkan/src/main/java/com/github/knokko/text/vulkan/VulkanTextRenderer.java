@@ -1,6 +1,7 @@
 package com.github.knokko.text.vulkan;
 
 import com.github.knokko.boiler.commands.CommandRecorder;
+import com.github.knokko.boiler.utilities.ColorPacker;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.bitmap.FreeTypeGlyphRasterizer;
 import com.github.knokko.text.bitmap.GlyphQuad;
@@ -12,7 +13,6 @@ import com.github.knokko.text.placement.TextPlacer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
-import java.awt.*;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,9 +52,7 @@ public class VulkanTextRenderer {
 	}
 
 	public void recordCommands(
-			VkCommandBuffer commandBuffer, MemoryStack stack,
-			int framebufferWidth, int framebufferHeight,
-			List<TextPlaceRequest> requests
+			CommandRecorder recorder, int framebufferWidth, int framebufferHeight, List<TextPlaceRequest> requests
 	) {
 		var filteredRequests = new ArrayList<TextPlaceRequest>(requests.size());
 		for (var request : requests) {
@@ -91,17 +89,12 @@ public class VulkanTextRenderer {
 			);
 		}
 
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeline);
+		vkCmdBindPipeline(recorder.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeline);
 		if (pipeline.hasDynamicViewport) {
-			CommandRecorder.alreadyRecording(
-					commandBuffer, instance.boiler, stack
-			).dynamicViewportAndScissor(framebufferWidth, framebufferHeight);
+			recorder.dynamicViewportAndScissor(framebufferWidth, framebufferHeight);
 		}
-		vkCmdBindDescriptorSets(
-				commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, instance.pipelineLayout,
-				0, stack.longs(descriptorSet), null
-		);
-		pushConstants(commandBuffer, stack, framebufferWidth, framebufferHeight);
+		recorder.bindGraphicsDescriptors(instance.pipelineLayout, descriptorSet);
+		pushConstants(recorder.commandBuffer, recorder.stack, framebufferWidth, framebufferHeight);
 
 		int quadIndex = 0;
 		for (var quad : filteredPlacedQuads) {
@@ -109,7 +102,7 @@ public class VulkanTextRenderer {
 			quadIndex += 1;
 		}
 
-		vkCmdDraw(commandBuffer, 6 * filteredPlacedQuads.size(), 1, 0, 0);
+		vkCmdDraw(recorder.commandBuffer, 6 * filteredPlacedQuads.size(), 1, 0, 0);
 	}
 
 	public void pushConstants(
@@ -133,13 +126,10 @@ public class VulkanTextRenderer {
 		memPutInt(address + 24, quad.sectionWidth);
 		memPutInt(address + 28, quad.scale);
 
-		Color color = Color.BLACK;
-		if (quad.userData instanceof Color) color = (Color) quad.userData;
+		int color = ColorPacker.rgba(0, 0, 0, 255);
+		if (quad.userData instanceof Integer) color = (Integer) quad.userData;
 
-		memPutByte(address + 32, (byte) color.getRed());
-		memPutByte(address + 33, (byte) color.getGreen());
-		memPutByte(address + 34, (byte) color.getBlue());
-		memPutByte(address + 35, (byte) color.getAlpha());
+		memPutInt(address + 32, color);
 	}
 
 	public void destroy() {

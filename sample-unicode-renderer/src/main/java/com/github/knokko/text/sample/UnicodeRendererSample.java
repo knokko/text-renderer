@@ -23,10 +23,10 @@ import com.github.knokko.text.vulkan.VulkanTextRenderer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkRenderingAttachmentInfo;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.github.knokko.boiler.utilities.ColorPacker.rgba;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.memIntBuffer;
@@ -192,7 +192,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 			int maxX = virtualXtoScreenX(cameraX, scaleY, 70);
 			requests.add(new TextPlaceRequest(
 					line, minX, minY, maxX, maxY, (minY + maxY) / 2,
-					textHeight / 3, new Color(80, 180, 240, 200)
+					textHeight / 3, rgba(80, 180, 240, 200)
 			));
 			offsetY += 1.0;
 		}
@@ -203,7 +203,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 				VK_ATTACHMENT_STORE_OP_STORE, 0.2f, 0.2f, 0.2f, 1f
 		);
 		recorder.beginSimpleDynamicRendering(acquiredImage.width(), acquiredImage.height(), colorAttachments, null, null);
-		vkTextRenderer.recordCommands(recorder.commandBuffer, stack, acquiredImage.width(), acquiredImage.height(), requests);
+		vkTextRenderer.recordCommands(recorder, acquiredImage.width(), acquiredImage.height(), requests);
 		recorder.endDynamicRendering();
 	}
 

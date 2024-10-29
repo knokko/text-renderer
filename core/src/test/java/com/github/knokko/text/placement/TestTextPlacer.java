@@ -7,7 +7,6 @@ import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.util.UnicodeLines;
 import org.junit.jupiter.api.Test;
 
-import java.awt.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HexFormat;
@@ -27,7 +26,7 @@ public class TestTextPlacer {
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		String testCase = new String(HexFormat.of().parseHex("20E0B79120E0B79220E0B793"), StandardCharsets.UTF_8);
-		requests.add(new TextPlaceRequest(testCase, -4, -2, width - 1, height - 1, 18, 15, Color.WHITE));
+		requests.add(new TextPlaceRequest(testCase, -4, -2, width - 1, height - 1, 18, 15, null));
 
 		var placer = new TextPlacer(font);
 		assertEquals(6, placer.place(requests).size());
