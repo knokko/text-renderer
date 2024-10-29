@@ -46,8 +46,6 @@ project(":core") {
 		compileOnly "org.lwjgl:lwjgl-freetype"
 		compileOnly "org.lwjgl:lwjgl-harfbuzz"
 
-		implementation "com.github.knokko:memory-query:v1.1" // TODO Remove after testing
-
 		testImplementation project(":core-bundle")
 		testImplementation project(":unicode-fonts")
 		testImplementation project(":test-helper")
@@ -111,6 +109,7 @@ project(":sample-unicode-renderer") {
 		for (String target : project.ext.allNatives) {
 			runtimeOnly "org.lwjgl:lwjgl-glfw::$target"
 		}
+		implementation "com.github.knokko:memory-query:v1.1"
 		implementation "com.github.knokko:sample-profiler:v1.0.0"
 	}
 }

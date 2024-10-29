@@ -8,6 +8,7 @@ import com.github.knokko.boiler.commands.CommandRecorder;
 import com.github.knokko.boiler.descriptors.HomogeneousDescriptorPool;
 import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.boiler.window.*;
+import com.github.knokko.memory.MemorySnapshot;
 import com.github.knokko.profiler.SampleProfiler;
 import com.github.knokko.profiler.storage.FrequencyThreadStorage;
 import com.github.knokko.profiler.storage.SampleStorage;
@@ -38,11 +39,13 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 
 	@SuppressWarnings({"resource", "NonAtomicOperationOnVolatileField"})
 	public static void main(String[] args) {
+		System.out.println("initial memory usage is " + MemorySnapshot.take());
 		var boiler = new BoilerBuilder(
 				VK_API_VERSION_1_2, "UnicodeRendererSample", 1
 		).enableDynamicRendering().addWindow(new WindowBuilder(
 				1200, 700, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
 		)).build();
+		System.out.println("initialized memory usage is " + MemorySnapshot.take());
 
 		var glfwWindow = boiler.window().glfwWindow;
 		var renderer = new UnicodeRendererSample(boiler.window());
@@ -83,6 +86,8 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 
 		var eventLoop = new WindowEventLoop();
 		eventLoop.addWindow(renderer);
+
+		System.out.println("before starting event loop: memory usage is " + MemorySnapshot.take());
 		eventLoop.runMain();
 
 		boiler.destroyInitialObjects();
@@ -114,6 +119,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 
 	@Override
 	protected void setup(BoilerInstance boiler, MemoryStack stack) {
+		System.out.println("Memory usage before setup is " + MemorySnapshot.take());
 		profilerStorage = SampleStorage.frequency();
 		profiler = new SampleProfiler(profilerStorage);
 		profiler.start();
@@ -126,10 +132,11 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		vkTextPipeline = vkTextInstance.createPipelineWithDynamicRendering(
 				0, window.surfaceFormat, null, null
 		);
+		System.out.println("Memory usage mid setup is " + MemorySnapshot.take());
 		textDescriptorPool = vkTextInstance.descriptorSetLayout.createPool(1, 0, "TextPool");
-		glyphBuffer = boiler.buffers.createMapped(300_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
+		glyphBuffer = boiler.buffers.createMapped(30_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
 		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), (int) glyphBuffer.size());
-		quadBuffer = boiler.buffers.createMapped(100_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
+		quadBuffer = boiler.buffers.createMapped(10_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
 		var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
 		long descriptorSet;
 
@@ -138,6 +145,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 
 		vkTextRenderer = vkTextPipeline.createRenderer(unicodeFont, descriptorSet, glyphsBuffer, quadHostBuffer, 3);
 		unicodeTestCase = UnicodeLines.get();
+		System.out.println("Memory usage after setup is " + MemorySnapshot.take());
 	}
 
 	int virtualXtoScreenX(double cameraX, double scaleY, double virtualX) {
@@ -170,7 +178,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		long currentTime = System.nanoTime();
 		if (currentTime - lastFrame > 1_000_000_000) {
 			if (lastCounter > 0) {
-				System.out.println("FPS is approximately " + lastCounter);
+				System.out.println("FPS is approximately " + lastCounter + " and memory usage is " + MemorySnapshot.take());
 			}
 			lastFrame = currentTime;
 			lastCounter = 0;
