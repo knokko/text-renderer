@@ -138,9 +138,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), (int) glyphBuffer.size());
 		quadBuffer = boiler.buffers.createMapped(10_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
 		var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
-		long descriptorSet;
-
-		descriptorSet = textDescriptorPool.allocate(1)[0];
+		long descriptorSet = textDescriptorPool.allocate(1)[0];
 		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
 
 		vkTextRenderer = vkTextPipeline.createRenderer(unicodeFont, descriptorSet, glyphsBuffer, quadHostBuffer, 3);
