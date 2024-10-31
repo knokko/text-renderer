@@ -4,10 +4,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Represents a section of a <i>BitmapGlyphsBuffer</i> that is used to store (a part of )a glyph: the subsection
+ * (offsetX, offsetY) to (offsetX + width, offsetY + height) of the rasterized glyph is stored in the glyphs buffer
+ * between indices bufferIndex and bufferIndex + width * height
+ * @param bufferIndex The start index into the glyphs buffer, in bytes
+ * @param offsetX The lowest X-coordinate of the rasterized glyph section that is stored here
+ * @param offsetY The lowest Y-coordinate of the rasterized glyph section that is stored here
+ * @param width The width of the rasterized glyph section, in pixels
+ * @param height The height of the rasterized glyph section, in pixels
+ */
 public record BitmapGlyphSection(int bufferIndex, int offsetX, int offsetY, int width, int height) {
 
 	@SuppressWarnings("SuspiciousNameCombination")
-	public static List<BitmapGlyphSection> coverRectangle(
+	static List<BitmapGlyphSection> coverRectangle(
 			int slotSize, int width, int height,
 			BufferSlotAllocator allocator
 	) {

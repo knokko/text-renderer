@@ -1,6 +1,7 @@
 package com.github.knokko.text.font;
 
 import com.github.knokko.text.TextInstance;
+import org.lwjgl.util.freetype.FT_Face;
 
 import java.util.*;
 
@@ -9,6 +10,11 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.util.freetype.FreeType.FT_LOAD_BITMAP_METRICS_ONLY;
 import static org.lwjgl.util.freetype.FreeType.FT_Load_Char;
 
+/**
+ * Represents an ordered list of at least 1 font, where the first font is the primary/preferred font, and all other
+ * fonts are <i>fallback</i> fonts that will be used when none of the previous fonts is able to render a glyph. You
+ * should create 1 instance of {@link FontData} for each font that you want to use. This class is thread-safe.
+ */
 public class FontData {
 
 	private final TextInstance textInstance;
@@ -21,6 +27,12 @@ public class FontData {
 	private long openFaceCounter;
 	private long openBorrowCounter;
 
+	/**
+	 * Constructs a new instance of {@link FontData}.
+	 * @param textInstance The {@link TextInstance}
+	 * @param fonts The ordered list of {@link FontSource}s, where the first source is the primary (preferred) font.
+	 *              All fonts to which the font sources point, will be loaded.
+	 */
 	public FontData(TextInstance textInstance, FontSource... fonts) {
 		this.textInstance = textInstance;
 
@@ -55,15 +67,33 @@ public class FontData {
 		}
 	}
 
+	/**
+	 * Sets the maximum height of this {@link FontData}. Whenever a
+	 * {@link com.github.knokko.text.placement.TextPlaceRequest} asks for a higher {@code heightA}, the glyph will be
+	 * <i>upscaled</i> to artificially get that height, sparing memory. This method must be called <b>before</b> using
+	 * this <i>FontData</i>
+	 */
 	public void setMaxHeight(int maxHeight) {
 		if (!faceCache.isEmpty()) throw new IllegalStateException("You must call this method BEFORE using this font");
 		this.maxHeight = maxHeight;
 	}
 
+	/**
+	 * @return The number of fonts/faces in this <i>FontData</i>
+	 */
 	public int getNumFaces() {
 		return faceSources.length;
 	}
 
+	/**
+	 * Borrows the face/font with index {@code faceIndex} from this {@link FontData}, with the given {@code height}.
+	 * Note that this method is intended for internal use, so you should probably not need to call this yourself. But
+	 * if you do, make sure that you also call {@link #returnFace(TextFace)}.
+	 *
+	 * @param faceIndex The index of the face/font to borrow, must be at least 0 and smaller than {@link #getNumFaces()}
+	 * @param height The desired height of the (uppercase) 'A' character, in pixels
+	 * @return The borrowed font/face
+	 */
 	public TextFace borrowFaceWithHeightA(int faceIndex, int height) {
 		int originalHeight = height;
 		int heightScale = 1;
@@ -79,6 +109,17 @@ public class FontData {
 		return borrowFaceWithSize(faceIndex, size, heightScale);
 	}
 
+	/**
+	 * Borrows the face/font with index {@code faceIndex} from this {@link FontData}, with the given {@code size}
+	 * and {@code scale}.
+	 * Note that this method is intended for internal use, so you should probably not need to call this yourself. But
+	 * if you do, make sure that you also call {@link #returnFace(TextFace)}.
+	 *
+	 * @param faceIndex The index of the face/font to borrow, must be at least 0 and smaller than {@link #getNumFaces()}
+	 * @param size The raw size of the font to be borrowed, which will be passed to
+	 * {@link org.lwjgl.util.freetype.FreeType#FT_Set_Char_Size}.
+	 * @return The borrowed font/face
+	 */
 	public TextFace borrowFaceWithSize(int faceIndex, int size, int scale) {
 		// Performance measurements: creating a FT_Face takes 10 to 40 microseconds, and allocates 10 to 30 KB
 		// Resizing an existing FT_Face takes 1 to 15 microseconds
@@ -122,6 +163,11 @@ public class FontData {
 		}
 	}
 
+	/**
+	 * Returns a font/face that was previously borrowed using {@link #borrowFaceWithHeightA} or
+	 * {@link #borrowFaceWithSize}.
+	 * @param face The borrowed face/font
+	 */
 	public void returnFace(TextFace face) {
 		synchronized (faceCache) {
 			var faceList = faceCache.get(face.key);
@@ -131,6 +177,9 @@ public class FontData {
 		}
 	}
 
+	/**
+	 * Destroys this {@link FontData}. You should use this once you no longer need it.
+	 */
 	public void destroy() {
 		synchronized (textInstance) {
 			for (var faceList : faceCache.values()) {

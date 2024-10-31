@@ -1,7 +1,6 @@
 package com.github.knokko.text.bitmap;
 
 import com.github.knokko.text.font.FontData;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.util.freetype.FT_Bitmap;
 import org.lwjgl.util.freetype.FT_GlyphSlot;
 
@@ -13,6 +12,9 @@ import static org.lwjgl.system.MemoryUtil.memFree;
 import static org.lwjgl.util.freetype.FreeType.FT_LOAD_RENDER;
 import static org.lwjgl.util.freetype.FreeType.FT_Load_Glyph;
 
+/**
+ * An implementation of <i>GlyphRasterizer</i> that uses FreeType to rasterize glyphs
+ */
 public class FreeTypeGlyphRasterizer implements GlyphRasterizer {
 
 	private final FontData font;
@@ -20,6 +22,9 @@ public class FreeTypeGlyphRasterizer implements GlyphRasterizer {
 	private int width, height;
 	private ByteBuffer buffer;
 
+	/**
+	 * Constructs a new rasterizer using the given font
+	 */
 	public FreeTypeGlyphRasterizer(FontData font) {
 		this.font = font;
 	}

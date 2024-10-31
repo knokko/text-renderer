@@ -3,7 +3,7 @@ package com.github.knokko.text.font;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntUnaryOperator;
 
-public class HeightSearcher {
+class HeightSearcher {
 
 	private final ConcurrentHashMap<Integer, Integer> cache = new ConcurrentHashMap<>();
 	private final IntUnaryOperator computeHeight;

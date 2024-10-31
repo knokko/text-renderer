@@ -6,6 +6,9 @@ import static com.github.knokko.text.FreeTypeFailureException.assertFtSuccess;
 import static org.lwjgl.util.freetype.FreeType.*;
 import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 
+/**
+ * This class is meant for internal use only. It wraps a FreeType face and some HarfBuzz objects.
+ */
 public class TextFace {
 
 	public final FT_Face ftFace;

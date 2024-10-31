@@ -119,7 +119,7 @@ public class VulkanTextRenderer {
 		long address = bufferAddress + (long) QUAD_BYTES * index;
 		memPutInt(address, quad.minX);
 		memPutInt(address + 4, quad.minY);
-		memPutInt(address + 8, quad.getActualWidth());
+		memPutInt(address + 8, quad.getWidth());
 		memPutInt(address + 12, quad.getHeight());
 		memPutInt(address + 16, quad.bufferIndex);
 		memPutInt(address + 20, quad.bufferOffsetX);

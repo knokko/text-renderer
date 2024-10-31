@@ -143,7 +143,7 @@ public class TestBitmapGlyphsBuffer {
 
 		quads.forEach(quad -> {
 			for (int offsetY = 0; offsetY < quad.getHeight(); offsetY++) {
-				for (int offsetX = 0; offsetX < quad.getActualWidth(); offsetX++) {
+				for (int offsetX = 0; offsetX < quad.getWidth(); offsetX++) {
 
 					int imageX = offsetX + quad.minX;
 					int imageY = offsetY + quad.minY;
@@ -184,7 +184,7 @@ public class TestBitmapGlyphsBuffer {
 
 		quads.forEach(quad -> {
 			for (int offsetY = 0; offsetY < quad.getHeight(); offsetY++) {
-				for (int offsetX = 0; offsetX < quad.getActualWidth(); offsetX++) {
+				for (int offsetX = 0; offsetX < quad.getWidth(); offsetX++) {
 
 					int imageX = offsetX + quad.minX;
 					int imageY = offsetY + quad.minY;

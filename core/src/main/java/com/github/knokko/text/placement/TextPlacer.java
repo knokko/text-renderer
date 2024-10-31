@@ -21,6 +21,10 @@ import static java.lang.Math.min;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.util.freetype.FreeType.*;
 
+/**
+ * The <i>TextPlacer</i> is responsible for stage 1 of the text rendering pipeline: it determines the position of
+ * each glyph that should be rendered. See the README for more information.
+ */
 public class TextPlacer {
 
 	private static final TextPlaceRequest TERMINATE_REQUEST = new TextPlaceRequest(
@@ -92,10 +96,17 @@ public class TextPlacer {
 		}
 	}
 
+	/**
+	 * Uses 1 thread to place all the given <i>TextPlaceRequest</i>s
+	 */
 	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests) {
 		return place(requests, 1);
 	}
 
+	/**
+	 * Uses <i>numThreads</i> threads to place all the given <i>TextPlaceRequest</i>s.
+	 * @return
+	 */
 	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests, int numThreads) {
 		if (numThreads > 1 && workerThreads == null) {
 			int numWorkerThreads = numThreads - 1;
@@ -231,6 +242,9 @@ public class TextPlacer {
 		return placements;
 	}
 
+	/**
+	 * Destroys this <i>TextPlacer</i>. It won't be able to handle any further requests.
+	 */
 	public void destroy() {
 		for (var buffer : allocations) memFree(buffer);
 		allocations.clear();

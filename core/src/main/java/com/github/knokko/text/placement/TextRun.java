@@ -3,7 +3,7 @@ package com.github.knokko.text.placement;
 import org.lwjgl.util.harfbuzz.hb_glyph_info_t;
 import org.lwjgl.util.harfbuzz.hb_glyph_position_t;
 
-public record TextRun(
+record TextRun(
 		String text, int faceIndex, int offset,
 		hb_glyph_info_t.Buffer glyphInfos,
 		hb_glyph_position_t.Buffer glyphPositions

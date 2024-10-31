@@ -5,10 +5,21 @@ import com.github.knokko.text.font.FontData;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+/**
+ * An implementation of {@link CpuTextRenderer} that draws into a {@link BufferedImage}
+ */
 public class BufferedImageTextRenderer extends CpuTextRenderer {
 
+	/**
+	 * The image onto which this renderer will draw the text
+	 */
 	public final BufferedImage image;
 
+	/**
+	 * @param image The image onto which this renderer will draw the text
+	 * @param font The font(s) that will be used to render the text
+	 * @param glyphBufferCapacity The capacity of the glyph buffer that will be used for stage 2, in bytes
+	 */
 	public BufferedImageTextRenderer(BufferedImage image, FontData font, int glyphBufferCapacity) {
 		super(font, glyphBufferCapacity);
 		this.image = image;
