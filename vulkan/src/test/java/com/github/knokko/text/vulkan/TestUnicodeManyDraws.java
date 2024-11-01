@@ -74,7 +74,7 @@ public class TestUnicodeManyDraws {
 				"TextFramebuffer", image.vkImageView()
 		);
 		long descriptorSet = textDescriptorPool.allocate(1)[0];
-		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
+		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer.fullRange(), glyphBuffer.fullRange());
 
 		var vkTextRenderer = vkTextPipeline.createRenderer(font, descriptorSet, glyphsBuffer, quadHostBuffer, 1);
 

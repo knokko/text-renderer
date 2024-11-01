@@ -98,8 +98,9 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 
 	private VulkanTextInstance vkTextInstance;
 	private VulkanTextPipeline vkTextPipeline;
-	private VulkanTextRenderer vkTextRenderer;
-	private MappedVkbBuffer glyphBuffer, quadBuffer;
+	private final VulkanTextRenderer[] vkTextRenderers = new VulkanTextRenderer[numFramesInFlight];
+	private final MappedVkbBuffer[] glyphBuffers = new MappedVkbBuffer[numFramesInFlight],
+			quadBuffers = new MappedVkbBuffer[numFramesInFlight];
 	private HomogeneousDescriptorPool textDescriptorPool;
 
 	private List<String> unicodeTestCase;
@@ -112,7 +113,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 
 	public UnicodeRendererSample(VkbWindow window) {
 		super(
-				window, 1, true, VK_PRESENT_MODE_MAILBOX_KHR,
+				window, 2, false, VK_PRESENT_MODE_MAILBOX_KHR,
 				ResourceUsage.COLOR_ATTACHMENT_WRITE, ResourceUsage.COLOR_ATTACHMENT_WRITE
 		);
 	}
@@ -133,15 +134,18 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 				0, window.surfaceFormat, null, null
 		);
 		System.out.println("Memory usage mid setup is " + MemorySnapshot.take());
-		textDescriptorPool = vkTextInstance.descriptorSetLayout.createPool(1, 0, "TextPool");
-		glyphBuffer = boiler.buffers.createMapped(30_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
-		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), (int) glyphBuffer.size());
-		quadBuffer = boiler.buffers.createMapped(10_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
-		var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
-		long descriptorSet = textDescriptorPool.allocate(1)[0];
-		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
+		textDescriptorPool = vkTextInstance.descriptorSetLayout.createPool(numFramesInFlight, 0, "TextPool");
 
-		vkTextRenderer = vkTextPipeline.createRenderer(unicodeFont, descriptorSet, glyphsBuffer, quadHostBuffer, 3);
+		long[] descriptorSets = textDescriptorPool.allocate(numFramesInFlight);
+
+		for (int index = 0; index < numFramesInFlight; index++) {
+			glyphBuffers[index] = boiler.buffers.createMapped(30_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
+			var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffers[index].hostAddress(), (int) glyphBuffers[index].size());
+			quadBuffers[index] = boiler.buffers.createMapped(10_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
+			var quadHostBuffer = memIntBuffer(quadBuffers[index].hostAddress(), (int) quadBuffers[index].size() / 4);
+			vkTextInstance.updateDescriptorSet(descriptorSets[index], quadBuffers[index].fullRange(), glyphBuffers[index].fullRange());
+			vkTextRenderers[index] = vkTextPipeline.createRenderer(unicodeFont, descriptorSets[index], glyphsBuffer, quadHostBuffer, 3);
+		}
 		unicodeTestCase = UnicodeLines.get();
 		System.out.println("Memory usage after setup is " + MemorySnapshot.take());
 	}
@@ -209,17 +213,17 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 				VK_ATTACHMENT_STORE_OP_STORE, 0.2f, 0.2f, 0.2f, 1f
 		);
 		recorder.beginSimpleDynamicRendering(acquiredImage.width(), acquiredImage.height(), colorAttachments, null, null);
-		vkTextRenderer.recordCommands(recorder, acquiredImage.width(), acquiredImage.height(), requests);
+		vkTextRenderers[frameIndex].recordCommands(recorder, acquiredImage.width(), acquiredImage.height(), requests);
 		recorder.endDynamicRendering();
 	}
 
 	@Override
 	protected void cleanUp(BoilerInstance boiler) {
 		super.cleanUp(boiler);
-		glyphBuffer.destroy(boiler);
-		quadBuffer.destroy(boiler);
+		for (var glyphBuffer : glyphBuffers) glyphBuffer.destroy(boiler);
+		for (var quadBuffer : quadBuffers) quadBuffer.destroy(boiler);
 		textDescriptorPool.destroy();
-		vkTextRenderer.destroy();
+		for (var renderer : vkTextRenderers) renderer.destroy();
 		vkTextPipeline.destroy();
 		vkTextInstance.destroyInitialObjects();
 		unicodeFont.destroy();

@@ -20,6 +20,10 @@ import java.util.List;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.VK10.*;
 
+/**
+ * This class is responsible for actually rendering the text. It is not thread-safe at all, and you need 1 instance of
+ * this class per frame in-flight.
+ */
 public class VulkanTextRenderer {
 
 	private static final int QUAD_INTS = 8;
@@ -35,7 +39,7 @@ public class VulkanTextRenderer {
 	private final GlyphRasterizer rasterizer;
 	private final int numTextPlacerThreads;
 
-	public VulkanTextRenderer(
+	VulkanTextRenderer(
 			FontData font, VulkanTextInstance instance, VulkanTextPipeline pipeline,
 			long descriptorSet, BitmapGlyphsBuffer glyphsBuffer, IntBuffer quadBuffer,
 			int numTextPlacerThreads
@@ -51,6 +55,27 @@ public class VulkanTextRenderer {
 		this.numTextPlacerThreads = numTextPlacerThreads;
 	}
 
+	/**
+	 * Records commands to:
+	 * <ol>
+	 *     <li>Bind the text graphics pipeline</li>
+	 *     <li>Sets dynamic viewport & scissor (if applicable)</li>
+	 *     <li>Binds the descriptor set of this renderer</li>
+	 *     <li>Sets push constant state</li>
+	 *     <li>Draw the text quads</li>
+	 * </ol>
+	 * Furthermore, it will
+	 * <ol>
+	 *     <li>Use {@link TextPlacer} to place all requests</li>
+	 *     <li>Use {@link BitmapGlyphsBuffer} to fill the mapped glyphs buffer</li>
+	 *     <li>Put all the {@link GlyphQuad}s into the glyph buffer</li>
+	 * </ol>
+	 * Note that it's the responsibility of the caller to ensure that a compatible renderpass is currently active.
+	 * @param recorder The command recorder to which this renderer should record the render commands
+	 * @param framebufferWidth The width of the framebuffer/target image, in pixels
+	 * @param framebufferHeight The height of the framebuffer/target image, in pixels
+	 * @param requests The requests to be rendered
+	 */
 	public void recordCommands(
 			CommandRecorder recorder, int framebufferWidth, int framebufferHeight, List<TextPlaceRequest> requests
 	) {
@@ -105,7 +130,7 @@ public class VulkanTextRenderer {
 		vkCmdDraw(recorder.commandBuffer, 6 * filteredPlacedQuads.size(), 1, 0, 0);
 	}
 
-	public void pushConstants(
+	private void pushConstants(
 			VkCommandBuffer commandBuffer, MemoryStack stack,
 			int framebufferWidth, int framebufferHeight
 	) {
@@ -115,7 +140,7 @@ public class VulkanTextRenderer {
 		);
 	}
 
-	public void putQuad(long bufferAddress, int index, GlyphQuad quad) {
+	private void putQuad(long bufferAddress, int index, GlyphQuad quad) {
 		long address = bufferAddress + (long) QUAD_BYTES * index;
 		memPutInt(address, quad.minX);
 		memPutInt(address + 4, quad.minY);
@@ -131,6 +156,10 @@ public class VulkanTextRenderer {
 		memPutInt(address + 28, color);
 	}
 
+	/**
+	 * Destroys this renderer. You should call this when you no longer need this renderer, and all submission for which
+	 * it has recorder commands, have completed execution.
+	 */
 	public void destroy() {
 		placer.destroy();
 		rasterizer.destroy();

@@ -1,7 +1,7 @@
 package com.github.knokko.text.vulkan;
 
 import com.github.knokko.boiler.BoilerInstance;
-import com.github.knokko.boiler.buffers.MappedVkbBuffer;
+import com.github.knokko.boiler.buffers.VkbBufferRange;
 import com.github.knokko.boiler.descriptors.VkbDescriptorSetLayout;
 import com.github.knokko.boiler.pipelines.GraphicsPipelineBuilder;
 import org.lwjgl.vulkan.*;
@@ -10,12 +10,29 @@ import static com.github.knokko.boiler.exceptions.VulkanFailureException.assertV
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
+/**
+ * The 'root' of the hierarchy of the Vulkan implementation of stage 3 of the text rendering pipeline. You should
+ * create 1 instance of this class per {@link BoilerInstance}, so probably just 1. This class is completely
+ * thread-safe.
+ */
 public class VulkanTextInstance {
 
 	public final BoilerInstance boiler;
+
+	/**
+	 * The {@link VkbDescriptorSetLayout} from which you need to allocate descriptor sets for the text rendering
+	 * graphics pipeline.
+	 */
 	public final VkbDescriptorSetLayout descriptorSetLayout;
+
+	/**
+	 * The <i>VkPipelineLayout</i> that all text graphics pipelines will have
+	 */
 	public final long pipelineLayout;
 
+	/**
+	 * Constructs a new {@link VulkanTextInstance} using the given {@link BoilerInstance}
+	 */
 	public VulkanTextInstance(BoilerInstance boiler) {
 		this.boiler = boiler;
 		try (var stack = stackPush()) {
@@ -34,6 +51,16 @@ public class VulkanTextInstance {
 		}
 	}
 
+	/**
+	 * Creates a <i>VkRenderpass</i> that will be compatible with the text rendering graphics pipelines.
+	 * @param framebufferFormat {@link VkAttachmentDescription#format()}
+	 * @param loadOp {@link VkAttachmentDescription#loadOp()}
+	 * @param initialLayout {@link VkAttachmentDescription#initialLayout()}
+	 * @param finalLayout {@link VkAttachmentDescription#finalLayout()}
+	 * @param dstStageMask {@link VkSubpassDependency#dstStageMask()}
+	 * @param dstAccessMask {@link VkSubpassDependency#dstAccessMask()}
+	 * @return The created <i>VkRenderPass</i>
+	 */
 	public long createRenderPass(
 			int framebufferFormat, int loadOp, int initialLayout, int finalLayout,
 			Integer dstStageMask, Integer dstAccessMask
@@ -99,34 +126,73 @@ public class VulkanTextInstance {
 		}
 	}
 
-	public void updateDescriptorSet(long descriptorSet, MappedVkbBuffer quadBuffer, MappedVkbBuffer glyphBuffer) {
+	/**
+	 * Calls <i>vkUpdateDescriptorSets</i> to update the given <i>VkDescriptorSet</i>. You need to call this once
+	 * after allocating {@code descriptorSet}, and after each time you change the {@code quadBuffer} and/or
+	 * {@code glyphBuffer}.
+	 * @param descriptorSet The descriptor set to be updated. It should have the layout {@link #descriptorSetLayout}
+	 * @param quadBuffer The {@link VkbBufferRange} containing all the <i>GlyphQuad</i> data
+	 * @param glyphBuffer The {@link VkbBufferRange} containing all the rasterized glyphs, which should be mapped to
+	 *                    the {@link com.github.knokko.text.bitmap.BitmapGlyphsBuffer}
+	 */
+	public void updateDescriptorSet(long descriptorSet, VkbBufferRange quadBuffer, VkbBufferRange glyphBuffer) {
 		try (var stack = stackPush()) {
 			var descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
 			boiler.descriptors.writeBuffer(
 					stack, descriptorWrites, descriptorSet, 0,
-					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, quadBuffer.fullRange()
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, quadBuffer
 			);
 			boiler.descriptors.writeBuffer(
 					stack, descriptorWrites, descriptorSet, 1,
-					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, glyphBuffer.fullRange()
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, glyphBuffer
 			);
 			vkUpdateDescriptorSets(boiler.vkDevice(), descriptorWrites, null);
 		}
 	}
 
+	/**
+	 * Creates a {@link VulkanTextPipeline} that will be compatible with the given {@code subpass} of the given
+	 * {@code renderPass}. You should probably have used {@link #createRenderPass} to create the given
+	 * {@code renderPass}, but that's not a hard requirement.
+	 * <ul>
+	 *     <li>
+	 *         When {@code framebufferWidth} and {@code framebufferHeight} are null, the pipeline will have a dynamic
+	 *         viewport state and scissor state.
+	 *     </li>
+	 *     <li>
+	 *         When {@code framebufferWidth} and {@code framebufferHeight} are not null, the pipeline will have a
+	 *         fixed viewport and scissor of {@code framebufferWidth} by {@code framebufferHeight} pixels.
+	 *     </li>
+	 * </ul>
+	 */
 	public VulkanTextPipeline createPipelineWithRenderPass(
 			long renderPass, int subpass, Integer framebufferWidth, Integer framebufferHeight
 	) {
 		return createPipeline(renderPass, subpass, 0, 0, framebufferWidth, framebufferHeight);
 	}
 
+	/**
+	 * Creates a {@link VulkanTextPipeline} that will use dynamic rendering. the {@code viewMask} will be propagated to
+	 * {@link VkPipelineRenderingCreateInfo#viewMask()} and the {@code colorAttachmentFormat} will be propagated to
+	 * {@link VkPipelineRenderingCreateInfo#pColorAttachmentFormats()}.
+	 * <ul>
+	 *     <li>
+	 *         When {@code framebufferWidth} and {@code framebufferHeight} are null, the pipeline will have a dynamic
+	 *         viewport state and scissor state.
+	 *     </li>
+	 *     <li>
+	 *         When {@code framebufferWidth} and {@code framebufferHeight} are not null, the pipeline will have a
+	 *         fixed viewport and scissor of {@code framebufferWidth} by {@code framebufferHeight} pixels.
+	 *     </li>
+	 * </ul>
+	 */
 	public VulkanTextPipeline createPipelineWithDynamicRendering(
 			int viewMask, int colorAttachmentFormat, Integer framebufferWidth, Integer framebufferHeight
 	) {
 		return createPipeline(null, 0, viewMask, colorAttachmentFormat, framebufferWidth, framebufferHeight);
 	}
 
-	public VulkanTextPipeline createPipeline(
+	private VulkanTextPipeline createPipeline(
 			Long renderPass, int subpass,
 			int viewMask, int colorAttachmentFormat,
 			Integer framebufferWidth, Integer framebufferHeight
@@ -175,7 +241,7 @@ public class VulkanTextInstance {
 	}
 
 	/**
-	 * Destroys all Vulkan objects that were created in the VulkanText constructor
+	 * Destroys all Vulkan objects that were created in the constructor of this class
 	 */
 	public void destroyInitialObjects() {
 		descriptorSetLayout.destroy();
