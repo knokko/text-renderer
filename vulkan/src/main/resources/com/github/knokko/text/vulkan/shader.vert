@@ -11,22 +11,20 @@ layout(set = 0, binding = 0) readonly buffer sb {
 layout(location = 0) out flat ivec2 corner;
 layout(location = 1) out flat ivec2 size;
 layout(location = 2) out flat int bufferIndex;
-layout(location = 3) out flat int bufferOffsetX;
-layout(location = 4) out flat int sectionWidth;
-layout(location = 5) out flat int scale;
-layout(location = 6) out flat int rawColor;
+layout(location = 3) out flat int sectionWidth;
+layout(location = 4) out flat int scale;
+layout(location = 5) out flat int rawColor;
 
 void main() {
-	int quadIndex = 9 * (gl_VertexIndex / 6);
+	int quadIndex = 8 * (gl_VertexIndex / 6);
 	int vertexIndex = gl_VertexIndex % 6;
 
 	corner = ivec2(quads[quadIndex], quads[quadIndex + 1]);
 	size = ivec2(quads[quadIndex + 2], quads[quadIndex + 3]);
 	bufferIndex = quads[quadIndex + 4];
-	bufferOffsetX = quads[quadIndex + 5];
-	sectionWidth = quads[quadIndex + 6];
-	scale = quads[quadIndex + 7];
-	rawColor = quads[quadIndex + 8];
+	sectionWidth = quads[quadIndex + 5];
+	scale = quads[quadIndex + 6];
+	rawColor = quads[quadIndex + 7];
 
 	int x = corner.x;
 	int y = corner.y;

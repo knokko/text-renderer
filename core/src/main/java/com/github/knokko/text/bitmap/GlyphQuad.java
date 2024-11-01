@@ -33,7 +33,6 @@ public class GlyphQuad {
 	 * The width of the rasterized glyph section, in pixels
 	 */
 	public final int sectionWidth;
-	public final int bufferOffsetX; // TODO Get rid of this
 
 	/**
 	 * The index into the {@link TextPlaceRequest#text} of the character that is (partially) being rendered by this
@@ -61,7 +60,7 @@ public class GlyphQuad {
 	 */
 	public GlyphQuad(
 			int bufferIndex, int minX, int minY, int maxX, int maxY, int scale,
-			int sectionWidth, int bufferOffsetX, int charIndex, Object userData
+			int sectionWidth, int charIndex, Object userData
 	) {
 		this.bufferIndex = bufferIndex;
 		this.minX = minX;
@@ -70,7 +69,6 @@ public class GlyphQuad {
 		this.maxY = maxY;
 		this.scale = scale;
 		this.sectionWidth = sectionWidth;
-		this.bufferOffsetX = bufferOffsetX;
 		this.charIndex = charIndex;
 		this.userData = userData;
 	}

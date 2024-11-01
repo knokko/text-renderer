@@ -147,7 +147,7 @@ public class TestBitmapGlyphsBuffer {
 
 					int imageX = offsetX + quad.minX;
 					int imageY = offsetY + quad.minY;
-					int bufferIndex = quad.bufferIndex + offsetX + quad.bufferOffsetX + offsetY * quad.sectionWidth;
+					int bufferIndex = quad.bufferIndex + offsetX + offsetY * quad.sectionWidth;
 
 					resultMap[imageX - placeRequest.minX][imageY - placeRequest.minY] = memGetByte(bufferAddress + bufferIndex);
 				}
@@ -188,7 +188,7 @@ public class TestBitmapGlyphsBuffer {
 
 					int imageX = offsetX + quad.minX;
 					int imageY = offsetY + quad.minY;
-					int bufferIndex = quad.bufferIndex + offsetX + quad.bufferOffsetX + offsetY * quad.sectionWidth;
+					int bufferIndex = quad.bufferIndex + offsetX + offsetY * quad.sectionWidth;
 
 					resultMap[imageX - placeRequest.minX][imageY - 1] = memGetByte(bufferAddress + bufferIndex);
 				}
@@ -226,13 +226,12 @@ public class TestBitmapGlyphsBuffer {
 		assertEquals(1, quads.size());
 
 		var quad = quads.get(0);
-		assertEquals(0, quad.bufferIndex);
 		assertEquals(1, quad.minX);
 		assertEquals(4, quad.minY);
 		assertEquals(2, quad.maxX); // maxX is 2 instead of 3 because width must be a multiple of scale
 		assertEquals(7, quad.maxY);
+		assertEquals(placeRequest.minX + placeRequest.minY * quad.sectionWidth, quad.bufferIndex);
 		assertEquals(2, quad.scale);
 		assertEquals(5, quad.sectionWidth);
-		assertEquals(placeRequest.minX + placeRequest.minY * quad.sectionWidth, quad.bufferOffsetX);
 	}
 }

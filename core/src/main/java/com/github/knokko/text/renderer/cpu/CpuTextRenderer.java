@@ -55,7 +55,7 @@ public abstract class CpuTextRenderer {
 
 					int imageX = offsetX + quad.minX;
 					int imageY = offsetY + quad.minY;
-					int bufferIndex = quad.bufferIndex + offsetX / quad.scale + quad.bufferOffsetX + (offsetY / quad.scale) * quad.sectionWidth;
+					int bufferIndex = quad.bufferIndex + offsetX / quad.scale + (offsetY / quad.scale) * quad.sectionWidth;
 					setPixel(imageX, imageY, byteBuffer.get(bufferIndex) & 0xFF);
 				}
 			}

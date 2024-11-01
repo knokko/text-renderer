@@ -22,7 +22,7 @@ import static org.lwjgl.vulkan.VK10.*;
 
 public class VulkanTextRenderer {
 
-	private static final int QUAD_INTS = 9;
+	private static final int QUAD_INTS = 8;
 	private static final int QUAD_BYTES = QUAD_INTS * 4;
 
 	private final VulkanTextInstance instance;
@@ -122,14 +122,13 @@ public class VulkanTextRenderer {
 		memPutInt(address + 8, quad.getWidth());
 		memPutInt(address + 12, quad.getHeight());
 		memPutInt(address + 16, quad.bufferIndex);
-		memPutInt(address + 20, quad.bufferOffsetX);
-		memPutInt(address + 24, quad.sectionWidth);
-		memPutInt(address + 28, quad.scale);
+		memPutInt(address + 20, quad.sectionWidth);
+		memPutInt(address + 24, quad.scale);
 
 		int color = ColorPacker.rgba(0, 0, 0, 255);
 		if (quad.userData instanceof Integer) color = (Integer) quad.userData;
 
-		memPutInt(address + 32, color);
+		memPutInt(address + 28, color);
 	}
 
 	public void destroy() {

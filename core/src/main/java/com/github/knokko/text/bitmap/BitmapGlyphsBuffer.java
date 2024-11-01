@@ -95,8 +95,8 @@ public class BitmapGlyphsBuffer {
 				while ((1 + maxY - minY) % scale != 0) maxY -= 1;
 
 				glyphQuads.add(new GlyphQuad(
-						section.bufferIndex(), minX, minY, maxX, maxY, scale, section.width(),
-						minX - desiredMinX + section.width() * (minY - desiredMinY),
+						section.bufferIndex() + minX - desiredMinX + section.width() * (minY - desiredMinY),
+						minX, minY, maxX, maxY, scale, section.width(),
 						placedGlyph.charIndex, placedGlyph.request.userData
 				));
 			}
