@@ -75,6 +75,8 @@ public class VulkanTextRenderer {
 	 * @param framebufferWidth The width of the framebuffer/target image, in pixels
 	 * @param framebufferHeight The height of the framebuffer/target image, in pixels
 	 * @param requests The requests to be rendered
+	 * @throws QuadBufferOverflowException When the quad buffer of this renderer is too small to render this frame.
+	 * Consider recreating the renderer with a larger quad buffer when this happens.
 	 */
 	public void recordCommands(
 			CommandRecorder recorder, int framebufferWidth, int framebufferHeight, List<TextPlaceRequest> requests
@@ -109,9 +111,7 @@ public class VulkanTextRenderer {
 		}
 
 		if (filteredPlacedQuads.size() * QUAD_INTS > quadBuffer.remaining()) {
-			throw new IllegalArgumentException("Quad buffer is too small: needed " +
-					filteredPlacedQuads.size() * QUAD_INTS + ", but got " + quadBuffer.remaining()
-			);
+			throw new QuadBufferOverflowException(filteredPlacedQuads.size() * QUAD_INTS, quadBuffer.remaining());
 		}
 
 		vkCmdBindPipeline(recorder.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeline);
