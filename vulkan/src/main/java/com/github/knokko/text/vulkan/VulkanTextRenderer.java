@@ -109,6 +109,7 @@ public class VulkanTextRenderer {
 		}
 
 		if (filteredPlacedQuads.size() * QUAD_INTS > quadBuffer.remaining()) {
+			// TODO Create special exception class for this
 			throw new IllegalArgumentException("Quad buffer is too small: needed " +
 					filteredPlacedQuads.size() * QUAD_INTS + ", but got " + quadBuffer.remaining()
 			);
