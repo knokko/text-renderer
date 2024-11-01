@@ -72,6 +72,8 @@ public class BitmapGlyphsBuffer {
 	 * @param rasterizer The rasterizer that should render the glyphs
 	 * @param placedGlyphs The glyphs to be rasterized
 	 * @return The list of corresponding <i>GlyphQuad</i>s
+	 * @throws GlyphBufferCapacityException When there is not enough space left in the glyph buffer to rasterize
+	 * the glyphs
 	 */
 	public List<GlyphQuad> bufferGlyphs(GlyphRasterizer rasterizer, List<PlacedGlyph> placedGlyphs) {
 		var glyphQuads = new ArrayList<GlyphQuad>(placedGlyphs.size());
@@ -111,6 +113,8 @@ public class BitmapGlyphsBuffer {
 	 * @param rasterizer The rasterizer that should be used to rasterize the glyph
 	 * @param glyph The glyph to be rasterized
 	 * @return The sections in this buffer where the glyph fragments are stored
+	 * @throws GlyphBufferCapacityException When there is not enough space left in the glyph buffer to rasterize
+	 * the glyph
 	 */
 	public List<BitmapGlyphSection> getSections(GlyphRasterizer rasterizer, SizedGlyph glyph) {
 		var bufferedGlyph = glyphMap.get(glyph);
@@ -144,8 +148,7 @@ public class BitmapGlyphsBuffer {
 									for (var section : oldestGlyph.sections) {
 										bufferSlots.add(section.bufferIndex() / slotSize);
 									}
-								} else throw new RuntimeException("Not enough slots/capacity available");
-								// TODO Create proper exception class for this
+								} else throw new GlyphBufferCapacityException();
 							}
 							return slotSize * bufferSlots.remove(bufferSlots.size() - 1);
 						} else return -1;
