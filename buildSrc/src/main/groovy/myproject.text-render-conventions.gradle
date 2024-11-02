@@ -1,0 +1,37 @@
+plugins {
+	id "java"
+}
+
+repositories {
+	mavenCentral()
+	maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
+	maven { url = "https://jitpack.io" }
+}
+
+java {
+	sourceCompatibility = "17"
+	targetCompatibility = "17"
+}
+
+project.ext.boilerVersion = "v4.2.0"
+project.ext.jUnitVersion = "5.10.3"
+project.ext.allNatives = [
+		"natives-windows", "natives-windows-x86", "natives-windows-arm64",
+		"natives-linux", "natives-linux-arm32", "natives-linux-arm64",
+		"natives-freebsd", "natives-linux-ppc64le", "natives-linux-riscv64",
+		"natives-macos", "natives-macos-arm64"
+]
+
+dependencies {
+	implementation platform("org.lwjgl:lwjgl-bom:3.3.4")
+
+	testImplementation platform("org.junit:junit-bom:$jUnitVersion")
+	testImplementation "org.junit.jupiter:junit-jupiter:$jUnitVersion"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+compileTestJava.options.encoding = 'UTF-8'
+
+test {
+	useJUnitPlatform()
+}
