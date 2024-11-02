@@ -1,0 +1,5 @@
+dependencies {
+	implementation platform("org.junit:junit-bom:$jUnitVersion")
+	implementation "org.junit.jupiter:junit-jupiter:$jUnitVersion"
+	runtimeOnly "org.junit.platform:junit-platform-launcher"
+}

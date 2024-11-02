@@ -1,0 +1,11 @@
+dependencies {
+	implementation project(":vulkan-bundle")
+	implementation project(":unicode-fonts")
+	implementation project(":test-helper")
+	implementation "org.lwjgl:lwjgl-glfw"
+	for (String target : project.ext.allNatives) {
+		runtimeOnly "org.lwjgl:lwjgl-glfw::$target"
+	}
+	implementation "com.github.knokko:memory-query:v1.1"
+	implementation "com.github.knokko:sample-profiler:v1.0.0"
+}

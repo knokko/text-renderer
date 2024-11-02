@@ -1,0 +1,10 @@
+dependencies {
+	compileOnly project(":core")
+	compileOnly "org.lwjgl:lwjgl-vulkan"
+	compileOnly "org.lwjgl:lwjgl-vma"
+	compileOnly "com.github.knokko:vk-boiler:$boilerVersion"
+
+	testImplementation project(":vulkan-bundle")
+	testImplementation project(":unicode-fonts")
+	testImplementation project(":test-helper")
+}

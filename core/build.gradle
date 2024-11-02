@@ -1,0 +1,9 @@
+dependencies {
+	compileOnly "org.lwjgl:lwjgl"
+	compileOnly "org.lwjgl:lwjgl-freetype"
+	compileOnly "org.lwjgl:lwjgl-harfbuzz"
+
+	testImplementation project(":core-bundle")
+	testImplementation project(":unicode-fonts")
+	testImplementation project(":test-helper")
+}
