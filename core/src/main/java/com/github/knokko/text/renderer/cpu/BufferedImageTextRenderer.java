@@ -1,5 +1,6 @@
 package com.github.knokko.text.renderer.cpu;
 
+import com.github.knokko.text.BoundingRectangle;
 import com.github.knokko.text.font.FontData;
 
 import java.awt.*;
@@ -36,5 +37,10 @@ public class BufferedImageTextRenderer extends CpuTextRenderer {
 			int mergedIntValue = Math.min(255, Math.max(0, Math.round((float) mergedValue * 255f)));
 			image.setRGB(x, y, new Color(mergedIntValue, mergedIntValue, mergedIntValue).getRGB());
 		}
+	}
+
+	@Override
+	protected BoundingRectangle createBoundingRectangle() {
+		return new BoundingRectangle(0, 0, image.getWidth(), image.getHeight());
 	}
 }

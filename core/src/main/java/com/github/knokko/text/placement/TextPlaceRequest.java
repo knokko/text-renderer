@@ -82,6 +82,10 @@ public class TextPlaceRequest implements Comparable<TextPlaceRequest> {
 		return 1 + maxX - minX;
 	}
 
+	public int getHeight() {
+		return 1 + maxY - minY;
+	}
+
 	@Override
 	public int compareTo(TextPlaceRequest other) {
 		return Integer.compare(this.heightA, other.heightA);

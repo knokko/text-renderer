@@ -2,22 +2,20 @@ package com.github.knokko.text.vulkan;
 
 import com.github.knokko.boiler.commands.CommandRecorder;
 import com.github.knokko.boiler.utilities.ColorPacker;
+import com.github.knokko.text.BoundingRectangle;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.bitmap.FreeTypeGlyphRasterizer;
 import com.github.knokko.text.bitmap.GlyphQuad;
 import com.github.knokko.text.bitmap.GlyphRasterizer;
 import com.github.knokko.text.font.FontData;
-import com.github.knokko.text.placement.PlacedGlyph;
 import com.github.knokko.text.placement.TextPlaceRequest;
 import com.github.knokko.text.placement.TextPlacer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
 import java.nio.IntBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
-import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.vulkan.VK10.*;
 
 /**
@@ -27,7 +25,6 @@ import static org.lwjgl.vulkan.VK10.*;
 public class VulkanTextRenderer {
 
 	private static final int QUAD_INTS = 8;
-	private static final int QUAD_BYTES = QUAD_INTS * 4;
 
 	private final VulkanTextInstance instance;
 	private final VulkanTextPipeline pipeline;
@@ -79,41 +76,23 @@ public class VulkanTextRenderer {
 	public void recordCommands(
 			CommandRecorder recorder, int framebufferWidth, int framebufferHeight, List<TextPlaceRequest> requests
 	) {
-		var filteredRequests = new ArrayList<TextPlaceRequest>(requests.size());
-		for (var request : requests) {
-			if (request.minX < framebufferWidth && request.maxX >= 0 &&
-					request.minY < framebufferHeight && request.maxY >= 0
-			) {
-				filteredRequests.add(request);
-			}
-		}
-
-		var placedGlyphs = placer.place(filteredRequests, numTextPlacerThreads);
-		var filteredPlacedGlyphs = new ArrayList<PlacedGlyph>(placedGlyphs.size());
-		for (var placedGlyph : placedGlyphs) {
-			if (placedGlyph.minX < framebufferWidth &&
-					placedGlyph.minX > -5 * placedGlyph.glyph.scale * placedGlyph.glyph.size
-			) {
-				filteredPlacedGlyphs.add(placedGlyph);
-			}
-		}
+		var bounds = new BoundingRectangle(0, 0, framebufferWidth, framebufferHeight);
+		var placedGlyphs = placer.place(requests, numTextPlacerThreads, bounds);
 
 		glyphsBuffer.startFrame();
 
-		var placedQuads = glyphsBuffer.bufferGlyphs(rasterizer, filteredPlacedGlyphs);
-		var filteredPlacedQuads = new ArrayList<GlyphQuad>(placedQuads.size());
-		for (var quad : placedQuads) {
-			if (quad.minX < framebufferWidth && quad.minY < framebufferHeight && quad.maxX >= 0 && quad.maxY >= 0) {
-				filteredPlacedQuads.add(quad);
-			}
-		}
+		quadBuffer.position(0);
 
-		if (filteredPlacedQuads.size() * QUAD_INTS > quadBuffer.remaining()) {
-			// TODO Create special exception class for this
-			throw new IllegalArgumentException("Quad buffer is too small: needed " +
-					filteredPlacedQuads.size() * QUAD_INTS + ", but got " + quadBuffer.remaining()
-			);
-		}
+		glyphsBuffer.bufferGlyphs(rasterizer, placedGlyphs, bounds, quad -> {
+			quadBuffer.put(quad.minX).put(quad.minY);
+			quadBuffer.put(quad.getWidth()).put(quad.getHeight());
+			quadBuffer.put(quad.bufferIndex).put(quad.sectionWidth).put(quad.scale);
+
+			int color = ColorPacker.rgba(0, 0, 0, 255);
+			if (quad.request.userData instanceof Integer) color = (Integer) quad.request.userData;
+
+			quadBuffer.put(color);
+		});
 
 		vkCmdBindPipeline(recorder.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.graphicsPipeline);
 		if (pipeline.hasDynamicViewport) {
@@ -122,13 +101,7 @@ public class VulkanTextRenderer {
 		recorder.bindGraphicsDescriptors(instance.pipelineLayout, descriptorSet);
 		pushConstants(recorder.commandBuffer, recorder.stack, framebufferWidth, framebufferHeight);
 
-		int quadIndex = 0;
-		for (var quad : filteredPlacedQuads) {
-			putQuad(memAddress(quadBuffer), quadIndex, quad);
-			quadIndex += 1;
-		}
-
-		vkCmdDraw(recorder.commandBuffer, 6 * filteredPlacedQuads.size(), 1, 0, 0);
+		vkCmdDraw(recorder.commandBuffer, 6 * (quadBuffer.position() / QUAD_INTS), 1, 0, 0);
 	}
 
 	private void pushConstants(
@@ -139,22 +112,6 @@ public class VulkanTextRenderer {
 				commandBuffer, instance.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, stack.ints(framebufferWidth, framebufferHeight)
 		);
-	}
-
-	private void putQuad(long bufferAddress, int index, GlyphQuad quad) {
-		long address = bufferAddress + (long) QUAD_BYTES * index;
-		memPutInt(address, quad.minX);
-		memPutInt(address + 4, quad.minY);
-		memPutInt(address + 8, quad.getWidth());
-		memPutInt(address + 12, quad.getHeight());
-		memPutInt(address + 16, quad.bufferIndex);
-		memPutInt(address + 20, quad.sectionWidth);
-		memPutInt(address + 24, quad.scale);
-
-		int color = ColorPacker.rgba(0, 0, 0, 255);
-		if (quad.userData instanceof Integer) color = (Integer) quad.userData;
-
-		memPutInt(address + 28, color);
 	}
 
 	/**

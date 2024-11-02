@@ -1,5 +1,6 @@
 package com.github.knokko.text.placement;
 
+import com.github.knokko.text.BoundingRectangle;
 import com.github.knokko.text.SizedGlyph;
 import com.github.knokko.text.font.FontData;
 import org.lwjgl.system.MemoryStack;
@@ -43,6 +44,8 @@ public class TextPlacer {
 	private LinkedBlockingQueue<TextPlaceRequest> asyncRequests;
 	private BlockingQueue<List<PlacedGlyph>> asyncResults;
 	private final AtomicLong offsetCounter = new AtomicLong(0);
+
+	private BoundingRectangle currentBounds;
 
 	public TextPlacer(FontData font) {
 		this.fontData = font;
@@ -99,15 +102,17 @@ public class TextPlacer {
 	/**
 	 * Uses 1 thread to place all the given <i>TextPlaceRequest</i>s
 	 */
-	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests) {
-		return place(requests, 1);
+	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests, BoundingRectangle bounds) {
+		return place(requests, 1, bounds);
 	}
+
+	// TODO Update docs
 
 	/**
 	 * Uses <i>numThreads</i> threads to place all the given <i>TextPlaceRequest</i>s.
-	 * @return
 	 */
-	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests, int numThreads) {
+	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests, int numThreads, BoundingRectangle bounds) {
+		this.currentBounds = bounds;
 		if (numThreads > 1 && workerThreads == null) {
 			int numWorkerThreads = numThreads - 1;
 			workerThreads = new Thread[numWorkerThreads];
@@ -124,7 +129,13 @@ public class TextPlacer {
 
 		if (numThreads > 1) {
 			if (!asyncResults.isEmpty()) throw new IllegalStateException("Can't use TextPlacer concurrently!");
-			asyncRequests.addAll(requests);
+			int numRequests = 0;
+			for (var request : requests) {
+				if (bounds.hasOverlap(request.minX, request.minY, request.maxX, request.maxY)) {
+					asyncRequests.add(request);
+					numRequests += 1;
+				}
+			}
 
 			while (true) {
 				var nextRequest = asyncRequests.poll();
@@ -133,16 +144,19 @@ public class TextPlacer {
 			}
 
 			try {
-				for (int counter = 0; counter < requests.size(); counter++) placedGlyphs.addAll(asyncResults.take());
+				for (int counter = 0; counter < numRequests; counter++) placedGlyphs.addAll(asyncResults.take());
 			} catch (InterruptedException shouldNotHappen) {
 				throw new RuntimeException(shouldNotHappen);
 			}
 		} else {
 			var requestList = new ArrayList<>(requests);
 			requestList.sort(null);
-			for (var request : requestList) placedGlyphs.addAll(handleRequest(request));
+			for (var request : requestList) {
+				if (bounds.hasOverlap(request.minX, request.minY, request.maxX, request.maxY)) {
+					placedGlyphs.addAll(handleRequest(request));
+				}
+			}
 		}
-
 
 		return placedGlyphs;
 	}
@@ -204,7 +218,7 @@ public class TextPlacer {
 					int scale = currentFace.scale;
 					int placedMinX = cursorX / 64 + scale * (position.x_offset() + glyphOffset.bitmapLeft);
 					int placedMinY = cursorY / 64 + scale * (position.y_offset() - glyphOffset.bitmapTop);
-					if (placedMinX <= (request.maxX - request.minX) && placedMinY <= (request.maxY - request.minY)) {
+					if (placedMinX <= request.getWidth() && placedMinY < request.getHeight() && placedMinX <= currentBounds.maxX()) {
 						placements.add(new PlacedGlyph(
 								new SizedGlyph(glyph, run.faceIndex(), currentFace.fontSize, scale),
 								placedMinX, placedMinY, request, charIndex

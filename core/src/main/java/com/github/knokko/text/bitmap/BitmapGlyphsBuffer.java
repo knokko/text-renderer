@@ -1,10 +1,12 @@
 package com.github.knokko.text.bitmap;
 
+import com.github.knokko.text.BoundingRectangle;
 import com.github.knokko.text.SizedGlyph;
 import com.github.knokko.text.placement.PlacedGlyph;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.lwjgl.system.MemoryUtil.memByteBuffer;
 
@@ -75,36 +77,44 @@ public class BitmapGlyphsBuffer {
 	 * @throws GlyphBufferCapacityException When there is not enough space left in the glyph buffer to rasterize
 	 * the glyphs
 	 */
-	public List<GlyphQuad> bufferGlyphs(GlyphRasterizer rasterizer, List<PlacedGlyph> placedGlyphs) {
-		var glyphQuads = new ArrayList<GlyphQuad>(placedGlyphs.size());
+	// TODO Update docs
+	public void bufferGlyphs(GlyphRasterizer rasterizer, List<PlacedGlyph> placedGlyphs, BoundingRectangle bounds, Consumer<GlyphQuad> addQuad) {
+		var glyphQuad = new GlyphQuad(0, 0, 0, 0, 0, 0, 0, 0, null);
 		for (var placedGlyph : placedGlyphs) {
 			int scale = placedGlyph.glyph.scale;
 			var sections = getSections(rasterizer, placedGlyph.glyph);
 
 			for (var section : sections) {
 				int desiredMinX = placedGlyph.minX + scale * section.offsetX();
-				int desiredMinY = placedGlyph.minY + scale * section.offsetY();
-				int desiredMaxX = desiredMinX + scale * section.width() - 1;
-				int desiredMaxY = desiredMinY + scale * section.height() - 1;
 				int minX = Math.max(placedGlyph.request.minX, desiredMinX);
+				if (minX > bounds.maxX()) continue;
+
+				int desiredMaxX = desiredMinX + scale * section.width() - 1;
 				int maxX = Math.min(placedGlyph.request.maxX, desiredMaxX);
-
 				while ((1 + maxX - minX) % scale != 0) maxX -= 1;
+				if (maxX < bounds.minX()) continue;
 
+				int desiredMinY = placedGlyph.minY + scale * section.offsetY();
 				int minY = Math.max(placedGlyph.request.minY, desiredMinY);
+				if (minY > bounds.maxY()) continue;
+
+				int desiredMaxY = desiredMinY + scale * section.height() - 1;
 				int maxY = Math.min(placedGlyph.request.maxY, desiredMaxY);
-
 				while ((1 + maxY - minY) % scale != 0) maxY -= 1;
+				if (maxY < bounds.minY()) continue;
 
-				glyphQuads.add(new GlyphQuad(
-						section.bufferIndex() + minX - desiredMinX + section.width() * (minY - desiredMinY),
-						minX, minY, maxX, maxY, scale, section.width(),
-						placedGlyph.charIndex, placedGlyph.request.userData
-				));
+				glyphQuad.bufferIndex = section.bufferIndex() + minX - desiredMinX + section.width() * (minY - desiredMinY);
+				glyphQuad.minX = minX;
+				glyphQuad.minY = minY;
+				glyphQuad.maxX = maxX;
+				glyphQuad.maxY = maxY;
+				glyphQuad.scale = scale;
+				glyphQuad.sectionWidth = section.width();
+				glyphQuad.charIndex = placedGlyph.charIndex;
+				glyphQuad.request = placedGlyph.request;
+				addQuad.accept(glyphQuad);
 			}
 		}
-
-		return glyphQuads;
 	}
 
 	/**

@@ -1,10 +1,11 @@
 package com.github.knokko.text.vulkan;
 
+import com.github.knokko.boiler.buffers.MappedVkbBufferRange;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.FontData;
+import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
-import java.nio.IntBuffer;
-
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 /**
@@ -39,12 +40,26 @@ public class VulkanTextPipeline {
 	 *                             of the renderer will use
 	 * @return The created renderer
 	 */
+	// TODO Update docs
 	public VulkanTextRenderer createRenderer(
-			FontData font, long descriptorSet, BitmapGlyphsBuffer glyphsBuffer,
-			IntBuffer quadBuffer, int numTextPlacerThreads
+			FontData font, long descriptorSet, MappedVkbBufferRange glyphBuffer,
+			MappedVkbBufferRange quadBuffer, int slotSize, int numTextPlacerThreads
 	) {
+		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), glyphBuffer.intSize(), slotSize);
+		try (var stack = stackPush()) {
+			var descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
+			instance.boiler.descriptors.writeBuffer(
+					stack, descriptorWrites, descriptorSet, 0,
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, quadBuffer.range()
+			);
+			instance.boiler.descriptors.writeBuffer(
+					stack, descriptorWrites, descriptorSet, 1,
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, glyphBuffer.range()
+			);
+			vkUpdateDescriptorSets(instance.boiler.vkDevice(), descriptorWrites, null);
+		}
 		return new VulkanTextRenderer(
-				font, instance, this, descriptorSet, glyphsBuffer, quadBuffer, numTextPlacerThreads
+				font, instance, this, descriptorSet, glyphsBuffer, quadBuffer.intBuffer(), numTextPlacerThreads
 		);
 	}
 

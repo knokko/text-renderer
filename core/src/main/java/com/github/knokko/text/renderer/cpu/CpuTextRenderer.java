@@ -1,5 +1,6 @@
 package com.github.knokko.text.renderer.cpu;
 
+import com.github.knokko.text.BoundingRectangle;
 import com.github.knokko.text.bitmap.FreeTypeGlyphRasterizer;
 import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
@@ -42,14 +43,16 @@ public abstract class CpuTextRenderer {
 	 */
 	public abstract void setPixel(int x, int y, int value);
 
+	protected abstract BoundingRectangle createBoundingRectangle();
+
 	/**
 	 * Renders the given requests
 	 */
 	public void render(Collection<TextPlaceRequest> requests) {
-		var placedGlyphs = placer.place(requests);
+		var bounds = createBoundingRectangle();
+		var placedGlyphs = placer.place(requests, bounds);
 		glyphsBuffer.startFrame();
-		var glyphQuads = glyphsBuffer.bufferGlyphs(rasterizer, placedGlyphs);
-		glyphQuads.forEach(quad -> {
+		glyphsBuffer.bufferGlyphs(rasterizer, placedGlyphs, bounds, quad -> {
 			for (int offsetY = 0; offsetY < quad.getHeight(); offsetY++) {
 				for (int offsetX = 0; offsetX < quad.getWidth(); offsetX++) {
 

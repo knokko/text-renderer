@@ -1,7 +1,6 @@
 package com.github.knokko.text.vulkan;
 
 import com.github.knokko.boiler.BoilerInstance;
-import com.github.knokko.boiler.buffers.VkbBufferRange;
 import com.github.knokko.boiler.descriptors.VkbDescriptorSetLayout;
 import com.github.knokko.boiler.pipelines.GraphicsPipelineBuilder;
 import org.lwjgl.vulkan.*;
@@ -123,30 +122,6 @@ public class VulkanTextInstance {
 					boiler.vkDevice(), ciRenderPass, null, pRenderPass
 			), "CreateRenderPass", "TextRenderPass");
 			return pRenderPass.get(0);
-		}
-	}
-
-	/**
-	 * Calls <i>vkUpdateDescriptorSets</i> to update the given <i>VkDescriptorSet</i>. You need to call this once
-	 * after allocating {@code descriptorSet}, and after each time you change the {@code quadBuffer} and/or
-	 * {@code glyphBuffer}.
-	 * @param descriptorSet The descriptor set to be updated. It should have the layout {@link #descriptorSetLayout}
-	 * @param quadBuffer The {@link VkbBufferRange} containing all the <i>GlyphQuad</i> data
-	 * @param glyphBuffer The {@link VkbBufferRange} containing all the rasterized glyphs, which should be mapped to
-	 *                    the {@link com.github.knokko.text.bitmap.BitmapGlyphsBuffer}
-	 */
-	public void updateDescriptorSet(long descriptorSet, VkbBufferRange quadBuffer, VkbBufferRange glyphBuffer) {
-		try (var stack = stackPush()) {
-			var descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
-			boiler.descriptors.writeBuffer(
-					stack, descriptorWrites, descriptorSet, 0,
-					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, quadBuffer
-			);
-			boiler.descriptors.writeBuffer(
-					stack, descriptorWrites, descriptorSet, 1,
-					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, glyphBuffer
-			);
-			vkUpdateDescriptorSets(boiler.vkDevice(), descriptorWrites, null);
 		}
 	}
 

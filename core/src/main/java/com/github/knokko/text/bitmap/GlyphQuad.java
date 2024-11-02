@@ -13,12 +13,12 @@ public class GlyphQuad {
 	 * The first index into the glyphs buffer that contains the rasterized glyph section to be drawn in this quad,
 	 * in bytes.
 	 */
-	public final int bufferIndex;
+	public int bufferIndex;
 
 	/**
 	 * The coordinates of the quad to be rendered, in pixels.
 	 */
-	public final int minX, minY, maxX, maxY;
+	public int minX, minY, maxX, maxY;
 
 	/**
 	 * The scale at which the rasterized glyph should be rendered, which is usually 1.
@@ -27,23 +27,23 @@ public class GlyphQuad {
 	 *     <li>When the scale is N, the glyphs buffer contains 1 byte (value) per N by N pixel block in this quad.</li>
 	 * </ul>
 	 */
-	public final int scale;
+	public int scale;
 
 	/**
 	 * The width of the rasterized glyph section, in pixels
 	 */
-	public final int sectionWidth;
+	public int sectionWidth;
 
 	/**
 	 * The index into the {@link TextPlaceRequest#text} of the character that is (partially) being rendered by this
 	 * quad. The exact character can be retrieved by invoking the <i>codePointAt</i> method of the text.
 	 */
-	public final int charIndex;
+	public int charIndex;
 
 	/**
-	 * The corresponding user data that has been propagated from stage 1
+	 * The corresponding request from stage 1
 	 */
-	public final Object userData;
+	public TextPlaceRequest request;
 
 	/**
 	 * Constructs a new <i>GlyphQuad</i>. Note that you should usually not use this constructor yourself. Instead, let
@@ -56,11 +56,11 @@ public class GlyphQuad {
 	 * @param scale {@link #scale}
 	 * @param sectionWidth {@link #sectionWidth}
 	 * @param charIndex {@link #charIndex}
-	 * @param userData {@link #userData}
+	 * @param request {@link #request}
 	 */
 	public GlyphQuad(
 			int bufferIndex, int minX, int minY, int maxX, int maxY, int scale,
-			int sectionWidth, int charIndex, Object userData
+			int sectionWidth, int charIndex, TextPlaceRequest request
 	) {
 		this.bufferIndex = bufferIndex;
 		this.minX = minX;
@@ -70,7 +70,7 @@ public class GlyphQuad {
 		this.scale = scale;
 		this.sectionWidth = sectionWidth;
 		this.charIndex = charIndex;
-		this.userData = userData;
+		this.request = request;
 	}
 
 	@Override
