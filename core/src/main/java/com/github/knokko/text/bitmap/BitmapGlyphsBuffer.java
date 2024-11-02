@@ -99,7 +99,7 @@ public class BitmapGlyphsBuffer {
 				glyphQuads.add(new GlyphQuad(
 						section.bufferIndex() + minX - desiredMinX + section.width() * (minY - desiredMinY),
 						minX, minY, maxX, maxY, scale, section.width(),
-						placedGlyph.charIndex, placedGlyph.request.userData
+						placedGlyph.charIndex, placedGlyph.request
 				));
 			}
 		}

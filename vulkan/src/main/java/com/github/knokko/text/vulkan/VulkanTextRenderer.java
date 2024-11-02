@@ -151,7 +151,7 @@ public class VulkanTextRenderer {
 		memPutInt(address + 24, quad.scale);
 
 		int color = ColorPacker.rgba(0, 0, 0, 255);
-		if (quad.userData instanceof Integer) color = (Integer) quad.userData;
+		if (quad.request.userData instanceof Integer) color = (Integer) quad.request.userData;
 
 		memPutInt(address + 28, color);
 	}

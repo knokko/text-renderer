@@ -41,9 +41,9 @@ public class GlyphQuad {
 	public final int charIndex;
 
 	/**
-	 * The corresponding user data that has been propagated from stage 1
+	 * The corresponding request from stage 1
 	 */
-	public final Object userData;
+	public final TextPlaceRequest request;
 
 	/**
 	 * Constructs a new <i>GlyphQuad</i>. Note that you should usually not use this constructor yourself. Instead, let
@@ -56,11 +56,11 @@ public class GlyphQuad {
 	 * @param scale {@link #scale}
 	 * @param sectionWidth {@link #sectionWidth}
 	 * @param charIndex {@link #charIndex}
-	 * @param userData {@link #userData}
+	 * @param request {@link #request}
 	 */
 	public GlyphQuad(
 			int bufferIndex, int minX, int minY, int maxX, int maxY, int scale,
-			int sectionWidth, int charIndex, Object userData
+			int sectionWidth, int charIndex, TextPlaceRequest request
 	) {
 		this.bufferIndex = bufferIndex;
 		this.minX = minX;
@@ -70,7 +70,7 @@ public class GlyphQuad {
 		this.scale = scale;
 		this.sectionWidth = sectionWidth;
 		this.charIndex = charIndex;
-		this.userData = userData;
+		this.request = request;
 	}
 
 	@Override
