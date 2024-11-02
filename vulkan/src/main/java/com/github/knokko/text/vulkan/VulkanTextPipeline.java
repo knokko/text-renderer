@@ -1,10 +1,11 @@
 package com.github.knokko.text.vulkan;
 
+import com.github.knokko.boiler.buffers.MappedVkbBufferRange;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.FontData;
+import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
-import java.nio.IntBuffer;
-
+import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 /**
@@ -33,18 +34,36 @@ public class VulkanTextPipeline {
 	 * Creates a {@link VulkanTextRenderer} that will use this graphics pipeline
 	 * @param font The font(s) that the renderer will use
 	 * @param descriptorSet The <i>VkDescriptorSet</i> that the renderer will bind before drawing
-	 * @param glyphsBuffer the {@link BitmapGlyphsBuffer} where the renderer will store its rasterized glyphs
+	 * @param glyphBuffer the buffer where the {@link BitmapGlyphsBuffer} will store its rasterized glyphs
 	 * @param quadBuffer the buffer where the renderer will store the quads
+	 * @param glyphSlotSize The slot size that will be used by the {@link BitmapGlyphsBuffer}, see
+	 *                      {@link BitmapGlyphsBuffer#BitmapGlyphsBuffer(long, int, int)}
 	 * @param numTextPlacerThreads The number of threads that the {@link com.github.knokko.text.placement.TextPlacer}
 	 *                             of the renderer will use
 	 * @return The created renderer
 	 */
 	public VulkanTextRenderer createRenderer(
-			FontData font, long descriptorSet, BitmapGlyphsBuffer glyphsBuffer,
-			IntBuffer quadBuffer, int numTextPlacerThreads
+			FontData font, long descriptorSet,
+			MappedVkbBufferRange glyphBuffer,
+			MappedVkbBufferRange quadBuffer,
+			int glyphSlotSize, int numTextPlacerThreads
 	) {
+		try (var stack = stackPush()) {
+			var descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
+			instance.boiler.descriptors.writeBuffer(
+					stack, descriptorWrites, descriptorSet, 0,
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, quadBuffer.range()
+			);
+			instance.boiler.descriptors.writeBuffer(
+					stack, descriptorWrites, descriptorSet, 1,
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, glyphBuffer.range()
+			);
+			vkUpdateDescriptorSets(instance.boiler.vkDevice(), descriptorWrites, null);
+		}
+
+		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), glyphBuffer.intSize(), glyphSlotSize);
 		return new VulkanTextRenderer(
-				font, instance, this, descriptorSet, glyphsBuffer, quadBuffer, numTextPlacerThreads
+				font, instance, this, descriptorSet, glyphsBuffer, quadBuffer.intBuffer(), numTextPlacerThreads
 		);
 	}
 

@@ -13,7 +13,6 @@ import com.github.knokko.profiler.SampleProfiler;
 import com.github.knokko.profiler.storage.FrequencyThreadStorage;
 import com.github.knokko.profiler.storage.SampleStorage;
 import com.github.knokko.text.TextInstance;
-import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.placement.TextPlaceRequest;
@@ -30,7 +29,6 @@ import java.util.List;
 import static com.github.knokko.boiler.utilities.ColorPacker.rgba;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.memIntBuffer;
 import static org.lwjgl.vulkan.KHRSurface.VK_PRESENT_MODE_MAILBOX_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK12.VK_API_VERSION_1_2;
@@ -140,11 +138,11 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 
 		for (int index = 0; index < numFramesInFlight; index++) {
 			glyphBuffers[index] = boiler.buffers.createMapped(30_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
-			var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffers[index].hostAddress(), (int) glyphBuffers[index].size());
 			quadBuffers[index] = boiler.buffers.createMapped(10_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
-			var quadHostBuffer = memIntBuffer(quadBuffers[index].hostAddress(), (int) quadBuffers[index].size() / 4);
-			vkTextInstance.updateDescriptorSet(descriptorSets[index], quadBuffers[index].fullRange(), glyphBuffers[index].fullRange());
-			vkTextRenderers[index] = vkTextPipeline.createRenderer(unicodeFont, descriptorSets[index], glyphsBuffer, quadHostBuffer, 3);
+			vkTextRenderers[index] = vkTextPipeline.createRenderer(
+					unicodeFont, descriptorSets[index], glyphBuffers[index].fullMappedRange(),
+					quadBuffers[index].fullMappedRange(), 360, 3
+			);
 		}
 		unicodeTestCase = UnicodeLines.get();
 		System.out.println("Memory usage after setup is " + MemorySnapshot.take());

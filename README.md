@@ -138,14 +138,20 @@ var vkTextInstance = new VulkanTextInstance(boiler);
 var vkTextPipeline = vkTextInstance.createPipelineWithDynamicRendering(
 		0, window.surfaceFormat, null, null
 );
-var textDescriptorPool = vkTextInstance.descriptorSetLayout.createPool(1, 0, "TextPool");
-var glyphBuffer = boiler.buffers.createMapped(30_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
-var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), (int) glyphBuffer.size());
-var quadBuffer = boiler.buffers.createMapped(10_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
-var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
+var textDescriptorPool = vkTextInstance.descriptorSetLayout.createPool(
+		1, 0, "TextPool"
+);
+var glyphBuffer = boiler.buffers.createMapped(
+		30_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer"
+);
+var quadBuffer = boiler.buffers.createMapped(
+		10_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer"
+);
 long descriptorSet = textDescriptorPool.allocate(1)[0];
-var vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer, glyphBuffer);
-var vkTextRenderer = vkTextPipeline.createRenderer(unicodeFont, descriptorSet, glyphsBuffer, quadHostBuffer, 3);
+var vkTextRenderer = vkTextPipeline.createRenderer(
+		unicodeFont, descriptorSet, glyphBuffer.fullMappedRange(),
+		quadBuffer.fullMappedRange(), 360, 3
+);
 
 // To record render commands, you need to run the following code during a renderpass
 vkTextRenderer.recordCommands(recorder, acquiredImage.width(), acquiredImage.height(), requests);

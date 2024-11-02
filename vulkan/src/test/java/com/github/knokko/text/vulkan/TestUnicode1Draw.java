@@ -4,7 +4,6 @@ import com.github.knokko.boiler.builders.BoilerBuilder;
 import com.github.knokko.boiler.commands.SingleTimeCommands;
 import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.text.TextInstance;
-import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.placement.TextPlaceRequest;
@@ -17,7 +16,6 @@ import java.util.List;
 
 import static com.github.knokko.boiler.utilities.ColorPacker.rgba;
 import static com.github.knokko.text.util.ImageChecks.assertImageEquals;
-import static org.lwjgl.system.MemoryUtil.memIntBuffer;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK12.VK_API_VERSION_1_2;
 
@@ -53,9 +51,7 @@ public class TestUnicode1Draw {
 		System.out.println("initial: " + (System.nanoTime() - startTime) / 1000_000);
 
 		var glyphBuffer = boiler.buffers.createMapped(3_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
-		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), (int) glyphBuffer.size());
 		var quadBuffer = boiler.buffers.createMapped(1_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
-		var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
 
 		var resultBuffer = boiler.buffers.createMapped(4 * width * height, VK_BUFFER_USAGE_TRANSFER_DST_BIT, "ResultBuffer");
 		var image = boiler.images.createSimple(
@@ -65,9 +61,11 @@ public class TestUnicode1Draw {
 		);
 
 		var descriptorSet = textDescriptorPool.allocate(1)[0];
-		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer.fullRange(), glyphBuffer.fullRange());
 
-		var vkTextRenderer = vkTextPipeline.createRenderer(font, descriptorSet, glyphsBuffer, quadHostBuffer, 10);
+		var vkTextRenderer = vkTextPipeline.createRenderer(
+				font, descriptorSet, glyphBuffer.fullMappedRange(),
+				quadBuffer.fullMappedRange(), 120, 10
+		);
 
 		var commands = new SingleTimeCommands(boiler);
 		commands.submit("TextRendering", recorder -> {

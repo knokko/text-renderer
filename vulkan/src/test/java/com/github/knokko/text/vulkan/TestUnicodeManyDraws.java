@@ -4,7 +4,6 @@ import com.github.knokko.boiler.builders.BoilerBuilder;
 import com.github.knokko.boiler.commands.SingleTimeCommands;
 import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.text.TextInstance;
-import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
 import com.github.knokko.text.placement.TextPlaceRequest;
@@ -17,7 +16,6 @@ import java.util.List;
 
 import static com.github.knokko.boiler.utilities.ColorPacker.rgba;
 import static com.github.knokko.text.util.ImageChecks.assertImageEquals;
-import static org.lwjgl.system.MemoryUtil.memIntBuffer;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK12.VK_API_VERSION_1_2;
 
@@ -59,9 +57,7 @@ public class TestUnicodeManyDraws {
 		var textDescriptorPool = vkTextInstance.descriptorSetLayout.createPool(1, 0, "TextPool");
 
 		var glyphBuffer = boiler.buffers.createMapped(90_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
-		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), (int) glyphBuffer.size());
 		var quadBuffer = boiler.buffers.createMapped(30_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
-		var quadHostBuffer = memIntBuffer(quadBuffer.hostAddress(), (int) quadBuffer.size() / 4);
 
 		var resultBuffer = boiler.buffers.createMapped(4 * width * height, VK_BUFFER_USAGE_TRANSFER_DST_BIT, "ResultBuffer");
 		var image = boiler.images.createSimple(
@@ -74,9 +70,11 @@ public class TestUnicodeManyDraws {
 				"TextFramebuffer", image.vkImageView()
 		);
 		long descriptorSet = textDescriptorPool.allocate(1)[0];
-		vkTextInstance.updateDescriptorSet(descriptorSet, quadBuffer.fullRange(), glyphBuffer.fullRange());
 
-		var vkTextRenderer = vkTextPipeline.createRenderer(font, descriptorSet, glyphsBuffer, quadHostBuffer, 1);
+		var vkTextRenderer = vkTextPipeline.createRenderer(
+				font, descriptorSet, glyphBuffer.fullMappedRange(),
+				quadBuffer.fullMappedRange(), 120, 1
+		);
 
 		System.out.println("created resources: " + (System.nanoTime() - startTime) / 1000_000);
 
