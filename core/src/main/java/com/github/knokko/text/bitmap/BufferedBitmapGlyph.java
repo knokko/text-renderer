@@ -2,17 +2,18 @@ package com.github.knokko.text.bitmap;
 
 import com.github.knokko.text.SizedGlyph;
 
-import java.util.Collections;
 import java.util.List;
 
 class BufferedBitmapGlyph implements Comparable<BufferedBitmapGlyph> {
 
 	final SizedGlyph glyph;
+	final String userData;
 	long lastUsed;
 	final List<BitmapGlyphSection> sections;
 
-	BufferedBitmapGlyph(SizedGlyph glyph, List<BitmapGlyphSection> sections, long currentFrame) {
+	BufferedBitmapGlyph(SizedGlyph glyph, String userData, List<BitmapGlyphSection> sections, long currentFrame) {
 		this.glyph = glyph;
+		this.userData = userData;
 		this.sections = sections;
 		this.lastUsed = currentFrame;
 	}
@@ -32,16 +33,21 @@ class BufferedBitmapGlyph implements Comparable<BufferedBitmapGlyph> {
 		if (this.glyph.faceIndex < other.glyph.faceIndex) return -1;
 		if (this.glyph.size > other.glyph.size) return 1;
 		if (this.glyph.size < other.glyph.size) return -1;
-		return Integer.compare(this.glyph.scale, other.glyph.scale);
+		if (this.glyph.scale > other.glyph.scale) return 1;
+		if (this.glyph.scale < other.glyph.scale) return -1;
+		return this.userData.compareTo(other.userData);
 	}
 
 	@Override
 	public boolean equals(Object other) {
-		return other instanceof BufferedBitmapGlyph && this.glyph.equals(((BufferedBitmapGlyph) other).glyph);
+		if (other instanceof BufferedBitmapGlyph) {
+			BufferedBitmapGlyph bbg = (BufferedBitmapGlyph) other;
+			return this.glyph.equals(bbg.glyph) && this.userData.equals(bbg.userData);
+		} else return false;
 	}
 
 	@Override
 	public int hashCode() {
-		return glyph.hashCode();
+		return glyph.hashCode() ^ userData.hashCode();
 	}
 }

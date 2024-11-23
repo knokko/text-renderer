@@ -28,7 +28,7 @@ import static org.lwjgl.util.freetype.FreeType.*;
 public class TextPlacer {
 
 	private static final TextPlaceRequest TERMINATE_REQUEST = new TextPlaceRequest(
-			"TERMINATE", 0, 0, 0, 0, 0, 0, null
+			"TERMINATE", 0, 0, 0, 0, 0, 0, 1, null
 	);
 
 	private final FontData fontData;
@@ -105,7 +105,6 @@ public class TextPlacer {
 
 	/**
 	 * Uses <i>numThreads</i> threads to place all the given <i>TextPlaceRequest</i>s.
-	 * @return
 	 */
 	public List<PlacedGlyph> place(Collection<TextPlaceRequest> requests, int numThreads) {
 		if (numThreads > 1 && workerThreads == null) {
@@ -150,7 +149,7 @@ public class TextPlacer {
 	@SuppressWarnings("resource")
 	private List<PlacedGlyph> placeFree(TextPlaceRequest request, MemoryStack stack) {
 		var splitter = new TextSplitter(fontData);
-		List<TextRun> runs = splitter.split(request.text, request.heightA, stack);
+		List<TextRun> runs = splitter.split(request, request.text, request.heightA, stack);
 		List<PlacedGlyph> placements = new ArrayList<>();
 
 		int cursorX = 0;
@@ -159,7 +158,7 @@ public class TextPlacer {
 
 		runLoop:
 		for (TextRun run : runs) {
-			var currentFace = fontData.borrowFaceWithHeightA(run.faceIndex(), request.heightA);
+			var currentFace = fontData.borrowFaceWithHeightA(run.faceIndex(), request.heightA, request.minScale);
 
 			if (run.glyphInfos() != null && run.glyphPositions() != null) {
 				for (int glyphIndex = 0; glyphIndex < run.glyphPositions().limit(); glyphIndex++) {
@@ -170,8 +169,10 @@ public class TextPlacer {
 					if (info.cluster() >= run.text().length()) continue;
 
 					int glyph = info.codepoint();
-					var glyphOffset = glyphOffsets.computeIfAbsent(new GlyphOffsetKey(request.heightA, run.faceIndex(), glyph), key -> {
-						var tempFace = fontData.borrowFaceWithHeightA(key.fontIndex, key.heightA);
+					var glyphOffset = glyphOffsets.computeIfAbsent(new GlyphOffsetKey(
+							request.heightA, request.minScale, run.faceIndex(), glyph
+					), key -> {
+						var tempFace = fontData.borrowFaceWithHeightA(key.fontIndex, key.heightA, key.minScale);
 						String context = "face=" + tempFace.ftFace + ", glyph=" + key.glyph + ", string=" + run.text();
 						assertFtSuccess(FT_Load_Glyph(tempFace.ftFace, key.glyph, FT_LOAD_BITMAP_METRICS_ONLY), "FT_Load_Glyph", context);
 						var glyphSlot = tempFace.ftFace.glyph();
@@ -253,7 +254,7 @@ public class TextPlacer {
 		}
 	}
 
-	record GlyphOffsetKey(int heightA, int fontIndex, int glyph) {}
+	record GlyphOffsetKey(int heightA, int minScale, int fontIndex, int glyph) {}
 
 	static class GlyphOffset {
 		final int bitmapLeft, bitmapTop, lsbDelta, rsbDelta;

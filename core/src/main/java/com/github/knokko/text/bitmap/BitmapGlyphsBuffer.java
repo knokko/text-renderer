@@ -19,7 +19,7 @@ import static org.lwjgl.system.MemoryUtil.memByteBuffer;
  */
 public class BitmapGlyphsBuffer {
 
-	private final Map<SizedGlyph, BufferedBitmapGlyph> glyphMap = new HashMap<>();
+	private final Map<GlyphKey, BufferedBitmapGlyph> glyphMap = new HashMap<>();
 	private final SortedSet<BufferedBitmapGlyph> glyphSet = new TreeSet<>();
 	private final List<Integer> bufferSlots = new ArrayList<>();
 	private final ByteBuffer buffer;
@@ -79,7 +79,7 @@ public class BitmapGlyphsBuffer {
 		var glyphQuads = new ArrayList<GlyphQuad>(placedGlyphs.size());
 		for (var placedGlyph : placedGlyphs) {
 			int scale = placedGlyph.glyph.scale;
-			var sections = getSections(rasterizer, placedGlyph.glyph);
+			var sections = getSections(rasterizer, placedGlyph.glyph, placedGlyph.request.userData);
 
 			for (var section : sections) {
 				int desiredMinX = placedGlyph.minX + scale * section.offsetX();
@@ -116,12 +116,13 @@ public class BitmapGlyphsBuffer {
 	 * @throws GlyphBufferCapacityException When there is not enough space left in the glyph buffer to rasterize
 	 * the glyph
 	 */
-	public List<BitmapGlyphSection> getSections(GlyphRasterizer rasterizer, SizedGlyph glyph) {
-		var bufferedGlyph = glyphMap.get(glyph);
+	public List<BitmapGlyphSection> getSections(GlyphRasterizer rasterizer, SizedGlyph glyph, Object userData) {
+		var key = new GlyphKey(glyph, rasterizer.getUserDataKey(userData));
+		var bufferedGlyph = glyphMap.get(key);
 
 		if (bufferedGlyph == null) {
 
-			rasterizer.set(glyph.id, glyph.faceIndex, glyph.size);
+			rasterizer.set(glyph, userData);
 			ByteBuffer bitmap = rasterizer.getBuffer();
 			List<BitmapGlyphSection> sections = BitmapGlyphSection.coverRectangle(
 					slotSize, rasterizer.getBufferWidth(), rasterizer.getBufferHeight(), (x, y, width, height) -> {
@@ -142,7 +143,7 @@ public class BitmapGlyphsBuffer {
 									if (!glyphSet.remove(oldestGlyph)) {
 										throw new IllegalStateException("Failed to remove oldest glyph");
 									}
-									if (glyphMap.remove(oldestGlyph.glyph) != oldestGlyph) {
+									if (glyphMap.remove(new GlyphKey(oldestGlyph.glyph, oldestGlyph.userData)) != oldestGlyph) {
 										throw new IllegalStateException("Unexpected oldest glyph was removed");
 									}
 									for (var section : oldestGlyph.sections) {
@@ -165,8 +166,8 @@ public class BitmapGlyphsBuffer {
 				}
 			}
 
-			bufferedGlyph = new BufferedBitmapGlyph(glyph, sections, currentFrame);
-			if (glyphMap.put(glyph, bufferedGlyph) != null) throw new RuntimeException("Didn't expect existing element");
+			bufferedGlyph = new BufferedBitmapGlyph(glyph, key.userData, sections, currentFrame);
+			if (glyphMap.put(key, bufferedGlyph) != null) throw new RuntimeException("Didn't expect existing element");
 			if (!glyphSet.add(bufferedGlyph)) throw new RuntimeException("Didn't expect existing element in glyph set");
 		} else {
 			if (bufferedGlyph.lastUsed != currentFrame) {
@@ -200,4 +201,6 @@ public class BitmapGlyphsBuffer {
 		}
 		return slotSize * (freeSlots + availableSlots);
 	}
+
+	private record GlyphKey(SizedGlyph glyph, String userData) {}
 }

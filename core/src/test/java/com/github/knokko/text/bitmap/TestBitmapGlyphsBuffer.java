@@ -8,9 +8,10 @@ import org.lwjgl.BufferUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.system.libc.LibCStdlib.nmalloc;
 
@@ -22,14 +23,19 @@ public class TestBitmapGlyphsBuffer {
 		private int size;
 
 		@Override
-		public void set(int glyph, int faceIndex, int size) {
-			int capacity = 2 * size * size;
+		public void set(SizedGlyph glyph, Object userData) {
+			int capacity = 2 * glyph.size * glyph.size;
 			buffer = BufferUtils.createByteBuffer(capacity);
 			for (int counter = 0; counter < capacity; counter++) {
 				buffer.put((byte) (counter + 1));
 			}
 			buffer.position(0);
-			this.size = size;
+			this.size = glyph.size;
+		}
+
+		@Override
+		public String getUserDataKey(Object userData) {
+			return "";
 		}
 
 		@Override
@@ -58,7 +64,7 @@ public class TestBitmapGlyphsBuffer {
 		glyphsBuffer.startFrame();
 
 		int size = 10;
-		var result = glyphsBuffer.getSections(new DummyRasterizer(), new SizedGlyph(1234, 0, size, 2));
+		var result = glyphsBuffer.getSections(new DummyRasterizer(), new SizedGlyph(1234, 0, size, 2), null);
 
 		int totalArea = 0;
 		for (var section : result) {
@@ -92,7 +98,7 @@ public class TestBitmapGlyphsBuffer {
 	@Test
 	public void testEfficientMemoryUsage() {
 		var placeRequest = new TextPlaceRequest(
-				"hello", 12, 34, 56, 78, 20, 10, null
+				"hello", 12, 34, 56, 78, 20, 10, 1, null
 		);
 
 		var glyph1 = new SizedGlyph(12, 0, 15, 3);
@@ -132,7 +138,7 @@ public class TestBitmapGlyphsBuffer {
 		long bufferAddress = nmalloc(bufferSize);
 		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
 
-		var placeRequest = new TextPlaceRequest("h", 5, 6, 20, 35, 20, 15, null);
+		var placeRequest = new TextPlaceRequest("h", 5, 6, 20, 35, 20, 15, 1, null);
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20, 1), 2, 1, placeRequest, 0));
@@ -173,7 +179,7 @@ public class TestBitmapGlyphsBuffer {
 		long bufferAddress = nmalloc(bufferSize);
 		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
 
-		var placeRequest = new TextPlaceRequest("h", 5, -6, 20, 55, 20, 15, null);
+		var placeRequest = new TextPlaceRequest("h", 5, -6, 20, 55, 20, 15, 1, null);
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20, 1), 2, 1, placeRequest, 0));
@@ -217,7 +223,7 @@ public class TestBitmapGlyphsBuffer {
 		long bufferAddress = nmalloc(bufferSize);
 		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
 
-		var placeRequest = new TextPlaceRequest("h", 1, 4, 3, 7, 5, 2, null);
+		var placeRequest = new TextPlaceRequest("h", 1, 4, 3, 7, 5, 2, 1, null);
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 5, 2), 0, 0, placeRequest, 0));
@@ -233,5 +239,78 @@ public class TestBitmapGlyphsBuffer {
 		assertEquals(placeRequest.minX + placeRequest.minY * quad.sectionWidth, quad.bufferIndex);
 		assertEquals(2, quad.scale);
 		assertEquals(5, quad.sectionWidth);
+	}
+
+	@Test
+	public void testReuseGlyphsWhenUserDataIsIgnored() {
+		int bufferSize = 1000;
+		long bufferAddress = nmalloc(bufferSize);
+		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
+
+		var placedGlyphs = new ArrayList<PlacedGlyph>();
+		for (int userData = 0; userData < 1000; userData++) {
+			var placeRequest = new TextPlaceRequest("h", 1, 4, 3, 7, 5, 2, 1, userData);
+			placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 5, 2), 0, 0, placeRequest, 0));
+		}
+
+		var quads = glyphs.bufferGlyphs(new DummyRasterizer(), placedGlyphs);
+		assertEquals(1000, quads.size());
+
+		int firstBufferIndex = quads.get(0).bufferIndex;
+		for (var quad : quads) assertEquals(firstBufferIndex, quad.bufferIndex);
+	}
+
+	@Test
+	public void testDontReuseGlyphsWhenUserDataIsUsed() {
+		int bufferSize = 1000 * 1000;
+		long bufferAddress = nmalloc(bufferSize);
+		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize, 900);
+
+		var rasterizer = new GlyphRasterizer() {
+
+			private final ByteBuffer buffer = BufferUtils.createByteBuffer(900);
+
+			@Override
+			public void set(SizedGlyph glyph, Object userData) {
+				for (int counter = 0; counter < buffer.capacity(); counter++) buffer.put((byte) counter);
+				buffer.position(0);
+			}
+
+			@Override
+			public String getUserDataKey(Object userData) {
+				return userData.toString();
+			}
+
+			@Override
+			public int getBufferWidth() {
+				return 30;
+			}
+
+			@Override
+			public int getBufferHeight() {
+				return 30;
+			}
+
+			@Override
+			public ByteBuffer getBuffer() {
+				return buffer;
+			}
+
+			@Override
+			public void destroy() {}
+		};
+
+		var placedGlyphs = new ArrayList<PlacedGlyph>();
+		for (int userData = 0; userData < 1000; userData++) {
+			var placeRequest = new TextPlaceRequest("h", 1, 4, 3, 7, 5, 2, 1, userData);
+			placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 5, 2), 0, 0, placeRequest, 0));
+		}
+
+		var quads = glyphs.bufferGlyphs(rasterizer, placedGlyphs);
+		assertEquals(1000, quads.size());
+
+		Set<Integer> bufferIndices = new HashSet<>();
+		for (var quad : quads) bufferIndices.add(quad.bufferIndex);
+		assertEquals(1000, bufferIndices.size());
 	}
 }

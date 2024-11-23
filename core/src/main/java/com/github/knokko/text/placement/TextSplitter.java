@@ -23,7 +23,7 @@ class TextSplitter {
 		this.fontData = fontData;
 	}
 
-	List<TextRun> split(String originalText, int height, MemoryStack stack) {
+	List<TextRun> split(TextPlaceRequest request, String originalText, int height, MemoryStack stack) {
 		Bidi bidi = new Bidi(originalText, Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT);
 		wasBaseLeftToRight = bidi.baseIsLeftToRight();
 		List<TextRun> runs = new ArrayList<>();
@@ -35,7 +35,10 @@ class TextSplitter {
 			int runLimit = bidi.getRunLimit(bidiRun);
 			if (runStart == runLimit) continue;
 
-			List<TextRun> newRuns = splitForRightFace(originalText, originalStringBuffer, height, runStart, runLimit, 0, stack);
+			List<TextRun> newRuns = splitForRightFace(
+					request, originalText, originalStringBuffer,
+					height, runStart, runLimit, 0, stack
+			);
 			if (bidi.getRunLevel(bidiRun) % 2 == 1) Collections.reverse(newRuns);
 
 			if (wasBaseLeftToRight) runs.addAll(merge(newRuns, stack));
@@ -133,12 +136,12 @@ class TextSplitter {
 	}
 
 	private List<TextRun> splitForRightFace(
-			String originalString, ByteBuffer originalStringBuffer,
+			TextPlaceRequest request, String originalString, ByteBuffer originalStringBuffer,
 			int height, int offset, int limit, int faceIndex, MemoryStack stack
 	) {
 		if (limit <= offset) return Collections.emptyList();
 
-		var face = fontData.borrowFaceWithHeightA(faceIndex, height);
+		var face = fontData.borrowFaceWithHeightA(faceIndex, height, request.minScale);
 		updateGlyphInfoAndPositions(originalStringBuffer, offset, limit, face);
 		var initialGlyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(face.hbBuffer));
 		var initialGlyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(face.hbBuffer));
@@ -160,18 +163,18 @@ class TextSplitter {
 
 			if (substring.succeeded) {
 				runs.addAll(splitForRightFace(
-						originalString, originalStringBuffer, height,
+						request, originalString, originalStringBuffer, height,
 						substring.startIndex, substring.limit, faceIndex, stack
 				));
 			} else {
 				if (faceIndex + 1 < fontData.getNumFaces()) {
 					runs.addAll(splitForRightFace(
-							originalString, originalStringBuffer,
+							request, originalString, originalStringBuffer,
 							height, substring.startIndex(), substring.limit(),
 							faceIndex + 1, stack
 					));
 				} else {
-					face = fontData.borrowFaceWithHeightA(0, height);
+					face = fontData.borrowFaceWithHeightA(0, height, request.minScale);
 					updateGlyphInfoAndPositions(originalStringBuffer, substring.startIndex, substring.limit, face);
 					var newGlyphInfo = Objects.requireNonNull(hb_buffer_get_glyph_infos(face.hbBuffer));
 					var glyphPositions = Objects.requireNonNull(hb_buffer_get_glyph_positions(face.hbBuffer));

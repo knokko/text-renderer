@@ -26,7 +26,7 @@ public class TestTextPlacer {
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		String testCase = new String(HexFormat.of().parseHex("20E0B79120E0B79220E0B793"), StandardCharsets.UTF_8);
-		requests.add(new TextPlaceRequest(testCase, -4, -2, width - 1, height - 1, 18, 15, null));
+		requests.add(new TextPlaceRequest(testCase, -4, -2, width - 1, height - 1, 18, 15, 1, null));
 
 		var placer = new TextPlacer(font);
 		assertEquals(6, placer.place(requests).size());
@@ -46,7 +46,7 @@ public class TestTextPlacer {
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		String oldItalicText = "𐌀 𐌁 𐌂 𐌃 𐌄 𐌅 𐌆 𐌇 𐌈 𐌉 𐌊 𐌋 𐌌 𐌍 𐌎 𐌏 𐌐 𐌑 𐌒 𐌓 𐌔 𐌕 𐌖 𐌗 𐌘 𐌙 𐌚 𐌛 𐌜 𐌝 𐌞 𐌠 𐌡 𐌢 𐌣";
-		requests.add(new TextPlaceRequest(oldItalicText, 0, 5, 5000, 45, 20, 20, null));
+		requests.add(new TextPlaceRequest(oldItalicText, 0, 5, 5000, 45, 20, 20, 1, null));
 
 		// Note that unicode-quivira supports old italic characters, whereas unicode-freeserif does not.
 		// So unicode-freeserif should render all whitespaces (because it is the first font), but it should
@@ -80,7 +80,7 @@ public class TestTextPlacer {
 
 		var requests = new ArrayList<TextPlaceRequest>();
 		for (String line : UnicodeLines.get()) {
-			requests.add(new TextPlaceRequest(line, 10, 10, 5000, 90, 60, 40, null));
+			requests.add(new TextPlaceRequest(line, 10, 10, 5000, 90, 60, 40, 1, null));
 		}
 
 		for (int counter = 0; counter < 10; counter++) {
@@ -101,7 +101,7 @@ public class TestTextPlacer {
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		String syriacText = "܀ ܁ ܂ ܃ ܄ ܅ ܆ ܇ ܈ ܉ ܊ ܋ ܌ ܍ ܏ ܐ ܑ ܒ ܓ ܔ ܕ ܖ ܗ ܘ ܙ ܚ ܛ ܜ ܝ ܞ ܟ ܠ ܡ ܢ ܣ";
-		requests.add(new TextPlaceRequest(syriacText, 0, 5, 5000, 45, 20, 20, null));
+		requests.add(new TextPlaceRequest(syriacText, 0, 5, 5000, 45, 20, 20, 1, null));
 
 		// Since the thaana font doesn't support the syriac characters, the fallback syriac font must be used to
 		// render the syriac characters, whereas the primary thaana font renders the whitespaces.
@@ -140,7 +140,7 @@ public class TestTextPlacer {
 		var placer = new TextPlacer(unicodeFont);
 
 		var requests = new ArrayList<TextPlaceRequest>();
-		requests.add(new TextPlaceRequest("￹ ￺ ￻ ￼ �", 0, 10, 1000, 90, 60, 40, null));
+		requests.add(new TextPlaceRequest("￹ ￺ ￻ ￼ �", 0, 10, 1000, 90, 60, 40, 1, null));
 
 		var result = placer.place(requests);
 		assertArrayEquals(
@@ -163,7 +163,7 @@ public class TestTextPlacer {
 		var testString = "aaa\u06B3aaa\u1713";
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
-		requests.add(new TextPlaceRequest(testString, 10, 110, 1000, 1900, 160, 30, null));
+		requests.add(new TextPlaceRequest(testString, 10, 110, 1000, 1900, 160, 30, 1, null));
 
 		var result = placer.place(requests);
 		assertArrayEquals(new int[] { 11, 29, 48, 68, 90, 109, 128, 120 }, result.stream().mapToInt(glyph -> glyph.minX).toArray());
@@ -189,7 +189,7 @@ public class TestTextPlacer {
 		String tagalogText = "ᜀ ᜁ ᜂ ᜃ ᜄ ᜅ ᜆ ᜇ ᜈ ᜉ ᜊ ᜋ ᜌ ᜎ ᜏ ᜐ ᜑ ᜒ ᜓ";
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
-		requests.add(new TextPlaceRequest(tagalogText, 10, 10, 800, 40, 20, 20, null));
+		requests.add(new TextPlaceRequest(tagalogText, 10, 10, 800, 40, 20, 20, 1, null));
 
 		var result = placer.place(requests);
 		assertEquals(37, result.size());
@@ -213,7 +213,7 @@ public class TestTextPlacer {
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		requests.add(new TextPlaceRequest(
 				"ؤلاششششششش" + "  hi  " + "يييييييثب",
-				10, 50, 490, 80, 60, 15, null
+				10, 50, 490, 80, 60, 15, 1, null
 		));
 
 		var result = placer.place(requests);
@@ -271,7 +271,7 @@ public class TestTextPlacer {
 		String gujaratiText = "૬ ૭ ૮ ૯";
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
-		requests.add(new TextPlaceRequest(gujaratiText, 10, 10, 500, 40, 20, 15, null));
+		requests.add(new TextPlaceRequest(gujaratiText, 10, 10, 500, 40, 20, 15, 1, null));
 
 		var result = placer.place(requests).stream();
 		assertTrue(result.noneMatch(placed -> placed.glyph.id == 0));

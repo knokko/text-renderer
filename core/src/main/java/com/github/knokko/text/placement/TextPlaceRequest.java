@@ -43,6 +43,11 @@ public class TextPlaceRequest implements Comparable<TextPlaceRequest> {
 	public final int heightA;
 
 	/**
+	 * The minimum {@link com.github.knokko.text.SizedGlyph#scale}, typically 1
+	 */
+	public final int minScale;
+
+	/**
 	 * Optional arbitrary user data that can be given to the renderer. This user data will be propagated to stage 3
 	 * of the renderer. If the userData is an <i>Integer</i>, the built-in CPU renderer and Vulkan renderer will
 	 * use it as text color, and assume that it was packed using the <i>ColorPacker</i> of vk-boiler. The built-in
@@ -61,7 +66,10 @@ public class TextPlaceRequest implements Comparable<TextPlaceRequest> {
 	 * @param heightA {@link #heightA}
 	 * @param userData {@link #userData}
 	 */
-	public TextPlaceRequest(String text, int minX, int minY, int maxX, int maxY, int baseY, int heightA, Object userData) {
+	public TextPlaceRequest(
+			String text, int minX, int minY, int maxX, int maxY,
+			int baseY, int heightA, int minScale, Object userData
+	) {
 		if (minX > maxX) {
 			throw new IllegalArgumentException("minX (" + minX + ") must not be larger than maxX (" + maxX + ")");
 		}
@@ -75,6 +83,7 @@ public class TextPlaceRequest implements Comparable<TextPlaceRequest> {
 		this.maxY = maxY;
 		this.baseY = baseY;
 		this.heightA = heightA;
+		this.minScale = minScale;
 		this.userData = userData;
 	}
 
@@ -94,7 +103,8 @@ public class TextPlaceRequest implements Comparable<TextPlaceRequest> {
 			return this.text.equals(request.text) && Objects.equals(this.userData, request.userData) &&
 					this.minX == request.minX && this.minY == request.minY &&
 					this.maxX == request.maxX && this.maxY == request.maxY &&
-					this.baseY == request.baseY && this.heightA == request.heightA;
+					this.baseY == request.baseY && this.heightA == request.heightA &&
+					this.minScale == request.minScale;
 		} else return false;
 	}
 

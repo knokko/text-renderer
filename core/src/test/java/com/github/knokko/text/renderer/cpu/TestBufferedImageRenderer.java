@@ -28,10 +28,10 @@ public class TestBufferedImageRenderer {
 		);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
-		requests.add(new TextPlaceRequest("hello world", 10, 10, 200, 40, 34, 18, null));
-		requests.add(new TextPlaceRequest("אלט", 210, 10, 300, 40, 34, 18, null));
-		requests.add(new TextPlaceRequest("ؤلاششششششش" + "  hi  " + "يييييييثب", 10, 50, 490, 80, 74, 18, null));
-		requests.add(new TextPlaceRequest("(Only) 1 word (אלט) is Hebrew", 10, 90, 490, 120, 114, 18, null));
+		requests.add(new TextPlaceRequest("hello world", 10, 10, 200, 40, 34, 18, 1, null));
+		requests.add(new TextPlaceRequest("אלט", 210, 10, 300, 40, 34, 18, 1, null));
+		requests.add(new TextPlaceRequest("ؤلاششششششش" + "  hi  " + "يييييييثب", 10, 50, 490, 80, 74, 18, 1, null));
+		requests.add(new TextPlaceRequest("(Only) 1 word (אלט) is Hebrew", 10, 90, 490, 120, 114, 18, 1, null));
 		renderer.render(requests);
 
 		assertImageEquals(
@@ -49,7 +49,7 @@ public class TestBufferedImageRenderer {
 	private List<TextPlaceRequest> shift(List<TextPlaceRequest> original, int index) {
 		var old = original.get(index);
 		return Collections.singletonList(new TextPlaceRequest(
-				old.text, 1000 + old.minX, old.minY, 1000 + old.maxX, old.maxY, old.baseY, old.heightA, old.userData
+				old.text, 1000 + old.minX, old.minY, 1000 + old.maxX, old.maxY, old.baseY, old.heightA, old.minScale, old.userData
 		));
 	}
 
@@ -57,7 +57,7 @@ public class TestBufferedImageRenderer {
 		int offsetY = 100 * unicodeRequests.size();
 		unicodeRequests.add(new TextPlaceRequest(
 				text, 10, offsetY + 10, 1000, offsetY + 90,
-				offsetY + 60, 30, null
+				offsetY + 60, 30, 1, null
 		));
 	}
 
@@ -174,7 +174,7 @@ public class TestBufferedImageRenderer {
 		int minY = 5;
 		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(line, 0, minY, renderer.image.getWidth(), maxY, minY + 20, 15, null));
+			requests.add(new TextPlaceRequest(line, 0, minY, renderer.image.getWidth(), maxY, minY + 20, 15, 1, null));
 			minY = maxY;
 		}
 
@@ -205,7 +205,7 @@ public class TestBufferedImageRenderer {
 		int minY = 5;
 		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(line, 0, minY, renderer.image.getWidth(), maxY, minY + 20, 15, null));
+			requests.add(new TextPlaceRequest(line, 0, minY, renderer.image.getWidth(), maxY, minY + 20, 15, 1, null));
 			renderer.render(requests);
 			requests.clear();
 			minY = maxY;
@@ -237,7 +237,7 @@ public class TestBufferedImageRenderer {
 		for (int height = 1500; height < 5000; height += 900) {
 			requests.add(new TextPlaceRequest(
 					"Big", minX, minY, minX + height, minY + height,
-					minY + height / 2, height * 35 / 100, null
+					minY + height / 2, height * 35 / 100, 1, null
 			));
 			// noinspection SuspiciousNameCombination
 			minX += height;
@@ -275,7 +275,7 @@ public class TestBufferedImageRenderer {
 		for (int height = 20; height < 500; height += 30) {
 			requests.add(new TextPlaceRequest(
 					"Big", minX, minY, minX + height, minY + height,
-					minY + (int) (height * 0.48), height * 38 / 100, null
+					minY + (int) (height * 0.48), height * 38 / 100, 1, null
 			));
 			// noinspection SuspiciousNameCombination
 			minX += height;
@@ -307,15 +307,42 @@ public class TestBufferedImageRenderer {
 		);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
-		requests.add(new TextPlaceRequest("hello", 0, 0, 10, 9, 7, 0, null));
-		requests.add(new TextPlaceRequest("hello", 10, 0, 20, 9, 7, 1, null));
-		requests.add(new TextPlaceRequest("hello", 20, 0, 40, 9, 7, 2, null));
+		requests.add(new TextPlaceRequest("hello", 0, 0, 10, 9, 7, 0, 1, null));
+		requests.add(new TextPlaceRequest("hello", 10, 0, 20, 9, 7, 1, 1, null));
+		requests.add(new TextPlaceRequest("hello", 20, 0, 40, 9, 7, 2, 1, null));
 		renderer.render(requests);
 
 		assertImageEquals(
 				"expected-very-small-text.png",
 				renderer.image,
 				"actual-very-small-text.png",
+				true
+		);
+
+		renderer.destroy();
+		font.destroy();
+		instance.destroy();
+	}
+
+	@Test
+	public void testMinScale() {
+		var instance = new TextInstance();
+		var font = new FontData(instance, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
+		var renderer = new BufferedImageTextRenderer(
+				new BufferedImage(180, 40, BufferedImage.TYPE_INT_RGB),
+				font, 10_000
+		);
+
+		List<TextPlaceRequest> requests = new ArrayList<>();
+		requests.add(new TextPlaceRequest("hi", 0, 0, 60, 39, 37, 35, 1, null));
+		requests.add(new TextPlaceRequest("hi", 60, 0, 120, 39, 37, 35, 2, null));
+		requests.add(new TextPlaceRequest("hi", 120, 0, 180, 39, 37, 35, 3, null));
+		renderer.render(requests);
+
+		assertImageEquals(
+				"expected-min-scale.png",
+				renderer.image,
+				"actual-min-scale.png",
 				true
 		);
 

@@ -1,7 +1,6 @@
 package com.github.knokko.text.font;
 
 import com.github.knokko.text.TextInstance;
-import org.lwjgl.util.freetype.FT_Face;
 
 import java.util.*;
 
@@ -92,12 +91,13 @@ public class FontData {
 	 *
 	 * @param faceIndex The index of the face/font to borrow, must be at least 0 and smaller than {@link #getNumFaces()}
 	 * @param height The desired height of the (uppercase) 'A' character, in pixels
+	 * @param minScale The minimum {@link com.github.knokko.text.SizedGlyph#scale}
 	 * @return The borrowed font/face
 	 */
-	public TextFace borrowFaceWithHeightA(int faceIndex, int height) {
+	public TextFace borrowFaceWithHeightA(int faceIndex, int height, int minScale) {
 		int originalHeight = height;
 		int heightScale = 1;
-		while (height > maxHeight) {
+		while (height > maxHeight || heightScale < minScale) {
 			heightScale += 1;
 			height = originalHeight / heightScale;
 		}

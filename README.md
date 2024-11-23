@@ -41,7 +41,7 @@ fallback fonts. To use it, you need to create a `TextPlacer` and call its
 var textPlacer = new TextPlacer(fontData);
 List<TextPlaceRequest> requests = new ArrayList<>();
 // parameters: text, minX, minY, maxX, maxY, baseY, heightA, userData
-requests.add(new TextPlaceRequest("hello world", 10, 10, 200, 40, 34, 18, null));
+requests.add(new TextPlaceRequest("hello world", 10, 10, 200, 40, 34, 18, 1, null));
 
 var placedGlyphs = textPlacer.place(requests);
 ```
@@ -114,7 +114,7 @@ var renderer = new BufferedImageTextRenderer(
 );
 
 List<TextPlaceRequest> requests = new ArrayList<>();
-requests.add(new TextPlaceRequest("hello", 0, 0, 10, 9, 7, 0, null));
+requests.add(new TextPlaceRequest("hello", 0, 0, 10, 9, 7, 0, 1, null));
 renderer.render(requests);
 // The result is now visible in renderer.image, which you can
 // see by e.g. using ImageIO.write

@@ -200,7 +200,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 			int maxX = virtualXtoScreenX(cameraX, scaleY, 70);
 			requests.add(new TextPlaceRequest(
 					line, minX, minY, maxX, maxY, (minY + maxY) / 2,
-					textHeight / 3, rgba(80, 180, 240, 200)
+					textHeight / 3, 1, rgba(80, 180, 240, 200)
 			));
 			offsetY += 1.0;
 		}

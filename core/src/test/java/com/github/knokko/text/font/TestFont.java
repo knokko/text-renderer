@@ -20,7 +20,7 @@ public class TestFont {
 				"../unicode-fonts/src/main/resources/fonts/unicode-freeserif.ttf"
 		)));
 
-		var face = font.borrowFaceWithHeightA(0, 15);
+		var face = font.borrowFaceWithHeightA(0, 15, 1);
 		assertFtSuccess(FT_Load_Char(
 				face.ftFace, 'A', FT_LOAD_BITMAP_METRICS_ONLY
 		), "Load_Char", "TestFont.testSetHeight");

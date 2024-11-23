@@ -35,7 +35,10 @@ public class TestUnicode1Draw {
 		int minY = 5;
 		for (String line : UnicodeLines.get()) {
 			int maxY = minY + 40;
-			requests.add(new TextPlaceRequest(line, 0, minY, width, maxY, minY + 20, 15, rgba(255, 255, 255, 255)));
+			requests.add(new TextPlaceRequest(
+					line, 0, minY, width, maxY,
+					minY + 20, 15, 1, rgba(255, 255, 255, 255)
+			));
 			minY = maxY;
 		}
 

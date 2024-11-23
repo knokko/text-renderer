@@ -1,5 +1,6 @@
 package com.github.knokko.text.bitmap;
 
+import com.github.knokko.text.SizedGlyph;
 import com.github.knokko.text.font.FontData;
 import org.lwjgl.util.freetype.FT_Bitmap;
 import org.lwjgl.util.freetype.FT_GlyphSlot;
@@ -30,10 +31,10 @@ public class FreeTypeGlyphRasterizer implements GlyphRasterizer {
 	}
 
 	@Override
-	public void set(int glyph, int faceIndex, int size) {
-		String context = "FreeTypeGlyphRasterizer.set(" + glyph + ", " + faceIndex + ", " + size + ")";
-		var face = font.borrowFaceWithSize(faceIndex, size, 1);
-		assertFtSuccess(FT_Load_Glyph(face.ftFace, glyph, FT_LOAD_RENDER), "Load_Glyph", context);
+	public void set(SizedGlyph glyph, Object userData) {
+		String context = "FreeTypeGlyphRasterizer.set(" + glyph + ")";
+		var face = font.borrowFaceWithSize(glyph.faceIndex, glyph.size, 1);
+		assertFtSuccess(FT_Load_Glyph(face.ftFace, glyph.id, FT_LOAD_RENDER), "Load_Glyph", context);
 
 		FT_GlyphSlot slot = face.ftFace.glyph();
 		if (slot == null) throw new Error("Glyph slot must not be null at this point");
@@ -57,6 +58,11 @@ public class FreeTypeGlyphRasterizer implements GlyphRasterizer {
 		} else this.buffer.limit(0);
 
 		font.returnFace(face);
+	}
+
+	@Override
+	public String getUserDataKey(Object userData) {
+		return "";
 	}
 
 	@Override
