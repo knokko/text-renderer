@@ -97,7 +97,7 @@ public class FontData {
 	public TextFace borrowFaceWithHeightA(int faceIndex, int height, int minScale) {
 		int originalHeight = height;
 		int heightScale = 1;
-		while (height > maxHeight || heightScale < minScale) {
+		while ((height > maxHeight || heightScale < minScale) && originalHeight >= (heightScale + 1)) {
 			heightScale += 1;
 			height = originalHeight / heightScale;
 		}

@@ -49,4 +49,19 @@ public class TestFont {
 		font.destroy();
 		instance.destroy();
 	}
+
+	@Test
+	public void testSetSmallHeightRegression() {
+		var instance = new TextInstance();
+		var font = new FontData(instance, new FilesFontSource(new File(
+				"../unicode-fonts/src/main/resources/fonts/unicode-freeserif.ttf"
+		)));
+
+		// We simply check that this won't throw an exception
+		var face = font.borrowFaceWithHeightA(0, 1, 2);
+
+		font.returnFace(face);
+		font.destroy();
+		instance.destroy();
+	}
 }
