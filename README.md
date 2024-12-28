@@ -177,6 +177,10 @@ The `core` module contains stage 1 and stage 2 of the pipeline,
 plus the CPU renderer of stage 3. The `core` module bundles
 LWJGL core, `freetype`, and `harfbuzz`.
 
+Note however that you *do* need to ensure that the right
+`freetype` **natives** are present (but the `harfbuzz`
+natives are not needed).
+
 ### Unicode fonts
 The `unicode-fonts` module contains a bunch of fonts that
 together cover most Unicode characters. They are meant to be
