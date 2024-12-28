@@ -37,5 +37,11 @@ public enum TextAlignment {
 	 *     <li>Right-to-left text starts at the right boundary, and renders towards the left boundary</li>
 	 * </ul>
 	 */
-	RIGHT
+	RIGHT,
+
+	/**
+	 * The gap on the left will always be equally large as the gap on the right of the text, regardless of the
+	 * directionality of the text.
+	 */
+	CENTER
 }

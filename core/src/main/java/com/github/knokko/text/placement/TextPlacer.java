@@ -160,7 +160,7 @@ public class TextPlacer {
 		boolean hasRightGap = splitter.wasBaseLeftToRight;
 		if (request.alignment == TextAlignment.REVERSED) hasRightGap = !hasRightGap;
 		if (request.alignment == TextAlignment.LEFT) hasRightGap = true;
-		if (request.alignment == TextAlignment.RIGHT) hasRightGap = false;
+		if (request.alignment == TextAlignment.RIGHT || request.alignment == TextAlignment.CENTER) hasRightGap = false;
 
 		runLoop:
 		for (TextRun run : runs) {
@@ -233,8 +233,10 @@ public class TextPlacer {
 
 		if (!hasRightGap) {
 			int shift = request.getWidth() - cursorX / 64;
+			if (request.alignment == TextAlignment.CENTER) shift /= 2;
+			int finalShift = shift;
 			placements = placements.stream().map(placement -> new PlacedGlyph(
-					placement.glyph, placement.minX + shift,
+					placement.glyph, placement.minX + finalShift,
 					placement.minY, placement.request, placement.charIndex
 			)).collect(Collectors.toList());
 

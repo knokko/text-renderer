@@ -388,48 +388,74 @@ public class TestBufferedImageRenderer {
 		var instance = new TextInstance();
 		var font = new FontData(instance, new ClasspathFontsSource("fonts/unicode-polyglott.ttf"));
 		var renderer = new BufferedImageTextRenderer(
-				new BufferedImage(500, 200, BufferedImage.TYPE_INT_RGB),
+				new BufferedImage(500, 280, BufferedImage.TYPE_INT_RGB),
 				font, 10_000
 		);
 
 		List<TextPlaceRequest> requests = new ArrayList<>();
 		requests.add(new TextPlaceRequest(
-				"hello", 0, 0, 200, 39, 37, 35, 1, TextAlignment.REVERSED, null
+				"hello", 0, 0, 200, 39,
+				37, 35, 1, TextAlignment.REVERSED, null
 		));
 		requests.add(new TextPlaceRequest(
-				"hello", 0, 40, 200, 79, 77, 35, 1, TextAlignment.LEFT, null
+				"hello", 0, 40, 200, 79,
+				77, 35, 1, TextAlignment.LEFT, null
 		));
 		requests.add(new TextPlaceRequest(
-				"hello", 0, 80, 200, 119, 117, 35, 1, TextAlignment.RIGHT, null
+				"hello", 0, 80, 200, 119,
+				117, 35, 1, TextAlignment.RIGHT, null
 		));
 		requests.add(new TextPlaceRequest(
-				"hellohello", 0, 120, 200, 159, 157, 35, 1, TextAlignment.REVERSED, null
+				"hellohello", 0, 120, 200, 159,
+				157, 35, 1, TextAlignment.REVERSED, null
 		));
 		requests.add(new TextPlaceRequest(
-				"hellohello", 0, 160, 200, 199, 197, 35, 1, TextAlignment.DEFAULT, null
+				"hellohello", 0, 160, 200, 199,
+				197, 35, 1, TextAlignment.DEFAULT, null
+		));
+		requests.add(new TextPlaceRequest(
+				"hello", 0, 200, 200, 239,
+				237, 35, 1, TextAlignment.CENTER, null
+		));
+		requests.add(new TextPlaceRequest(
+				"hellohello", 0, 240, 200, 279,
+				277, 35, 1, TextAlignment.CENTER, null
 		));
 
 		requests.add(new TextPlaceRequest(
-				"مرحباً", 300, 0, 499, 39, 32, 25, 1, TextAlignment.REVERSED, null
+				"مرحباً", 300, 0, 499, 39,
+				32, 25, 1, TextAlignment.REVERSED, null
 		));
 		requests.add(new TextPlaceRequest(
-				"مرحباً", 300, 40, 499, 79, 72, 25, 1, TextAlignment.LEFT, null
+				"مرحباً", 300, 40, 499, 79,
+				72, 25, 1, TextAlignment.LEFT, null
 		));
 		requests.add(new TextPlaceRequest(
-				"مرحباً", 300, 80, 499, 119, 112, 25, 1, TextAlignment.RIGHT, null
+				"مرحباً", 300, 80, 499, 119,
+				112, 25, 1, TextAlignment.RIGHT, null
 		));
 		requests.add(new TextPlaceRequest(
-				"مرحبامرحبامرحباً", 300, 120, 499, 159, 152, 25, 1, TextAlignment.REVERSED, null
+				"مرحبامرحبامرحباً", 300, 120, 499, 159,
+				152, 25, 1, TextAlignment.REVERSED, null
 		));
 		requests.add(new TextPlaceRequest(
-				"مرحبامرحبامرحباً", 300, 160, 499, 199, 192, 25, 1, TextAlignment.DEFAULT, null
+				"مرحبامرحبامرحباً", 300, 160, 499, 199,
+				192, 25, 1, TextAlignment.DEFAULT, null
+		));
+		requests.add(new TextPlaceRequest(
+				"مرحباً", 300, 200, 499, 239,
+				232, 25, 1, TextAlignment.CENTER, null
+		));
+		requests.add(new TextPlaceRequest(
+				"مرحبامرحبامرحباً", 300, 220, 499, 279,
+				272, 25, 1, TextAlignment.CENTER, null
 		));
 		renderer.render(requests);
 
 		assertImageEquals(
 				"expected-text-alignment.png",
 				renderer.image,
-				"actual-text-alignment.png",
+				"expected-text-alignment.png",
 				true
 		);
 
