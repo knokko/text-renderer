@@ -1,9 +1,12 @@
 dependencies {
-	compileOnly "org.lwjgl:lwjgl"
-	compileOnly "org.lwjgl:lwjgl-freetype"
-	compileOnly "org.lwjgl:lwjgl-harfbuzz"
+	implementation "org.lwjgl:lwjgl"
+	implementation "org.lwjgl:lwjgl-freetype"
+	implementation "org.lwjgl:lwjgl-harfbuzz"
+	for (String target : project.ext.allNatives) {
+		runtimeOnly "org.lwjgl:lwjgl::$target"
+		runtimeOnly "org.lwjgl:lwjgl-freetype::$target"
+	}
 
-	testImplementation project(":core-bundle")
 	testImplementation project(":unicode-fonts")
 	testImplementation project(":test-helper")
 }

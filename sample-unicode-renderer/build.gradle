@@ -1,11 +1,18 @@
 dependencies {
-	implementation project(":vulkan-bundle")
-	implementation project(":unicode-fonts")
-	implementation project(":test-helper")
+	implementation project(":core")
+	implementation project(":vulkan")
 	implementation "org.lwjgl:lwjgl-glfw"
+	implementation "org.lwjgl:lwjgl-vulkan"
+	implementation "org.lwjgl:lwjgl-vma"
+	implementation "com.github.knokko:vk-boiler:$boilerVersion"
+	runtimeOnly "org.lwjgl:lwjgl-vulkan::natives-macos"
+	runtimeOnly "org.lwjgl:lwjgl-vulkan::natives-macos-arm64"
 	for (String target : project.ext.allNatives) {
+		runtimeOnly "org.lwjgl:lwjgl-vma::$target"
 		runtimeOnly "org.lwjgl:lwjgl-glfw::$target"
 	}
+	implementation project(":unicode-fonts")
+	implementation project(":test-helper")
 	implementation "com.github.knokko:memory-query:v1.1"
 	implementation "com.github.knokko:sample-profiler:v1.0.0"
 }

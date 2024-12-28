@@ -4,7 +4,15 @@ dependencies {
 	compileOnly "org.lwjgl:lwjgl-vma"
 	compileOnly "com.github.knokko:vk-boiler:$boilerVersion"
 
-	testImplementation project(":vulkan-bundle")
+	testImplementation project(":core")
+	testImplementation "org.lwjgl:lwjgl-vulkan"
+	testImplementation "org.lwjgl:lwjgl-vma"
+	testImplementation "com.github.knokko:vk-boiler:$boilerVersion"
+	testRuntimeOnly "org.lwjgl:lwjgl-vulkan::natives-macos"
+	testRuntimeOnly "org.lwjgl:lwjgl-vulkan::natives-macos-arm64"
+	for (String target : project.ext.allNatives) {
+		testRuntimeOnly "org.lwjgl:lwjgl-vma::$target"
+	}
 	testImplementation project(":unicode-fonts")
 	testImplementation project(":test-helper")
 }

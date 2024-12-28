@@ -7,32 +7,3 @@ allprojects {
 	apply plugin: "java-library"
 	apply plugin: "myproject.text-render-conventions"
 }
-
-project(":core-bundle") {
-	dependencies {
-		api "org.lwjgl:lwjgl"
-		api "org.lwjgl:lwjgl-freetype"
-		api "org.lwjgl:lwjgl-harfbuzz"
-		api project(":core")
-
-		for (String target : project.ext.allNatives) {
-			runtimeOnly "org.lwjgl:lwjgl::$target"
-			runtimeOnly "org.lwjgl:lwjgl-freetype::$target"
-		}
-	}
-}
-
-project(":vulkan-bundle") {
-	dependencies {
-		api project(":core-bundle")
-		api project(":vulkan")
-		api "org.lwjgl:lwjgl-vulkan"
-		api "org.lwjgl:lwjgl-vma"
-		api "com.github.knokko:vk-boiler:$boilerVersion"
-		runtimeOnly "org.lwjgl:lwjgl-vulkan::natives-macos"
-		runtimeOnly "org.lwjgl:lwjgl-vulkan::natives-macos-arm64"
-		for (String target : project.ext.allNatives) {
-			runtimeOnly "org.lwjgl:lwjgl-vma::$target"
-		}
-	}
-}

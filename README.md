@@ -164,25 +164,18 @@ The above code was basically ripped from the
 This library consists of multiple modules, and you need to decide
 which of those you want:
 - `core`
-- `core-bundle`
+- `vulkan`
+- `unicode-fonts`
 - `sample-unicode-renderer`
 - `test-helper`
-- `unicode-fonts`
-- `vulkan`
-- `vulkan-bundle`
 
 You should probably **not** add `sample-unicode-renderer` and
 `test-helper` as dependency.
 
-### Core (bundle)
+### Core
 The `core` module contains stage 1 and stage 2 of the pipeline,
-plus the CPU renderer of stage 3. The `core` module requires
-`freetype` and `harfbuzz`.
-- If you add `core-bundle` as dependency, you will get the
-`core` module, bundled with `lwjgl-freetype` and `lwjgl-harfbuzz`
-- If you add the 'raw' `core` as dependency, you will only get
-the `core` module. You will have to ensure that `lwjgl-freetype`
-and `lwjgl-harfbuzz` are also present at runtime.
+plus the CPU renderer of stage 3. The `core` module bundles
+LWJGL core, `freetype`, and `harfbuzz`.
 
 ### Unicode fonts
 The `unicode-fonts` module contains a bunch of fonts that
@@ -199,17 +192,16 @@ as fallback for all other characters. Adding `unicode-fonts`
 as dependency should take about 10MB of storage, and about
 20MB of memory.
 
-### Vulkan (bundle)
+### Vulkan
 The `vulkan` module contains my Vulkan implementation of stage
 3 of the pipeline. You should only use this module if you want
 to use my Vulkan implementation. The `vulkan` module requires
 `core`, `lwjgl-vulkan`, `lwjgl-vma`, and `vk-boiler`.
-- If you add `vulkan-bundle` as dependency, you will get the
-`core` module, `vulkan` module, bundled with `lwjgl-vulkan`,
-`lwjgl-vma`, `lwjgl-freetype`, and `lwjgl-harfbuzz`.
-- If you add `vulkan` as dependency, you will just get the
-`vulkan` module, and need to ensure that all its dependencies
-will be available at runtime.
+
+If you add `vulkan` as dependency, you need to ensure that
+all its dependencies are available at runtime. Since it doesn't
+bundle `lwjgl-vulkan`, you can freely choose which version of
+`lwjgl-vulkan` (and all other dependencies) you wish to bundle.
 
 ### Gradle
 ```
@@ -222,7 +214,7 @@ repositories {
 dependencies {
 	...
 	// For each module
-	implementation 'com.github.knokko.text-renderer:module:v0.1.0'
+	implementation 'com.github.knokko.text-renderer:module:v0.2.0'
 }
 ```
 
@@ -241,6 +233,6 @@ dependencies {
 	<-- for each module -->
 	<groupId>com.github.knokko.text-renderer</groupId>
 	<artifactId>module</artifactId>
-	<version>v0.1.0</version>
+	<version>v0.2.0</version>
 </dependency>
 ```
