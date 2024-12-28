@@ -48,6 +48,11 @@ public class TextPlaceRequest implements Comparable<TextPlaceRequest> {
 	public final int minScale;
 
 	/**
+	 * The {@link TextAlignment}
+	 */
+	public final TextAlignment alignment;
+
+	/**
 	 * Optional arbitrary user data that can be given to the renderer. This user data will be propagated to stage 3
 	 * of the renderer. If the userData is an <i>Integer</i>, the built-in CPU renderer and Vulkan renderer will
 	 * use it as text color, and assume that it was packed using the <i>ColorPacker</i> of vk-boiler. The built-in
@@ -64,11 +69,13 @@ public class TextPlaceRequest implements Comparable<TextPlaceRequest> {
 	 * @param maxY {@link #maxY}
 	 * @param baseY {@link #baseY}
 	 * @param heightA {@link #heightA}
+	 * @param minScale {@link #minScale}
+	 * @param alignment {@link TextAlignment}
 	 * @param userData {@link #userData}
 	 */
 	public TextPlaceRequest(
 			String text, int minX, int minY, int maxX, int maxY,
-			int baseY, int heightA, int minScale, Object userData
+			int baseY, int heightA, int minScale, TextAlignment alignment, Object userData
 	) {
 		if (minX > maxX) {
 			throw new IllegalArgumentException("minX (" + minX + ") must not be larger than maxX (" + maxX + ")");
@@ -84,6 +91,7 @@ public class TextPlaceRequest implements Comparable<TextPlaceRequest> {
 		this.baseY = baseY;
 		this.heightA = heightA;
 		this.minScale = minScale;
+		this.alignment = Objects.requireNonNull(alignment);
 		this.userData = userData;
 	}
 
@@ -104,7 +112,7 @@ public class TextPlaceRequest implements Comparable<TextPlaceRequest> {
 					this.minX == request.minX && this.minY == request.minY &&
 					this.maxX == request.maxX && this.maxY == request.maxY &&
 					this.baseY == request.baseY && this.heightA == request.heightA &&
-					this.minScale == request.minScale;
+					this.minScale == request.minScale && this.alignment == request.alignment;
 		} else return false;
 	}
 

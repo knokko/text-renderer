@@ -15,6 +15,7 @@ import com.github.knokko.profiler.storage.SampleStorage;
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
+import com.github.knokko.text.placement.TextAlignment;
 import com.github.knokko.text.placement.TextPlaceRequest;
 import com.github.knokko.text.util.UnicodeLines;
 import com.github.knokko.text.vulkan.VulkanTextInstance;
@@ -200,7 +201,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 			int maxX = virtualXtoScreenX(cameraX, scaleY, 70);
 			requests.add(new TextPlaceRequest(
 					line, minX, minY, maxX, maxY, (minY + maxY) / 2,
-					textHeight / 3, 1, rgba(80, 180, 240, 200)
+					textHeight / 3, 1, TextAlignment.DEFAULT, rgba(80, 180, 240, 200)
 			));
 			offsetY += 1.0;
 		}

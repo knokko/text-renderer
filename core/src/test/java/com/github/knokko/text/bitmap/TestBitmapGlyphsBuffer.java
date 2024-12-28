@@ -2,6 +2,7 @@ package com.github.knokko.text.bitmap;
 
 import com.github.knokko.text.SizedGlyph;
 import com.github.knokko.text.placement.PlacedGlyph;
+import com.github.knokko.text.placement.TextAlignment;
 import com.github.knokko.text.placement.TextPlaceRequest;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.BufferUtils;
@@ -98,7 +99,7 @@ public class TestBitmapGlyphsBuffer {
 	@Test
 	public void testEfficientMemoryUsage() {
 		var placeRequest = new TextPlaceRequest(
-				"hello", 12, 34, 56, 78, 20, 10, 1, null
+				"hello", 12, 34, 56, 78, 20, 10, 1, TextAlignment.DEFAULT, null
 		);
 
 		var glyph1 = new SizedGlyph(12, 0, 15, 3);
@@ -138,7 +139,9 @@ public class TestBitmapGlyphsBuffer {
 		long bufferAddress = nmalloc(bufferSize);
 		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
 
-		var placeRequest = new TextPlaceRequest("h", 5, 6, 20, 35, 20, 15, 1, null);
+		var placeRequest = new TextPlaceRequest(
+				"h", 5, 6, 20, 35, 20, 15, 1, TextAlignment.DEFAULT, null
+		);
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20, 1), 2, 1, placeRequest, 0));
@@ -179,7 +182,9 @@ public class TestBitmapGlyphsBuffer {
 		long bufferAddress = nmalloc(bufferSize);
 		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
 
-		var placeRequest = new TextPlaceRequest("h", 5, -6, 20, 55, 20, 15, 1, null);
+		var placeRequest = new TextPlaceRequest(
+				"h", 5, -6, 20, 55, 20, 15, 1, TextAlignment.DEFAULT, null
+		);
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 20, 1), 2, 1, placeRequest, 0));
@@ -223,7 +228,9 @@ public class TestBitmapGlyphsBuffer {
 		long bufferAddress = nmalloc(bufferSize);
 		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
 
-		var placeRequest = new TextPlaceRequest("h", 1, 4, 3, 7, 5, 2, 1, null);
+		var placeRequest = new TextPlaceRequest(
+				"h", 1, 4, 3, 7, 5, 2, 1, TextAlignment.DEFAULT, null
+		);
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 5, 2), 0, 0, placeRequest, 0));
@@ -249,7 +256,9 @@ public class TestBitmapGlyphsBuffer {
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		for (int userData = 0; userData < 1000; userData++) {
-			var placeRequest = new TextPlaceRequest("h", 1, 4, 3, 7, 5, 2, 1, userData);
+			var placeRequest = new TextPlaceRequest(
+					"h", 1, 4, 3, 7, 5, 2, 1, TextAlignment.DEFAULT, userData
+			);
 			placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 5, 2), 0, 0, placeRequest, 0));
 		}
 
@@ -302,7 +311,9 @@ public class TestBitmapGlyphsBuffer {
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		for (int userData = 0; userData < 1000; userData++) {
-			var placeRequest = new TextPlaceRequest("h", 1, 4, 3, 7, 5, 2, 1, userData);
+			var placeRequest = new TextPlaceRequest(
+					"h", 1, 4, 3, 7, 5, 2, 1, TextAlignment.DEFAULT, userData
+			);
 			placedGlyphs.add(new PlacedGlyph(new SizedGlyph(123, 0, 5, 2), 0, 0, placeRequest, 0));
 		}
 

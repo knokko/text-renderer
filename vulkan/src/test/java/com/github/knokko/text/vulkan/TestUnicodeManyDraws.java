@@ -6,6 +6,7 @@ import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.font.FontData;
 import com.github.knokko.text.font.UnicodeFonts;
+import com.github.knokko.text.placement.TextAlignment;
 import com.github.knokko.text.placement.TextPlaceRequest;
 import com.github.knokko.text.util.UnicodeLines;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ public class TestUnicodeManyDraws {
 			int maxY = minY + 40;
 			requests.add(new TextPlaceRequest(
 					line, 0, minY, width, maxY,
-					minY + 20, 15, 1, rgba(255, 255, 255, 255)
+					minY + 20, 15, 1, TextAlignment.DEFAULT, rgba(255, 255, 255, 255)
 			));
 			minY = maxY;
 		}

@@ -28,7 +28,8 @@ import static org.lwjgl.util.freetype.FreeType.*;
 public class TextPlacer {
 
 	private static final TextPlaceRequest TERMINATE_REQUEST = new TextPlaceRequest(
-			"TERMINATE", 0, 0, 0, 0, 0, 0, 1, null
+			"TERMINATE", 0, 0, 0, 0,
+			0, 0, 1, TextAlignment.DEFAULT, null
 	);
 
 	private final FontData fontData;
@@ -156,6 +157,11 @@ public class TextPlacer {
 		int cursorY = 0;
 		int previousRsbDelta = 0;
 
+		boolean hasRightGap = splitter.wasBaseLeftToRight;
+		if (request.alignment == TextAlignment.REVERSED) hasRightGap = !hasRightGap;
+		if (request.alignment == TextAlignment.LEFT) hasRightGap = true;
+		if (request.alignment == TextAlignment.RIGHT) hasRightGap = false;
+
 		runLoop:
 		for (TextRun run : runs) {
 			var currentFace = fontData.borrowFaceWithHeightA(run.faceIndex(), request.heightA, request.minScale);
@@ -205,7 +211,7 @@ public class TextPlacer {
 					int scale = currentFace.scale;
 					int placedMinX = cursorX / 64 + scale * (position.x_offset() + glyphOffset.bitmapLeft);
 					int placedMinY = cursorY / 64 + scale * (position.y_offset() - glyphOffset.bitmapTop);
-					if (placedMinX <= (request.maxX - request.minX) && placedMinY <= (request.maxY - request.minY)) {
+					if ((placedMinX <= (request.maxX - request.minX) || !hasRightGap) && placedMinY <= (request.maxY - request.minY)) {
 						placements.add(new PlacedGlyph(
 								new SizedGlyph(glyph, run.faceIndex(), currentFace.fontSize, scale),
 								placedMinX, placedMinY, request, charIndex
@@ -215,7 +221,7 @@ public class TextPlacer {
 					cursorX += scale * position.x_advance();
 					cursorY += scale * position.y_advance();
 
-					if (cursorX > 64 * (request.getWidth() + 2 * request.heightA) && splitter.wasBaseLeftToRight) {
+					if (cursorX > 64 * (request.getWidth() + 2 * request.heightA) && hasRightGap) {
 						fontData.returnFace(currentFace);
 						break runLoop;
 					}
@@ -225,7 +231,7 @@ public class TextPlacer {
 			fontData.returnFace(currentFace);
 		}
 
-		if (!splitter.wasBaseLeftToRight) {
+		if (!hasRightGap) {
 			int shift = request.getWidth() - cursorX / 64;
 			placements = placements.stream().map(placement -> new PlacedGlyph(
 					placement.glyph, placement.minX + shift,

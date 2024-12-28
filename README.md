@@ -40,8 +40,8 @@ fallback fonts. To use it, you need to create a `TextPlacer` and call its
 ```java
 var textPlacer = new TextPlacer(fontData);
 List<TextPlaceRequest> requests = new ArrayList<>();
-// parameters: text, minX, minY, maxX, maxY, baseY, heightA, userData
-requests.add(new TextPlaceRequest("hello world", 10, 10, 200, 40, 34, 18, 1, null));
+// parameters: text, minX, minY, maxX, maxY, baseY, heightA, minScale, alignment, userData
+requests.add(new TextPlaceRequest("hello world", 10, 10, 200, 40, 34, 18, 1, TextAlignment.DEFAULT, null));
 
 var placedGlyphs = textPlacer.place(requests);
 ```
@@ -114,7 +114,7 @@ var renderer = new BufferedImageTextRenderer(
 );
 
 List<TextPlaceRequest> requests = new ArrayList<>();
-requests.add(new TextPlaceRequest("hello", 0, 0, 10, 9, 7, 0, 1, null));
+requests.add(new TextPlaceRequest("hello", 0, 0, 10, 9, 7, 0, 1, TextAlignment.DEFAULT, null));
 renderer.render(requests);
 // The result is now visible in renderer.image, which you can
 // see by e.g. using ImageIO.write
@@ -122,7 +122,7 @@ renderer.render(requests);
 
 #### Vulkan implementation
 My Vulkan implementation requires Vulkan 1.0 and
-[vk-boiler 4.2](https://github.com/knokko/vk-boiler). Note that
+[vk-boiler 4.3.1+](https://github.com/knokko/vk-boiler). Note that
 you are free to create your own Vulkan implementation if you
 don't want to use my vk-boiler library, or just need to
 support more features. When you do so, I recommend looking at the
