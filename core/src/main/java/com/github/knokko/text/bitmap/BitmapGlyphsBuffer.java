@@ -6,8 +6,6 @@ import com.github.knokko.text.placement.PlacedGlyph;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import static org.lwjgl.system.MemoryUtil.memByteBuffer;
-
 /**
  * The <i>BitmapGlyphsBuffer</i> implements stage 2 of the text rendering pipeline: given a list of (placed) glyphs, it
  * ensures that each of the glyphs is rasterized, and stored somewhere in the buffer.
@@ -28,10 +26,8 @@ public class BitmapGlyphsBuffer {
 	private long currentFrame;
 
 	/**
-	 * Constructs a new <i>BitmapGlyphsBuffer</i> that will store the rasterized glyphs in a 'buffer' starting at
-	 * memory address <i>address</i>, with a size of <i>size</i> bytes.
-	 * @param address The start memory address of the glyph buffer
-	 * @param size The size of the glyph buffer, in bytes
+	 * Constructs a new <i>BitmapGlyphsBuffer</i> that will store the rasterized glyphs in {@code buffer}.
+	 * @param buffer The glyph buffer
 	 * @param slotSize The 'slot size', in bytes. All rasterized glyphs will be split in chunks of at most
 	 *                 <i>slotSize</i> bytes, which simplifies memory allocation. Using a large slot size will cause
 	 *                 a relatively large amount of memory to be wasted for small glyphs, whereas a small slot size
@@ -40,22 +36,19 @@ public class BitmapGlyphsBuffer {
 	 *                 since this allows a more efficient packing of glyphs into sections. For instance, the default
 	 *                 slot size is 120 (bytes), which is divisible by quite some numbers.
 	 */
-	public BitmapGlyphsBuffer(long address, int size, int slotSize) {
-		this.buffer = memByteBuffer(address, size);
+	public BitmapGlyphsBuffer(ByteBuffer buffer, int slotSize) {
+		this.buffer = buffer;
 		this.slotSize = slotSize;
 
-		int numSlots = size / slotSize;
+		int numSlots = buffer.capacity() / slotSize;
 		for (int index = numSlots - 1; index >= 0; index--) bufferSlots.add(index);
 	}
 
 	/**
-	 * Constructs a new <i>BitmapGlyphsBuffer</i> that will store the rasterized glyphs in a 'buffer' starting at
-	 * memory address <i>address</i>, with a size of <i>size</i> bytes.
-	 * @param address The start memory address of the glyph buffer
-	 * @param size The size of the glyph buffer, in bytes
+	 * Constructs a new <i>BitmapGlyphsBuffer</i> that will store the rasterized glyphs in {@code buffer}
 	 */
-	public BitmapGlyphsBuffer(long address, int size) {
-		this(address, size, 120);
+	public BitmapGlyphsBuffer(ByteBuffer buffer) {
+		this(buffer, 120);
 	}
 
 	/**

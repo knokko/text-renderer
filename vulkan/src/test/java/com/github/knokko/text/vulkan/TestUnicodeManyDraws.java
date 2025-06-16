@@ -2,6 +2,9 @@ package com.github.knokko.text.vulkan;
 
 import com.github.knokko.boiler.builders.BoilerBuilder;
 import com.github.knokko.boiler.commands.SingleTimeCommands;
+import com.github.knokko.boiler.descriptors.DescriptorCombiner;
+import com.github.knokko.boiler.images.ImageBuilder;
+import com.github.knokko.boiler.memory.MemoryCombiner;
 import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.font.FontData;
@@ -58,26 +61,29 @@ public class TestUnicodeManyDraws {
 
 		var vkTextPipeline = vkTextInstance.createPipelineWithRenderPass(renderPass, 0, width, height);
 
-		var textDescriptorPool = vkTextInstance.descriptorSetLayout.createPool(1, 0, "TextPool");
+		long alignment = boiler.deviceProperties.limits().minStorageBufferOffsetAlignment();
+		var combiner = new MemoryCombiner(boiler, "UnicodeMemory");
+		var glyphBuffer = combiner.addMappedBuffer(90_000, alignment, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+		var quadBuffer = combiner.addMappedBuffer(30_000, alignment, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
-		var glyphBuffer = boiler.buffers.createMapped(90_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
-		var quadBuffer = boiler.buffers.createMapped(30_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
-
-		var resultBuffer = boiler.buffers.createMapped(4 * width * height, VK_BUFFER_USAGE_TRANSFER_DST_BIT, "ResultBuffer");
-		var image = boiler.images.createSimple(
-				width, height, colorFormat,
-				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-				VK_IMAGE_ASPECT_COLOR_BIT, "DrawImage"
+		var resultBuffer = combiner.addMappedBuffer(4 * width * height, 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+		var image = combiner.addImage(
+				new ImageBuilder("DrawImage", width, height)
+						.format(colorFormat)
+						.addUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
+						.addUsage(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 		);
+		var memory = combiner.build(false);
 		var framebuffer = boiler.images.createFramebuffer(
-				renderPass, width, height,
-				"TextFramebuffer", image.vkImageView()
+				renderPass, width, height, "TextFramebuffer", image.vkImageView
 		);
-		long descriptorSet = textDescriptorPool.allocate(1)[0];
+
+		var descriptorCombiner = new DescriptorCombiner(boiler);
+		long[] descriptorSets = descriptorCombiner.addMultiple(vkTextInstance.descriptorSetLayout, 1);
+		var descriptorPool = descriptorCombiner.build("UnicodeDescriptors");
 
 		var vkTextRenderer = vkTextPipeline.createRenderer(
-				font, descriptorSet, glyphBuffer.fullMappedRange(),
-				quadBuffer.fullMappedRange(), 120, 1
+				font, descriptorSets[0], glyphBuffer, quadBuffer, 120, 1
 		);
 
 		System.out.println("created resources: " + (System.nanoTime() - startTime) / 1000_000);
@@ -88,7 +94,7 @@ public class TestUnicodeManyDraws {
 			commands.submit("Rendering " + request.text, recorder -> {
 				if (request == requests.get(0)) {
 					recorder.transitionLayout(image, null, ResourceUsage.TRANSFER_DEST);
-					recorder.clearColorImage(image.vkImage(), 0f, 0f, 0f, 1f);
+					recorder.clearColorImage(image.vkImage, 0f, 0f, 0f, 1f);
 					recorder.transitionLayout(image, ResourceUsage.TRANSFER_DEST, new ResourceUsage(
 							VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 							VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
@@ -111,7 +117,7 @@ public class TestUnicodeManyDraws {
 
 				if (request == requests.get(requests.size() - 1)) {
 					recorder.transitionLayout(image, ResourceUsage.COLOR_ATTACHMENT_WRITE, ResourceUsage.TRANSFER_SOURCE);
-					recorder.copyImageToBuffer(image, resultBuffer.fullRange());
+					recorder.copyImageToBuffer(image, resultBuffer);
 				}
 			}).awaitCompletion();
 		}
@@ -120,19 +126,16 @@ public class TestUnicodeManyDraws {
 
 		commands.destroy();
 		vkTextRenderer.destroy();
-		image.destroy(boiler);
 
 		assertImageEquals(
 				"expected-unicode-test-result.png",
-				boiler.buffers.decodeBufferedImageRGBA(resultBuffer, 0, width, height),
+				resultBuffer.decodeBufferedImage(width, height),
 				"actual-unicode-test-result-vulkan-many.png", false
 		);
 
-		resultBuffer.destroy(boiler);
 		vkDestroyFramebuffer(boiler.vkDevice(), framebuffer, null);
-		glyphBuffer.destroy(boiler);
-		quadBuffer.destroy(boiler);
-		textDescriptorPool.destroy();
+		vkDestroyDescriptorPool(boiler.vkDevice(), descriptorPool, null);
+		memory.destroy(boiler);
 		vkTextPipeline.destroy();
 		vkDestroyRenderPass(boiler.vkDevice(), renderPass, null);
 		vkTextInstance.destroyInitialObjects();

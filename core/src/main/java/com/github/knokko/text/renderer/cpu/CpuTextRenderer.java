@@ -31,7 +31,7 @@ public abstract class CpuTextRenderer {
 		this.rasterizer = new FreeTypeGlyphRasterizer(font);
 		this.placer = new TextPlacer(font);
 		this.byteBuffer = memAlloc(glyphBufferCapacity);
-		this.glyphsBuffer = new BitmapGlyphsBuffer(memAddress(byteBuffer), glyphBufferCapacity);
+		this.glyphsBuffer = new BitmapGlyphsBuffer(byteBuffer);
 	}
 
 	/**

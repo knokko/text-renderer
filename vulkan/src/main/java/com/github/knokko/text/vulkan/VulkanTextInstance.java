@@ -1,7 +1,9 @@
 package com.github.knokko.text.vulkan;
 
 import com.github.knokko.boiler.BoilerInstance;
+import com.github.knokko.boiler.descriptors.DescriptorSetLayoutBuilder;
 import com.github.knokko.boiler.descriptors.VkbDescriptorSetLayout;
+import com.github.knokko.boiler.memory.callbacks.CallbackUserData;
 import com.github.knokko.boiler.pipelines.GraphicsPipelineBuilder;
 import org.lwjgl.vulkan.*;
 
@@ -35,10 +37,10 @@ public class VulkanTextInstance {
 	public VulkanTextInstance(BoilerInstance boiler) {
 		this.boiler = boiler;
 		try (var stack = stackPush()) {
-			var bindings = VkDescriptorSetLayoutBinding.calloc(2, stack);
-			boiler.descriptors.binding(bindings, 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-			boiler.descriptors.binding(bindings, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
-			descriptorSetLayout = boiler.descriptors.createLayout(stack, bindings, "TextBuffersLayout");
+			var builder = new DescriptorSetLayoutBuilder(stack, 2);
+			builder.set(0, 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+			builder.set(1, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
+			descriptorSetLayout = builder.build(boiler, "TextBuffersLayout");
 
 			var pushConstants = VkPushConstantRange.calloc(1, stack);
 			pushConstants.stageFlags(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -119,7 +121,7 @@ public class VulkanTextInstance {
 
 			var pRenderPass = stack.callocLong(1);
 			assertVkSuccess(vkCreateRenderPass(
-					boiler.vkDevice(), ciRenderPass, null, pRenderPass
+					boiler.vkDevice(), ciRenderPass, CallbackUserData.RENDER_PASS.put(stack, boiler), pRenderPass
 			), "CreateRenderPass", "TextRenderPass");
 			return pRenderPass.get(0);
 		}
@@ -179,8 +181,8 @@ public class VulkanTextInstance {
 		try (var stack = stackPush()) {
 			var pipeline = new GraphicsPipelineBuilder(boiler, stack);
 			pipeline.simpleShaderStages(
-					"Text", "com/github/knokko/text/vulkan/shader.vert.spv",
-					"com/github/knokko/text/vulkan/shader.frag.spv"
+					"Text", "com/github/knokko/text/vulkan/",
+					"shader.vert.spv", "shader.frag.spv"
 			);
 			pipeline.noVertexInput();
 			pipeline.simpleInputAssembly();
@@ -219,7 +221,15 @@ public class VulkanTextInstance {
 	 * Destroys all Vulkan objects that were created in the constructor of this class
 	 */
 	public void destroyInitialObjects() {
-		descriptorSetLayout.destroy();
-		vkDestroyPipelineLayout(boiler.vkDevice(), pipelineLayout, null);
+		try (var stack = stackPush()) {
+			vkDestroyDescriptorSetLayout(
+					boiler.vkDevice(), descriptorSetLayout.vkDescriptorSetLayout,
+					CallbackUserData.DESCRIPTOR_SET_LAYOUT.put(stack, boiler)
+			);
+			vkDestroyPipelineLayout(
+					boiler.vkDevice(), pipelineLayout,
+					CallbackUserData.PIPELINE_LAYOUT.put(stack, boiler)
+			);
+		}
 	}
 }

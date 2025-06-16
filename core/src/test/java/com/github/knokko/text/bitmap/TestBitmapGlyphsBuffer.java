@@ -14,7 +14,6 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.lwjgl.system.MemoryUtil.*;
-import static org.lwjgl.system.libc.LibCStdlib.nmalloc;
 
 public class TestBitmapGlyphsBuffer {
 
@@ -61,7 +60,7 @@ public class TestBitmapGlyphsBuffer {
 	@Test
 	public void testSingleCharacter() {
 		var byteBuffer = memCalloc(1000);
-		var glyphsBuffer = new BitmapGlyphsBuffer(memAddress(byteBuffer), byteBuffer.capacity(), 60);
+		var glyphsBuffer = new BitmapGlyphsBuffer(byteBuffer, 60);
 		glyphsBuffer.startFrame();
 
 		int size = 10;
@@ -108,8 +107,7 @@ public class TestBitmapGlyphsBuffer {
 		int requiredSize = 2 * glyph1.size * glyph1.size + 2 * glyph2.size * glyph2.size;
 
 		int size = requiredSize + requiredSize / 4;
-		long address = nmemAlloc(size);
-		var glyphsBuffer = new BitmapGlyphsBuffer(address, size);
+		var glyphsBuffer = new BitmapGlyphsBuffer(ByteBuffer.allocate(size));
 		var rasterizer = new DummyRasterizer();
 
 		var dummyGlyphs = new ArrayList<PlacedGlyph>();
@@ -129,15 +127,13 @@ public class TestBitmapGlyphsBuffer {
 
 		glyphsBuffer.startFrame();
 		assertEquals(size - initialUsedSpace, glyphsBuffer.countAvailableSpace());
-
-		nmemFree(address);
 	}
 
 	@Test
 	public void testEnforceBoundsY() {
 		int bufferSize = 1000;
-		long bufferAddress = nmalloc(bufferSize);
-		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
+		var byteBuffer = ByteBuffer.allocate(bufferSize);
+		var glyphs = new BitmapGlyphsBuffer(byteBuffer);
 
 		var placeRequest = new TextPlaceRequest(
 				"h", 5, 6, 20, 35, 20, 15, 1, TextAlignment.DEFAULT, null
@@ -158,7 +154,7 @@ public class TestBitmapGlyphsBuffer {
 					int imageY = offsetY + quad.minY;
 					int bufferIndex = quad.bufferIndex + offsetX + offsetY * quad.sectionWidth;
 
-					resultMap[imageX - placeRequest.minX][imageY - placeRequest.minY] = memGetByte(bufferAddress + bufferIndex);
+					resultMap[imageX - placeRequest.minX][imageY - placeRequest.minY] = byteBuffer.get(bufferIndex);
 				}
 			}
 		});
@@ -179,8 +175,8 @@ public class TestBitmapGlyphsBuffer {
 	@Test
 	public void testDoNotEnforceBoundsY() {
 		int bufferSize = 1000;
-		long bufferAddress = nmalloc(bufferSize);
-		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
+		var byteBuffer = BufferUtils.createByteBuffer(bufferSize);
+		var glyphs = new BitmapGlyphsBuffer(byteBuffer);
 
 		var placeRequest = new TextPlaceRequest(
 				"h", 5, -6, 20, 55, 20, 15, 1, TextAlignment.DEFAULT, null
@@ -201,7 +197,7 @@ public class TestBitmapGlyphsBuffer {
 					int imageY = offsetY + quad.minY;
 					int bufferIndex = quad.bufferIndex + offsetX + offsetY * quad.sectionWidth;
 
-					resultMap[imageX - placeRequest.minX][imageY - 1] = memGetByte(bufferAddress + bufferIndex);
+					resultMap[imageX - placeRequest.minX][imageY - 1] = byteBuffer.get(bufferIndex);
 				}
 			}
 		});
@@ -225,8 +221,8 @@ public class TestBitmapGlyphsBuffer {
 	@Test
 	public void testScaledBoundY() {
 		int bufferSize = 1000;
-		long bufferAddress = nmalloc(bufferSize);
-		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
+		var byteBuffer = ByteBuffer.allocateDirect(bufferSize);
+		var glyphs = new BitmapGlyphsBuffer(byteBuffer);
 
 		var placeRequest = new TextPlaceRequest(
 				"h", 1, 4, 3, 7, 5, 2, 1, TextAlignment.DEFAULT, null
@@ -251,8 +247,7 @@ public class TestBitmapGlyphsBuffer {
 	@Test
 	public void testReuseGlyphsWhenUserDataIsIgnored() {
 		int bufferSize = 1000;
-		long bufferAddress = nmalloc(bufferSize);
-		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize);
+		var glyphs = new BitmapGlyphsBuffer(BufferUtils.createByteBuffer(bufferSize));
 
 		var placedGlyphs = new ArrayList<PlacedGlyph>();
 		for (int userData = 0; userData < 1000; userData++) {
@@ -272,8 +267,7 @@ public class TestBitmapGlyphsBuffer {
 	@Test
 	public void testDontReuseGlyphsWhenUserDataIsUsed() {
 		int bufferSize = 1000 * 1000;
-		long bufferAddress = nmalloc(bufferSize);
-		var glyphs = new BitmapGlyphsBuffer(bufferAddress, bufferSize, 900);
+		var glyphs = new BitmapGlyphsBuffer(ByteBuffer.allocate(bufferSize), 900);
 
 		var rasterizer = new GlyphRasterizer() {
 

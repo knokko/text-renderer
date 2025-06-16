@@ -2,6 +2,9 @@ package com.github.knokko.text.vulkan;
 
 import com.github.knokko.boiler.builders.BoilerBuilder;
 import com.github.knokko.boiler.commands.SingleTimeCommands;
+import com.github.knokko.boiler.descriptors.DescriptorCombiner;
+import com.github.knokko.boiler.images.ImageBuilder;
+import com.github.knokko.boiler.memory.MemoryCombiner;
 import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.text.TextInstance;
 import com.github.knokko.text.font.FontData;
@@ -50,25 +53,28 @@ public class TestUnicode1Draw {
 		var vkTextInstance = new VulkanTextInstance(boiler);
 		var vkTextPipeline = vkTextInstance.createPipelineWithDynamicRendering(0, colorFormat, width, height);
 
-		var textDescriptorPool = vkTextInstance.descriptorSetLayout.createPool(1, 0, "TextPool");
 
 		System.out.println("initial: " + (System.nanoTime() - startTime) / 1000_000);
 
-		var glyphBuffer = boiler.buffers.createMapped(3_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
-		var quadBuffer = boiler.buffers.createMapped(1_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
+		long alignment = boiler.deviceProperties.limits().minStorageBufferOffsetAlignment();
+		var memoryCombiner = new MemoryCombiner(boiler, "UnicodeMemory");
+		var glyphBuffer = memoryCombiner.addMappedBuffer(3_000_000, alignment, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+		var quadBuffer = memoryCombiner.addMappedBuffer(1_000_000, alignment, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
-		var resultBuffer = boiler.buffers.createMapped(4 * width * height, VK_BUFFER_USAGE_TRANSFER_DST_BIT, "ResultBuffer");
-		var image = boiler.images.createSimple(
-				width, height, colorFormat,
-				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-				VK_IMAGE_ASPECT_COLOR_BIT, "DrawImage"
+		var resultBuffer = memoryCombiner.addMappedBuffer(4 * width * height, 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+		var image = memoryCombiner.addImage(
+				new ImageBuilder("DrawImage", width, height)
+						.format(colorFormat)
+						.addUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
 		);
+		var memory = memoryCombiner.build(false);
 
-		var descriptorSet = textDescriptorPool.allocate(1)[0];
+		var descriptorCombiner = new DescriptorCombiner(boiler);
+		long[] descriptorSet = descriptorCombiner.addMultiple(vkTextInstance.descriptorSetLayout, 1);
+		long descriptorPool = descriptorCombiner.build("UnicodeDescriptors");
 
 		var vkTextRenderer = vkTextPipeline.createRenderer(
-				font, descriptorSet, glyphBuffer.fullMappedRange(),
-				quadBuffer.fullMappedRange(), 120, 10
+				font, descriptorSet[0], glyphBuffer, quadBuffer, 120, 10
 		);
 
 		var commands = new SingleTimeCommands(boiler);
@@ -79,7 +85,7 @@ public class TestUnicode1Draw {
 
 			var colorAttachments = VkRenderingAttachmentInfo.calloc(1, recorder.stack);
 			recorder.simpleColorRenderingAttachment(
-					colorAttachments.get(0), image.vkImageView(),
+					colorAttachments.get(0), image.vkImageView,
 					VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
 					0f, 0f, 0f, 1f
 			);
@@ -91,26 +97,23 @@ public class TestUnicode1Draw {
 
 			recorder.endDynamicRendering();
 			recorder.transitionLayout(image, ResourceUsage.COLOR_ATTACHMENT_WRITE, ResourceUsage.TRANSFER_SOURCE);
-			recorder.copyImageToBuffer(image, resultBuffer.fullRange());
+			recorder.copyImageToBuffer(image, resultBuffer);
 
 			System.out.println("finished recording: " + (System.nanoTime() - startTime) / 1000_000);
 		}).awaitCompletion();
 		System.out.println("finished drawing: " + (System.nanoTime() - startTime) / 1000_000);
 		commands.destroy();
 
-		image.destroy(boiler);
 		vkTextRenderer.destroy();
 
 		assertImageEquals(
 				"expected-unicode-test-result.png",
-				boiler.buffers.decodeBufferedImageRGBA(resultBuffer, 0, width, height),
+				resultBuffer.decodeBufferedImage(width, height),
 				"actual-unicode-test-result-vulkan1.png", false
 		);
 
-		resultBuffer.destroy(boiler);
-		glyphBuffer.destroy(boiler);
-		quadBuffer.destroy(boiler);
-		textDescriptorPool.destroy();
+		memory.destroy(boiler);
+		vkDestroyDescriptorPool(boiler.vkDevice(), descriptorPool, null);
 		vkTextPipeline.destroy();
 		vkTextInstance.destroyInitialObjects();
 		boiler.destroyInitialObjects();

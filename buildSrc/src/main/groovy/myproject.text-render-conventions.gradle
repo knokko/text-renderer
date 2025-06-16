@@ -13,7 +13,7 @@ java {
 	targetCompatibility = "17"
 }
 
-project.ext.boilerVersion = "v4.6.0"
+project.ext.boilerVersion = "v5.0.0-pre1"
 project.ext.jUnitVersion = "5.10.3"
 project.ext.allNatives = [
 		"natives-windows", "natives-windows-x86", "natives-windows-arm64",
@@ -23,7 +23,7 @@ project.ext.allNatives = [
 ]
 
 dependencies {
-	implementation platform("org.lwjgl:lwjgl-bom:3.3.4")
+	implementation platform("org.lwjgl:lwjgl-bom:3.3.6")
 
 	testImplementation platform("org.junit:junit-bom:$jUnitVersion")
 	testImplementation "org.junit.jupiter:junit-jupiter:$jUnitVersion"

@@ -5,7 +5,10 @@ import com.github.knokko.boiler.buffers.MappedVkbBuffer;
 import com.github.knokko.boiler.builders.BoilerBuilder;
 import com.github.knokko.boiler.builders.WindowBuilder;
 import com.github.knokko.boiler.commands.CommandRecorder;
-import com.github.knokko.boiler.descriptors.HomogeneousDescriptorPool;
+import com.github.knokko.boiler.descriptors.DescriptorCombiner;
+import com.github.knokko.boiler.memory.MemoryBlock;
+import com.github.knokko.boiler.memory.MemoryCombiner;
+import com.github.knokko.boiler.memory.callbacks.CallbackUserData;
 import com.github.knokko.boiler.synchronization.ResourceUsage;
 import com.github.knokko.boiler.window.*;
 import com.github.knokko.memory.MemorySnapshot;
@@ -30,6 +33,7 @@ import java.util.List;
 import static com.github.knokko.boiler.utilities.ColorPacker.rgba;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.vulkan.KHRSurface.VK_PRESENT_MODE_IMMEDIATE_KHR;
 import static org.lwjgl.vulkan.KHRSurface.VK_PRESENT_MODE_MAILBOX_KHR;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK12.VK_API_VERSION_1_2;
@@ -100,7 +104,8 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 	private final VulkanTextRenderer[] vkTextRenderers = new VulkanTextRenderer[numFramesInFlight];
 	private final MappedVkbBuffer[] glyphBuffers = new MappedVkbBuffer[numFramesInFlight],
 			quadBuffers = new MappedVkbBuffer[numFramesInFlight];
-	private HomogeneousDescriptorPool textDescriptorPool;
+	private long descriptorPool;
+	private MemoryBlock memory;
 
 	private List<String> unicodeTestCase;
 	volatile double cameraX = 0.0;
@@ -112,7 +117,9 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 
 	public UnicodeRendererSample(VkbWindow window) {
 		super(
-				window, 2, false, VK_PRESENT_MODE_MAILBOX_KHR,
+				window, 2, false,
+				window.supportedPresentModes.contains(VK_PRESENT_MODE_MAILBOX_KHR) ?
+						VK_PRESENT_MODE_MAILBOX_KHR : VK_PRESENT_MODE_IMMEDIATE_KHR,
 				ResourceUsage.COLOR_ATTACHMENT_WRITE, ResourceUsage.COLOR_ATTACHMENT_WRITE
 		);
 	}
@@ -133,16 +140,27 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 				0, window.surfaceFormat, null, null
 		);
 		System.out.println("Memory usage mid setup is " + MemorySnapshot.take());
-		textDescriptorPool = vkTextInstance.descriptorSetLayout.createPool(numFramesInFlight, 0, "TextPool");
 
-		long[] descriptorSets = textDescriptorPool.allocate(numFramesInFlight);
+		var descriptorCombiner = new DescriptorCombiner(boiler);
+		var descriptorSets = descriptorCombiner.addMultiple(vkTextInstance.descriptorSetLayout, numFramesInFlight);
+		this.descriptorPool = descriptorCombiner.build("UnicodeDescriptors");
+		var memoryCombiner = new MemoryCombiner(boiler, "UnicodeMemory");
 
+		long alignment = boiler.deviceProperties.limits().minStorageBufferOffsetAlignment();
 		for (int index = 0; index < numFramesInFlight; index++) {
-			glyphBuffers[index] = boiler.buffers.createMapped(30_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "GlyphBuffer");
-			quadBuffers[index] = boiler.buffers.createMapped(10_000_000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "QuadBuffer");
+			glyphBuffers[index] = memoryCombiner.addMappedBuffer(
+					30_000_000, alignment, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+			);
+			quadBuffers[index] = memoryCombiner.addMappedBuffer(
+					10_000_000, alignment, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+			);
+		}
+
+		this.memory = memoryCombiner.build(false);
+		for (int index = 0; index < numFramesInFlight; index++) {
 			vkTextRenderers[index] = vkTextPipeline.createRenderer(
-					unicodeFont, descriptorSets[index], glyphBuffers[index].fullMappedRange(),
-					quadBuffers[index].fullMappedRange(), 360, 3
+					unicodeFont, descriptorSets[index], glyphBuffers[index],
+					quadBuffers[index], 360, 3
 			);
 		}
 		unicodeTestCase = UnicodeLines.get();
@@ -208,7 +226,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 
 		var colorAttachments = VkRenderingAttachmentInfo.calloc(1, stack);
 		recorder.simpleColorRenderingAttachment(
-				colorAttachments.get(0), acquiredImage.image().vkImageView(), VK_ATTACHMENT_LOAD_OP_CLEAR,
+				colorAttachments.get(0), acquiredImage.image().vkImageView, VK_ATTACHMENT_LOAD_OP_CLEAR,
 				VK_ATTACHMENT_STORE_OP_STORE, 0.2f, 0.2f, 0.2f, 1f
 		);
 		recorder.beginSimpleDynamicRendering(acquiredImage.width(), acquiredImage.height(), colorAttachments, null, null);
@@ -219,9 +237,13 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 	@Override
 	protected void cleanUp(BoilerInstance boiler) {
 		super.cleanUp(boiler);
-		for (var glyphBuffer : glyphBuffers) glyphBuffer.destroy(boiler);
-		for (var quadBuffer : quadBuffers) quadBuffer.destroy(boiler);
-		textDescriptorPool.destroy();
+		memory.destroy(boiler);
+		try (var stack = stackPush()) {
+			vkDestroyDescriptorPool(
+					boiler.vkDevice(), descriptorPool,
+					CallbackUserData.DESCRIPTOR_POOL.put(stack, boiler)
+			);
+		}
 		for (var renderer : vkTextRenderers) renderer.destroy();
 		vkTextPipeline.destroy();
 		vkTextInstance.destroyInitialObjects();

@@ -1,9 +1,12 @@
 package com.github.knokko.text.vulkan;
 
-import com.github.knokko.boiler.buffers.MappedVkbBufferRange;
+import com.github.knokko.boiler.buffers.MappedVkbBuffer;
+import com.github.knokko.boiler.descriptors.DescriptorUpdater;
+import com.github.knokko.boiler.memory.callbacks.CallbackUserData;
 import com.github.knokko.text.bitmap.BitmapGlyphsBuffer;
 import com.github.knokko.text.font.FontData;
-import org.lwjgl.vulkan.VkWriteDescriptorSet;
+
+import java.nio.ByteBuffer;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
@@ -37,31 +40,25 @@ public class VulkanTextPipeline {
 	 * @param glyphBuffer the buffer where the {@link BitmapGlyphsBuffer} will store its rasterized glyphs
 	 * @param quadBuffer the buffer where the renderer will store the quads
 	 * @param glyphSlotSize The slot size that will be used by the {@link BitmapGlyphsBuffer}, see
-	 *                      {@link BitmapGlyphsBuffer#BitmapGlyphsBuffer(long, int, int)}
+	 *                      {@link BitmapGlyphsBuffer#BitmapGlyphsBuffer(ByteBuffer, int)}
 	 * @param numTextPlacerThreads The number of threads that the {@link com.github.knokko.text.placement.TextPlacer}
 	 *                             of the renderer will use
 	 * @return The created renderer
 	 */
 	public VulkanTextRenderer createRenderer(
 			FontData font, long descriptorSet,
-			MappedVkbBufferRange glyphBuffer,
-			MappedVkbBufferRange quadBuffer,
+			MappedVkbBuffer glyphBuffer,
+			MappedVkbBuffer quadBuffer,
 			int glyphSlotSize, int numTextPlacerThreads
 	) {
 		try (var stack = stackPush()) {
-			var descriptorWrites = VkWriteDescriptorSet.calloc(2, stack);
-			instance.boiler.descriptors.writeBuffer(
-					stack, descriptorWrites, descriptorSet, 0,
-					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, quadBuffer.range()
-			);
-			instance.boiler.descriptors.writeBuffer(
-					stack, descriptorWrites, descriptorSet, 1,
-					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, glyphBuffer.range()
-			);
-			vkUpdateDescriptorSets(instance.boiler.vkDevice(), descriptorWrites, null);
+			var updater = new DescriptorUpdater(stack, 2);
+			updater.writeStorageBuffer(0, descriptorSet, 0, quadBuffer);
+			updater.writeStorageBuffer(1, descriptorSet, 1, glyphBuffer);
+			updater.update(instance.boiler);
 		}
 
-		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.hostAddress(), glyphBuffer.intSize(), glyphSlotSize);
+		var glyphsBuffer = new BitmapGlyphsBuffer(glyphBuffer.byteBuffer(), glyphSlotSize);
 		return new VulkanTextRenderer(
 				font, instance, this, descriptorSet, glyphsBuffer, quadBuffer.intBuffer(), numTextPlacerThreads
 		);
@@ -72,6 +69,11 @@ public class VulkanTextPipeline {
 	 * the renderers created for it
 	 */
 	public void destroy() {
-		vkDestroyPipeline(instance.boiler.vkDevice(), graphicsPipeline, null);
+		try (var stack = stackPush()) {
+			vkDestroyPipeline(
+					instance.boiler.vkDevice(), graphicsPipeline,
+					CallbackUserData.PIPELINE.put(stack, instance.boiler)
+			);
+		}
 	}
 }
