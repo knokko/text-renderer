@@ -65,7 +65,7 @@ public class TestUnicode1Draw {
 		var image = memoryCombiner.addImage(
 				new ImageBuilder("DrawImage", width, height)
 						.format(colorFormat)
-						.addUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
+						.addUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT), 1f
 		);
 		var memory = memoryCombiner.build(false);
 

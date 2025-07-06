@@ -50,7 +50,7 @@ public class UnicodeRendererSample extends SimpleWindowRenderLoop {
 		)).build();
 		System.out.println("initialized memory usage is " + MemorySnapshot.take());
 
-		var glfwWindow = boiler.window().glfwWindow;
+		var glfwWindow = boiler.window().handle;
 		var renderer = new UnicodeRendererSample(boiler.window());
 		glfwSetKeyCallback(glfwWindow, (window, key, scancode, action, mods) -> {
 			double arrowSpeed = 20 / renderer.scaleY;
